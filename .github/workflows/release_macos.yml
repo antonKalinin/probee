@@ -5,6 +5,10 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Release should have a tag (v0.0.0)
+        required: true
 
 env:
   CARGO_TERM_COLOR: always
@@ -30,5 +34,6 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
+          token: ${{ secrets.RELEASE_TOKEN }}
           files: |
             target/release/*.dmg
