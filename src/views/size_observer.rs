@@ -3,47 +3,46 @@
 use gpui::*;
 use smallvec::SmallVec;
 
-/// A frame state for a `ResizeObserver` element, which contains layout IDs for its children.
+/// A frame state for a `SizeObserver` element, which contains layout IDs for its children.
 ///
-/// This struct is used internally by the `ResizeObserver` element to manage the layout state of its children
+/// This struct is used internally by the `SizeObserver` element to manage the layout state of its children
 /// during the UI update cycle. It holds a small vector of `LayoutId` values, each corresponding to
-/// a child element of the `ResizeObserver`. These IDs are used to query the layout engine for the computed
+/// a child element of the `SizeObserver`. These IDs are used to query the layout engine for the computed
 /// bounds of the children after the layout phase is complete.
-pub struct ResizeObserverFrameState {
+pub struct SizeObserverFrameState {
     child_layout_ids: SmallVec<[LayoutId; 2]>,
 }
 
-/**
- * ResizeObserver is element that allow to observe size changes of content it holds
-*/
-pub struct ResizeObserver {
+pub(crate) type MeasureSizeListener = Box<dyn Fn(Size<Pixels>, &mut WindowContext) + 'static>;
+
+pub struct SizeObserver {
     interactivity: Interactivity,
     children: SmallVec<[AnyElement; 2]>,
-    resize_callback: Option<Box<dyn FnMut(Size<Pixels>, &mut WindowContext)>>,
+    size_callback: Option<MeasureSizeListener>,
 }
 
-// create new ResizeObserver element
-pub fn resize_observer() -> ResizeObserver {
-    ResizeObserver {
+// create new SizeObserver element
+pub fn size_observer() -> SizeObserver {
+    SizeObserver {
         interactivity: Interactivity::default(),
         children: SmallVec::default(),
-        resize_callback: None,
+        size_callback: None,
     }
 }
 
-impl ResizeObserver {
-    pub fn on_resize(
+impl SizeObserver {
+    pub fn on_sized(
         mut self,
-        callback: impl FnMut(Size<Pixels>, &mut WindowContext) + 'static,
+        callback: impl Fn(Size<Pixels>, &mut WindowContext) + 'static,
     ) -> Self {
-        self.resize_callback = Some(Box::new(callback));
+        self.size_callback = Some(Box::new(callback));
 
         self
     }
 }
 
-impl Element for ResizeObserver {
-    type RequestLayoutState = ResizeObserverFrameState;
+impl Element for SizeObserver {
+    type RequestLayoutState = SizeObserverFrameState;
     type PrepaintState = Option<Hitbox>;
 
     fn id(&self) -> Option<crate::ElementId> {
@@ -69,7 +68,7 @@ impl Element for ResizeObserver {
                 })
             });
 
-        (layout_id, ResizeObserverFrameState { child_layout_ids })
+        (layout_id, SizeObserverFrameState { child_layout_ids })
     }
 
     fn prepaint(
@@ -93,7 +92,7 @@ impl Element for ResizeObserver {
             (child_max - child_min).into()
         };
 
-        if let Some(callback) = &mut self.resize_callback {
+        if let Some(callback) = &mut self.size_callback {
             callback(content_size, cx);
         }
 
@@ -130,7 +129,7 @@ impl Element for ResizeObserver {
     }
 }
 
-impl IntoElement for ResizeObserver {
+impl IntoElement for SizeObserver {
     type Element = Self;
 
     fn into_element(self) -> Self::Element {
@@ -138,19 +137,19 @@ impl IntoElement for ResizeObserver {
     }
 }
 
-impl Styled for ResizeObserver {
+impl Styled for SizeObserver {
     fn style(&mut self) -> &mut StyleRefinement {
         &mut self.interactivity.base_style
     }
 }
 
-impl InteractiveElement for ResizeObserver {
+impl InteractiveElement for SizeObserver {
     fn interactivity(&mut self) -> &mut Interactivity {
         &mut self.interactivity
     }
 }
 
-impl ParentElement for ResizeObserver {
+impl ParentElement for SizeObserver {
     fn extend(&mut self, elements: impl IntoIterator<Item = AnyElement>) {
         self.children.extend(elements)
     }

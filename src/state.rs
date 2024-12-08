@@ -5,9 +5,10 @@ use crate::window::Window;
 
 #[derive(Debug)]
 pub struct State {
+    pub mode: AssistMode,
     pub input: Option<String>,
     pub output: String,
-    pub mode: AssistMode,
+    pub output_size: Option<Size<Pixels>>,
 }
 
 #[derive(Clone)]
@@ -19,9 +20,10 @@ impl StateController {
     pub fn init(cx: &mut WindowContext) -> Self {
         let this = Self {
             model: cx.new_model(|_| State {
+                mode: AssistMode::Translate,
                 input: None,
                 output: "...".to_string(),
-                mode: AssistMode::Translate,
+                output_size: None,
             }),
         };
 
@@ -60,6 +62,26 @@ impl StateController {
             model.output = output;
             cx.notify();
         });
+    }
+
+    pub fn set_output_size(&self, wcx: &mut WindowContext, size: Size<Pixels>) {
+        let mut resized = false;
+
+        self.model.update(wcx, |model, _cx| {
+            if let Some(prev_size) = model.output_size {
+                resized = prev_size != size;
+            } else {
+                resized = true;
+            }
+
+            if resized {
+                model.output_size = Some(size);
+            }
+        });
+
+        if resized {
+            Window::set_height(wcx, size.height.0 + 40.);
+        }
     }
 
     pub fn set_mode(&self, wcx: &mut WindowContext, mode: AssistMode) {

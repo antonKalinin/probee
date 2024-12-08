@@ -5,7 +5,6 @@ use crate::events::UiEvent;
 use crate::state::StateController;
 use crate::theme::Theme;
 use crate::views::*;
-use crate::window::Window;
 
 pub struct Root {
     mode_buttons: Vec<View<ModeButton>>,
@@ -27,7 +26,6 @@ impl Root {
             mode_buttons.iter().for_each(|button| {
                 cx.subscribe(button, move |_subscriber, _emitter, event, cx| {
                     if let UiEvent::ModeChanged(mode) = event {
-                        println!("Mode changed: {:?}", mode);
                         StateController::update(|this, cx| this.set_mode(cx, mode.clone()), cx);
                     }
                 })
@@ -60,6 +58,10 @@ impl Render for Root {
 
         mode_buttons.push(space);
 
+        let on_content_sized = |size, cx: &mut WindowContext<'_>| {
+            StateController::update(|this, cx| this.set_output_size(cx, size), cx);
+        };
+
         div()
             .size_full()
             .flex()
@@ -69,11 +71,8 @@ impl Render for Root {
             .border_color(theme.border)
             .child(actions_row.children(mode_buttons))
             .child(
-                resize_observer()
-                    .on_resize(|size, cx| {
-                        let view_height = size.height.0 + 40.;
-                        Window::set_height(cx, view_height);
-                    })
+                size_observer()
+                    .on_sized(on_content_sized)
                     .child(content_col.child(self.output.clone())),
             )
     }

@@ -11,7 +11,6 @@ use std::env;
 #[derive(Debug, Clone, PartialEq)]
 pub enum AssistMode {
     Translate,
-    TranslateCorrespond,
     Explain,
     GrammarCorrect,
 }
@@ -58,8 +57,9 @@ You are a highly skilled translator with expertise in many languages. \
 Your task is to identify the language of the text I provide and accurately \
 translate it into the English while preserving the meaning, \
 tone, and nuance of the original text. Please maintain proper grammar, spelling, \
-and punctuation in the translated version. Please do not provide any additional \
-information, titles, comments or context beyond the translated text.";
+punctuation including tabulation and new lines in the translated version. \
+Please do not provide any additional information, titles, comments or context \
+beyond the translated text.";
 
 const EXPLAIN_MODE_PROMPT: &str = "
 Your task is to explain the text I provide in a clear and concise manner. \
