@@ -18,9 +18,9 @@ jobs:
       - name: Rustup
         run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
       - name: Build x86_64
-        run: cargo build --target=x86_64-apple-darwin -F ${{ vars.CARGO_FEATURES }} --release
+        run: cargo build --target=x86_64-apple-darwin --release
       - name: Build aarch64
-        run: cargo build --target=aarch64-apple-darwin -F ${{ vars.CARGO_FEATURES }} --release
+        run: cargo build --target=aarch64-apple-darwin --release
       - name: Lipo
         run: mkdir -p target/release ; lipo -create -output target/release/frames target/x86_64-apple-darwin/release/frames target/aarch64-apple-darwin/release/frames
       - name: Install Packer
