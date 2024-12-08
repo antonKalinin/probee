@@ -1,0 +1,38 @@
+[package]
+name = "inline"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.91"                                                                                        # error handling
+async-std = { version = "1.13.0", features = ["attributes", "tokio1"] }
+dotenv = "0.15.0"                                                                                        # env vars
+global-hotkey = "0.6.3"                                                                                  # global hotkeys
+gpui = { git = "https://github.com/antonKalinin/zed", rev = "8bda4c56a8f9c18d6785a2e1e4bc16b3837b7307" } # ui framework (forked and patched to support window size changes)
+image = "0.25.4"                                                                                         # image processing
+ocrs = "0.9.0"                                                                                           # text detection and recognition
+reqwest = { version = "0.12.9", features = ["json"] }                                                    # http client
+rten = "0.13.1"                                                                                          # nn models and inference
+rust-embed = "8.5.0"                                                                                     # embedding assets
+serde = { version = "1.0.215", features = ["derive"] }                                                   # serialization core
+serde_json = "1.0.133"                                                                                   # json serialization
+smallvec = "1.13.2"                                                                                      # optimized vector struct used in gpui elements
+unicode-segmentation = "1.12.0"                                                                          # character segmentation for input handling
+xcap = "0.0.14"                                                                                          # screen capture
+
+# platform specific dependencies
+[target.'cfg(target_os = "macos")'.dependencies]
+core-foundation = "0.9.4"
+accessibility = "0.1.6"
+accessibility-sys = "0.1.3"
+
+[package.metadata.bundle.inline]
+product_name = "Inline"
+identifier = "io.github.antonkalinin.inline"
+copyright = "Copyright (c) Anton Kalinin 2024. All rights reserved."
+category = "Productivity"
+target_triple = "universal-apple-darwin"
+icons = ["icons/*.png"]
+
+[package.metadata.packager.macos]
+entitlements = "macos/entitlements.plist"
