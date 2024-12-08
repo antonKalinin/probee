@@ -22,7 +22,7 @@ jobs:
       - name: Build aarch64
         run: cargo build --target=aarch64-apple-darwin --release
       - name: Lipo
-        run: mkdir -p target/release ; lipo -create -output target/release/frames target/x86_64-apple-darwin/release/frames target/aarch64-apple-darwin/release/frames
+        run: mkdir -p target/release ; lipo -create -output target/release/cmdi target/x86_64-apple-darwin/release/cmdi target/aarch64-apple-darwin/release/cmdi
       - name: Install Packer
         run: cargo install cargo-packager --locked
       - name: Package
