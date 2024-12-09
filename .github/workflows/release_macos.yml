@@ -23,8 +23,12 @@ jobs:
         run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
       - name: Build x86_64
         run: cargo build --target=x86_64-apple-darwin --release
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       - name: Build aarch64
         run: cargo build --target=aarch64-apple-darwin --release
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       - name: Lipo
         run: mkdir -p target/release ; lipo -create -output target/release/cmdi target/x86_64-apple-darwin/release/cmdi target/aarch64-apple-darwin/release/cmdi
       - name: Install Packer

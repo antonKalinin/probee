@@ -1,7 +1,7 @@
 use gpui::*;
 
 pub static WIDTH: f32 = 360.;
-pub static MIN_HEIGHT: f32 = 80.;
+pub static MIN_HEIGHT: f32 = 40.;
 pub static MAX_HEIGHT: f32 = 400.;
 pub static MARGIN_TOP: f32 = 56.;
 pub static MARGIN_RIGHT: f32 = 16.;

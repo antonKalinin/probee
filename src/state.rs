@@ -22,7 +22,7 @@ impl StateController {
             model: cx.new_model(|_| State {
                 mode: AssistMode::Translate,
                 input: None,
-                output: "...".to_string(),
+                output: "".to_string(),
                 output_size: None,
             }),
         };

@@ -77,8 +77,7 @@ impl Assistant {
     pub fn init(cx: &mut AppContext) {
         dotenv().ok();
 
-        let api_key =
-            env::var("ANTHROPIC_API_KEY").expect("ANTHROPIC_API_KEY environment variable not set");
+        let api_key = env!("ANTHROPIC_API_KEY");
 
         let mut headers = HeaderMap::new();
 

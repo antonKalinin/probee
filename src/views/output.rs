@@ -15,7 +15,7 @@ impl Output {
         .detach();
 
         Output {
-            text: "...".to_string(),
+            text: "Hello, CmdI is AI assistant.".to_string(),
         }
     }
 }
