@@ -27,7 +27,7 @@ jobs:
       - name: Build aarch64
         run: ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }} cargo build --target=aarch64-apple-darwin --release
       - name: Lipo
-        run: mkdir -p target/release ;clipo -create -output target/release/cmdi target/x86_64-apple-darwin/release/cmdi target/aarch64-apple-darwin/release/cmdi
+        run: mkdir -p target/release ; lipo -create -output target/release/cmdi target/x86_64-apple-darwin/release/cmdi target/aarch64-apple-darwin/release/cmdi
       - name: Install Packager
         run: cargo install cargo-packager --locked
       - name: Package
