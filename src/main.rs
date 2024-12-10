@@ -1,3 +1,4 @@
+use dotenv::dotenv;
 use gpui::*;
 
 mod assets;
@@ -18,6 +19,8 @@ use crate::{
 
 #[async_std::main]
 async fn main() {
+    dotenv().ok();
+
     let app = App::new().with_assets(Assets);
 
     app.run(|cx: &mut AppContext| {

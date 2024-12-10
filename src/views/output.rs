@@ -15,7 +15,7 @@ impl Output {
         .detach();
 
         Output {
-            text: "Hello, CmdI is AI assistant.".to_string(),
+            text: "Hello, CMDI is AI assistant.\n\nSelect any text on screen, choose the assitant mode and press CMD + I".to_string(),
         }
     }
 }

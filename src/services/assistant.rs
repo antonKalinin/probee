@@ -1,5 +1,4 @@
 use anyhow::{Error, Result};
-use dotenv::dotenv;
 use gpui::{AppContext, Global};
 use reqwest::{
     header::{HeaderMap, HeaderValue},
@@ -75,8 +74,6 @@ word choice problems, and other grammatical mistakes.";
 
 impl Assistant {
     pub fn init(cx: &mut AppContext) {
-        dotenv().ok();
-
         let api_key = env!("ANTHROPIC_API_KEY");
 
         if api_key.is_empty() {
