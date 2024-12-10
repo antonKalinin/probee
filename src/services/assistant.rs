@@ -79,6 +79,10 @@ impl Assistant {
 
         let api_key = env!("ANTHROPIC_API_KEY");
 
+        if api_key.is_empty() {
+            panic!("Assistant api key is missing");
+        }
+
         let mut headers = HeaderMap::new();
 
         headers.insert("x-api-key", HeaderValue::from_str(&api_key).unwrap());
