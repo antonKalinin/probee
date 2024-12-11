@@ -77,7 +77,7 @@ impl Assistant {
         let api_key = env!("ANTHROPIC_API_KEY");
 
         if api_key.is_empty() {
-            panic!("Assistant api key is missing");
+            // set state error
         }
 
         let mut headers = HeaderMap::new();

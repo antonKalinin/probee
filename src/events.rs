@@ -2,7 +2,10 @@ use crate::assistant::AssistMode;
 
 #[derive(Clone)]
 pub enum UiEvent {
-    ModeChanged(AssistMode),
+    AppButtonClicked,
     ClearOutput,
     CopyOutput,
+    ModeChanged(AssistMode),
+    CloseWindow,
+    HideWindow,
 }

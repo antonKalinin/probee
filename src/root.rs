@@ -7,8 +7,11 @@ use crate::theme::Theme;
 use crate::views::*;
 
 pub struct Root {
-    mode_buttons: Vec<View<ModeButton>>,
     output: View<Output>,
+    loading: View<Loading>,
+    app_button: View<AppButton>,
+    mode_buttons: Vec<View<ModeButton>>,
+    window_buttons: Vec<View<WindowButton>>,
 }
 
 impl Root {
@@ -16,11 +19,18 @@ impl Root {
         let view = cx.new_view(|cx| {
             let state = StateController::init(cx).model;
             let output = cx.new_view(|cx| Output::new(cx, &state));
+            let loading = cx.new_view(|cx| Loading::new(cx, &state));
+            let app_button = cx.new_view(|cx| AppButton::new(cx, &state));
 
             let mode_buttons = vec![
                 cx.new_view(|cx| ModeButton::new(cx, AssistMode::Translate, true)),
                 cx.new_view(|cx| ModeButton::new(cx, AssistMode::Explain, false)),
                 cx.new_view(|cx| ModeButton::new(cx, AssistMode::GrammarCorrect, false)),
+            ];
+
+            let window_buttons = vec![
+                cx.new_view(|_cx| WindowButton::new(WindowAction::Close)),
+                cx.new_view(|_cx| WindowButton::new(WindowAction::Hide)),
             ];
 
             mode_buttons.iter().for_each(|button| {
@@ -34,11 +44,19 @@ impl Root {
 
             Root {
                 output,
+                loading,
+                app_button,
                 mode_buttons,
+                window_buttons,
             }
         });
 
         view
+    }
+
+    // TODO: Move to macros
+    fn render_space() -> Div {
+        div().flex().flex_grow()
     }
 }
 
@@ -46,17 +64,27 @@ impl Render for Root {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
-        let content_col = div().flex().flex_col().flex_grow();
         let actions_row = div().flex().flex_row();
-        let space = div().flex().flex_grow();
+        let content_col = div().flex().flex_col().flex_grow();
+        let title_row = div().flex().flex_row().items_start().mb_2();
+
+        let app_button = div().flex().child(self.app_button.clone());
+        let mut title_buttons = self
+            .window_buttons
+            .iter()
+            .map(|button| div().flex().mr_2().child(button.clone()))
+            .collect::<Vec<_>>();
+
+        title_buttons.push(Root::render_space());
+        title_buttons.push(app_button);
 
         let mut mode_buttons = self
             .mode_buttons
             .iter()
-            .map(|button| div().flex().mr_1().child(button.clone()))
+            .map(|button| div().flex().mr_2().child(button.clone()))
             .collect::<Vec<_>>();
 
-        mode_buttons.push(space);
+        mode_buttons.push(Root::render_space());
 
         let on_content_sized = |size, cx: &mut WindowContext<'_>| {
             StateController::update(|this, cx| this.set_output_size(cx, size), cx);
@@ -69,6 +97,7 @@ impl Render for Root {
             .p_2()
             .bg(theme.background)
             .border_color(theme.border)
+            .child(title_row.children(title_buttons))
             .child(actions_row.children(mode_buttons))
             .child(
                 size_observer()

@@ -36,6 +36,7 @@ pub enum Icon {
     BookMarked,
     BookType,
     CircleX,
+    Command,
     Eraser,
     FilePlus,
     Globe,

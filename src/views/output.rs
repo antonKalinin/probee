@@ -6,6 +6,11 @@ pub struct Output {
     text: String,
 }
 
+const INTRO_TEXT: &str = "Hello, this your assistant.\n\n\
+- Cmd + I to run selected command
+- Cmd + Shift + I to switch assistant mode
+- Cmd + Opt + I to hide the assistant";
+
 impl Output {
     pub fn new(cx: &mut ViewContext<Self>, state: &Model<State>) -> Self {
         cx.observe(state, |this, model, cx| {
@@ -15,7 +20,7 @@ impl Output {
         .detach();
 
         Output {
-            text: "Hello, CMDI is AI assistant.\n\nSelect any text on screen, choose the assitant mode and press CMD + I".to_string(),
+            text: INTRO_TEXT.to_string(),
         }
     }
 }

@@ -1,12 +1,22 @@
+use anyhow::Error;
 use gpui::*;
 
 use crate::services::*;
 use crate::window::Window;
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum ActiveView {
+    AppView,
+    AssitantView,
+}
+
 #[derive(Debug)]
 pub struct State {
-    pub mode: AssistMode,
+    pub active_view: ActiveView,
+    pub error: Option<Error>,
     pub input: Option<String>,
+    pub loading: bool,
+    pub mode: AssistMode,
     pub output: String,
     pub output_size: Option<Size<Pixels>>,
 }
@@ -20,8 +30,11 @@ impl StateController {
     pub fn init(cx: &mut WindowContext) -> Self {
         let this = Self {
             model: cx.new_model(|_| State {
-                mode: AssistMode::Translate,
+                active_view: ActiveView::AppView,
+                error: None,
                 input: None,
+                loading: false,
+                mode: AssistMode::Translate,
                 output: "".to_string(),
                 output_size: None,
             }),

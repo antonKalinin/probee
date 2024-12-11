@@ -80,6 +80,11 @@ pub struct Theme {
     pub text: Hsla,
     pub text_foreground: Hsla,
     pub subtext: Hsla,
+
+    pub amber400: Hsla,
+    pub red500: Hsla,
+    pub sky500: Hsla,
+    pub sky600: Hsla,
 }
 
 impl Theme {
@@ -109,6 +114,12 @@ impl Theme {
             destructive: Hsla::from(rgb(0xff0000)),
             destructive_foreground: Hsla::from(rgb(0xf5f5f4)),
             input: Hsla::from(rgb(0xf5f5f4)),
+
+            // tailwind
+            amber400: Hsla::from(rgb(0xfbbf24)),
+            red500: Hsla::from(rgb(0xef4444)),
+            sky500: Hsla::from(rgb(0x0ea5e9)),
+            sky600: Hsla::from(rgb(0x0284c7)),
 
             // typography
             font_sans: "Inter".into(),

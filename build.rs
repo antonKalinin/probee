@@ -1,8 +1,7 @@
 use std::env;
 
 fn main() {
-    let api_key =
-        env::var("ANTHROPIC_API_KEY").expect("ANTHROPIC_API_KEY environment variable not set");
+    let api_key = env::var("ANTHROPIC_API_KEY").unwrap_or_default();
 
     // Pass the environment variable to Cargo (to be accessed in code)
     println!("cargo:rerun-if-env-changed=ANTHROPIC_API_KEY");
