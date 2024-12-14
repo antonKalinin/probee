@@ -30,14 +30,14 @@ impl Render for AppButton {
         let theme = cx.global::<Theme>();
 
         let icon_color = match self.active {
-            true => theme.sky600,
-            false => theme.text,
+            true => theme.text,
+            false => theme.subtext,
         };
 
         let icon = svg()
             .path(Icon::Command.path())
             .text_color(icon_color)
-            .hover(|style| style.text_color(theme.sky500))
+            .hover(|style| style.text_color(theme.text))
             .size_full();
 
         let on_click = cx.listener({
@@ -84,9 +84,7 @@ impl ModeButton {
 
         let icon = match self.mode {
             AssistMode::Translate => Icon::Globe,
-            AssistMode::Explain => Icon::Milk,
-            AssistMode::GrammarCorrect => Icon::SpellCheck,
-            _ => Icon::Globe,
+            AssistMode::TranslateWordByWord => Icon::Table,
         };
 
         let text_color = match self.active {
@@ -94,16 +92,41 @@ impl ModeButton {
             false => theme.text,
         };
 
-        let svg = svg().path(icon.path()).text_color(text_color).size_full();
+        let svg = div()
+            .flex()
+            .child(svg().path(icon.path()).text_color(text_color).size_4());
 
         svg.into_any_element()
+    }
+
+    fn render_label(&self, cx: &ViewContext<Self>) -> impl IntoElement {
+        let theme = cx.global::<Theme>();
+
+        let text = match self.mode {
+            AssistMode::Translate => "Translate",
+            AssistMode::TranslateWordByWord => "Translate word by word",
+        };
+
+        let text_color = match self.active {
+            true => theme.text_foreground,
+            false => theme.text,
+        };
+
+        let label = div()
+            .flex()
+            .ml_1()
+            .pt_1()
+            .text_xs()
+            .text_color(text_color)
+            .child(text);
+
+        label.into_any_element()
     }
 }
 
 impl Render for ModeButton {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
-        let icon = self.render_icon(cx);
 
         let on_click = cx.listener({
             move |this, _event, cx: &mut ViewContext<Self>| {
@@ -124,16 +147,20 @@ impl Render for ModeButton {
 
         let button = div()
             .h_6()
-            .w_6()
-            .px_1()
+            .w_auto()
+            .px_2()
             .py_1()
             .border_1()
             .rounded_full()
+            .flex()
+            .flex_row()
+            .items_center()
             .bg(bg_color)
             .hover(|style| style.bg(bg_hover_color))
             .on_mouse_up(MouseButton::Left, on_click)
             .cursor(CursorStyle::PointingHand)
-            .child(icon);
+            .child(self.render_icon(cx))
+            .child(self.render_label(cx));
 
         button
     }

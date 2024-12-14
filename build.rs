@@ -1,12 +1,14 @@
+use dotenv::dotenv;
 use std::env;
 
 fn main() {
+    let dotenv_path = dotenv();
+
+    // Use dotenv for local development
+    if let Ok(dotenv_path) = dotenv_path {
+        println!("cargo:rerun-if-changed={}", dotenv_path.display());
+    }
+
     let api_key = env::var("ANTHROPIC_API_KEY").unwrap_or_default();
-
-    // Pass the environment variable to Cargo (to be accessed in code)
-    println!("cargo:rerun-if-env-changed=ANTHROPIC_API_KEY");
-    println!("cargo:rerun-if-changed=build.rs");
-
-    // Make the environment variable available to the Rust code
     println!("cargo:rustc-env=ANTHROPIC_API_KEY={}", api_key);
 }

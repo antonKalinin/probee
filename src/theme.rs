@@ -100,7 +100,7 @@ impl Theme {
             background_secondary: Hsla::from(rgb(0xf5f5f4)),
             text: Hsla::from(rgb(0x0c0a09)),
             text_foreground: Hsla::from(rgb(0xf5f5f4)),
-            subtext: Hsla::from(rgb(0x44403c)),
+            subtext: Hsla::from(rgb(0xa8a29e)),
             border: Hsla::from(rgb(0x78716c)),
             border_secondary: Hsla::from(rgb(0xa8a29e)),
             primary: Hsla::from(rgb(0x78716c)),

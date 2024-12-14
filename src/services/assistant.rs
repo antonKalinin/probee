@@ -10,8 +10,7 @@ use std::env;
 #[derive(Debug, Clone, PartialEq)]
 pub enum AssistMode {
     Translate,
-    Explain,
-    GrammarCorrect,
+    TranslateWordByWord,
 }
 
 /**
@@ -60,17 +59,28 @@ punctuation including tabulation and new lines in the translated version. \
 Please do not provide any additional information, titles, comments or context \
 beyond the translated text.";
 
-const EXPLAIN_MODE_PROMPT: &str = "
-Your task is to explain the text I provide in a clear and concise manner. \
-Like I am five years old. If it is possible provide an example that explains \
-or describes the give text or term in a simple way. Do not be too verbose, focus on \
-the key points and make sure to use simple language.";
+const TRANSLATE_WORD_BY_WORD: &str = "
+You are a highly skilled translator with expertise in many languages. \
+Your task is to identify the language of the text I provide and accurately \
+translate it into the English word by word. Treat each word as separate, without \
+context of the whole sentence. \
+Please provide the translation of each word in a new line in form:\
+`original word - translation`. \
+Please do not provide any additional information, titles, comments or context \
+beyond the translated formatted text.";
 
-const GRAMMAR_CORRECT_MODE_PROMPT: &str = "
-Your task is to take the text provided and rewrite it into a clear, grammatically \
-correct version while preserving the original meaning as closely as possible. \
-Correct any spelling mistakes, punctuation errors, verb tense issues, \
-word choice problems, and other grammatical mistakes.";
+const WORD_FORMS: &str = "
+You are a highly skilled translator with expertise in many languages. \
+Your task is to identify the language of the text I provide, take the first word, \
+detect its part of speech, and provide all possible forms in the language of the text. \
+Please provide the result in the following format: \
+word - part of speech \
+form1, \
+form2, \
+...
+formN. \
+Please do not provide any additional information, titles, comments or context \
+beyond the formatted result.";
 
 impl Assistant {
     pub fn init(cx: &mut AppContext) {
@@ -94,9 +104,7 @@ impl Assistant {
     fn resolve_system_prompt(&self, mode: AssistMode) -> String {
         match mode {
             AssistMode::Translate => TRANSLATE_MODE_PROMPT.to_string(),
-            AssistMode::Explain => EXPLAIN_MODE_PROMPT.to_string(),
-            AssistMode::GrammarCorrect => GRAMMAR_CORRECT_MODE_PROMPT.to_string(),
-            _ => "What is weather today in Helsinki?".to_string(),
+            AssistMode::TranslateWordByWord => TRANSLATE_WORD_BY_WORD.to_string(),
         }
     }
 

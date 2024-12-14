@@ -1,28 +1,56 @@
+use gpui::*;
+use std::time::Duration;
+
 use crate::state::State;
 use crate::theme::Theme;
-use gpui::*;
+use crate::views::Icon;
 
 pub struct Loading {
-    active: bool,
+    visible: bool,
 }
 
 impl Loading {
     pub fn new(cx: &mut ViewContext<Self>, state: &Model<State>) -> Self {
         cx.observe(state, |this, model, cx| {
-            this.active = model.read(cx).loading.clone();
+            this.visible = model.read(cx).loading.clone();
             cx.notify();
         })
         .detach();
 
-        Loading { active: false }
+        Loading { visible: false }
     }
 }
 
 impl Render for Loading {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
-        let text = if self.active { "Loading..." } else { "" };
 
-        div().child(text)
+        if !self.visible {
+            return div().into_any_element();
+        }
+
+        let svg = div().flex().child(
+            svg()
+                .path(Icon::Loader.path())
+                .text_color(theme.subtext)
+                .size_6()
+                .with_animation(
+                    "rotating-loader",
+                    Animation::new(Duration::from_secs(2)).repeat(),
+                    |icon, delta| {
+                        icon.with_transformation(Transformation::rotate(percentage(delta)))
+                    },
+                ),
+        );
+
+        div()
+            .flex()
+            .flex_row()
+            .items_center()
+            .justify_center()
+            .h_20()
+            .w_full()
+            .child(svg)
+            .into_any_element()
     }
 }

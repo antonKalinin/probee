@@ -10,7 +10,7 @@ impl Error {
     pub fn new(cx: &mut ViewContext<Self>, state: &Model<State>) -> Self {
         cx.observe(state, |this, model, cx| {
             if Some(error) = model.read(cx).error {
-                this.message = error;
+                this.message = error.to_string();
                 cx.notify();
             }
         })

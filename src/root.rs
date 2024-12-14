@@ -7,8 +7,9 @@ use crate::theme::Theme;
 use crate::views::*;
 
 pub struct Root {
-    output: View<Output>,
-    loading: View<Loading>,
+    output_view: View<Output>,
+    loading_view: View<Loading>,
+    // error_view: View<Error>,
     app_button: View<AppButton>,
     mode_buttons: Vec<View<ModeButton>>,
     window_buttons: Vec<View<WindowButton>>,
@@ -18,14 +19,14 @@ impl Root {
     pub fn build(cx: &mut WindowContext) -> View<Self> {
         let view = cx.new_view(|cx| {
             let state = StateController::init(cx).model;
-            let output = cx.new_view(|cx| Output::new(cx, &state));
-            let loading = cx.new_view(|cx| Loading::new(cx, &state));
+            let output_view = cx.new_view(|cx| Output::new(cx, &state));
+            let loading_view = cx.new_view(|cx| Loading::new(cx, &state));
+
             let app_button = cx.new_view(|cx| AppButton::new(cx, &state));
 
             let mode_buttons = vec![
-                cx.new_view(|cx| ModeButton::new(cx, AssistMode::Translate, true)),
-                cx.new_view(|cx| ModeButton::new(cx, AssistMode::Explain, false)),
-                cx.new_view(|cx| ModeButton::new(cx, AssistMode::GrammarCorrect, false)),
+                cx.new_view(|cx| ModeButton::new(cx, AssistMode::Translate, false)),
+                cx.new_view(|cx| ModeButton::new(cx, AssistMode::TranslateWordByWord, false)),
             ];
 
             let window_buttons = vec![
@@ -43,8 +44,8 @@ impl Root {
             });
 
             Root {
-                output,
-                loading,
+                output_view,
+                loading_view,
                 app_button,
                 mode_buttons,
                 window_buttons,
@@ -90,6 +91,10 @@ impl Render for Root {
             StateController::update(|this, cx| this.set_output_size(cx, size), cx);
         };
 
+        let output = div().child(self.output_view.clone());
+        let loading = div().child(self.loading_view.clone());
+        // TODO: Add error view
+
         div()
             .size_full()
             .flex()
@@ -102,7 +107,7 @@ impl Render for Root {
             .child(
                 size_observer()
                     .on_sized(on_content_sized)
-                    .child(content_col.child(self.output.clone())),
+                    .child(content_col.children([loading, output])),
             )
     }
 }

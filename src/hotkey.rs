@@ -46,11 +46,24 @@ impl HotkeyManager {
 
                             let selected_text = selection::get_text();
 
-                            if let Ok(text) = selected_text {
-                                // TODO: Observe input change and request assistant
-                                StateController::update(|this, cx| this.set_input(cx, text), cx);
-                                StateController::update(|this, cx| this.request_assistant(cx), cx);
+                            if selected_text.is_err() {
+                                let err = selected_text.unwrap_err();
+                                StateController::update(|this, cx| this.set_error(cx, err), cx);
+                                return;
                             }
+
+                            let text = selected_text.unwrap();
+                            let empty_text = "".to_string();
+
+                            if text.is_empty() {
+                                // TODO: Show error
+                                return;
+                            }
+
+                            StateController::update(|this, cx| this.set_input(cx, text), cx);
+                            StateController::update(|this, cx| this.set_output(cx, empty_text), cx);
+                            StateController::update(|this, cx| this.set_loading(cx, true), cx);
+                            StateController::update(|this, cx| this.request_assistant(cx), cx);
                         });
                     }
                 }

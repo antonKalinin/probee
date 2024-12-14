@@ -77,6 +77,20 @@ impl StateController {
         });
     }
 
+    pub fn set_error(&self, wcx: &mut WindowContext, error: Error) {
+        self.model.update(wcx, |model, cx| {
+            model.error = Some(error);
+            cx.notify();
+        });
+    }
+
+    pub fn set_loading(&self, wcx: &mut WindowContext, loading: bool) {
+        self.model.update(wcx, |model, cx| {
+            model.loading = loading;
+            cx.notify();
+        });
+    }
+
     pub fn set_output_size(&self, wcx: &mut WindowContext, size: Size<Pixels>) {
         let mut resized = false;
 
@@ -93,7 +107,7 @@ impl StateController {
         });
 
         if resized {
-            Window::set_height(wcx, size.height.0 + 40.);
+            Window::set_height(wcx, size.height.0 + 80.);
         }
     }
 
@@ -122,6 +136,7 @@ impl StateController {
                     Self::update_async(
                         |this, cx| {
                             this.set_output(cx, text);
+                            this.set_loading(cx, false);
                         },
                         &mut cx,
                     );
