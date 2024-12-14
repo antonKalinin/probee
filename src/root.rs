@@ -7,9 +7,10 @@ use crate::theme::Theme;
 use crate::views::*;
 
 pub struct Root {
+    error_view: View<ErrorView>,
     output_view: View<Output>,
     loading_view: View<Loading>,
-    // error_view: View<Error>,
+
     app_button: View<AppButton>,
     mode_buttons: Vec<View<ModeButton>>,
     window_buttons: Vec<View<WindowButton>>,
@@ -21,6 +22,7 @@ impl Root {
             let state = StateController::init(cx).model;
             let output_view = cx.new_view(|cx| Output::new(cx, &state));
             let loading_view = cx.new_view(|cx| Loading::new(cx, &state));
+            let error_view = cx.new_view(|cx| ErrorView::new(cx, &state));
 
             let app_button = cx.new_view(|cx| AppButton::new(cx, &state));
 
@@ -44,8 +46,10 @@ impl Root {
             });
 
             Root {
+                error_view,
                 output_view,
                 loading_view,
+
                 app_button,
                 mode_buttons,
                 window_buttons,
@@ -91,9 +95,9 @@ impl Render for Root {
             StateController::update(|this, cx| this.set_output_size(cx, size), cx);
         };
 
+        let error = div().child(self.error_view.clone());
         let output = div().child(self.output_view.clone());
         let loading = div().child(self.loading_view.clone());
-        // TODO: Add error view
 
         div()
             .size_full()
@@ -107,7 +111,7 @@ impl Render for Root {
             .child(
                 size_observer()
                     .on_sized(on_content_sized)
-                    .child(content_col.children([loading, output])),
+                    .child(content_col.children([loading, error, output])),
             )
     }
 }

@@ -1,32 +1,36 @@
-use crate::state::State;
-use crate::theme::Theme;
 use gpui::*;
 
-pub struct Error {
+use crate::state::State;
+use crate::theme::Theme;
+
+pub struct ErrorView {
     message: String,
 }
 
-impl Error {
+impl ErrorView {
     pub fn new(cx: &mut ViewContext<Self>, state: &Model<State>) -> Self {
         cx.observe(state, |this, model, cx| {
-            if Some(error) = model.read(cx).error {
+            if let Some(error) = model.read(cx).error.as_ref() {
                 this.message = error.to_string();
                 cx.notify();
             }
         })
         .detach();
 
-        Error {
+        ErrorView {
             message: "".to_string(),
         }
     }
 }
 
-impl Render for Error {
+impl Render for ErrorView {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
-        let text = self.message.clone();
 
-        div().child(text)
+        if self.message.is_empty() {
+            return div().into_any_element();
+        }
+
+        div().child(self.message.clone()).into_any_element()
     }
 }
