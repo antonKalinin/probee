@@ -25,25 +25,29 @@ impl Root {
             let error_view = cx.new_view(|cx| ErrorView::new(cx, &state));
 
             let app_button = cx.new_view(|cx| AppButton::new(cx, &state));
+            let close_button = cx.new_view(|_cx| WindowButton::new(WindowAction::Close));
+            let hide_button = cx.new_view(|_cx| WindowButton::new(WindowAction::Hide));
 
             let mode_buttons = vec![
                 cx.new_view(|cx| ModeButton::new(cx, AssistMode::Translate, false)),
                 cx.new_view(|cx| ModeButton::new(cx, AssistMode::TranslateWordByWord, false)),
             ];
 
-            let window_buttons = vec![
-                cx.new_view(|_cx| WindowButton::new(WindowAction::Close)),
-                cx.new_view(|_cx| WindowButton::new(WindowAction::Hide)),
-            ];
-
             mode_buttons.iter().for_each(|button| {
                 cx.subscribe(button, move |_subscriber, _emitter, event, cx| {
-                    if let UiEvent::ModeChanged(mode) = event {
+                    if let UiEvent::ChangeMode(mode) = event {
                         StateController::update(|this, cx| this.set_mode(cx, mode.clone()), cx);
                     }
                 })
                 .detach();
             });
+
+            cx.subscribe(&close_button, move |_subscriber, _emitter, event, cx| {
+                if let UiEvent::CloseWindow = event {
+                    cx.quit();
+                }
+            })
+            .detach();
 
             Root {
                 error_view,
@@ -52,7 +56,7 @@ impl Root {
 
                 app_button,
                 mode_buttons,
-                window_buttons,
+                window_buttons: vec![close_button, hide_button],
             }
         });
 

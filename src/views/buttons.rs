@@ -131,7 +131,7 @@ impl Render for ModeButton {
         let on_click = cx.listener({
             move |this, _event, cx: &mut ViewContext<Self>| {
                 let mode = this.mode.clone();
-                cx.emit(UiEvent::ModeChanged(mode));
+                cx.emit(UiEvent::ChangeMode(mode));
             }
         });
 

@@ -77,9 +77,9 @@ impl StateController {
         });
     }
 
-    pub fn set_error(&self, wcx: &mut WindowContext, error: Error) {
+    pub fn set_error(&self, wcx: &mut WindowContext, error: Option<Error>) {
         self.model.update(wcx, |model, cx| {
-            model.error = Some(error);
+            model.error = error;
             cx.notify();
         });
     }

@@ -5,7 +5,7 @@ pub enum UiEvent {
     AppButtonClicked,
     ClearOutput,
     CopyOutput,
-    ModeChanged(AssistMode),
+    ChangeMode(AssistMode),
     CloseWindow,
     HideWindow,
 }

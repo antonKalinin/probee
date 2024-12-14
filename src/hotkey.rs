@@ -6,6 +6,7 @@ use global_hotkey::{
     GlobalHotKeyEvent, GlobalHotKeyManager,
 };
 
+use crate::errors::*;
 use crate::services::selection;
 use crate::state::StateController;
 use crate::window::Window;
@@ -47,8 +48,11 @@ impl HotkeyManager {
                             let selected_text = selection::get_text();
 
                             if selected_text.is_err() {
-                                let err = selected_text.unwrap_err();
-                                StateController::update(|this, cx| this.set_error(cx, err), cx);
+                                let err = InputError::SelectionApiError.into();
+                                StateController::update(
+                                    |this, cx| this.set_error(cx, Some(err)),
+                                    cx,
+                                );
                                 return;
                             }
 
@@ -56,10 +60,16 @@ impl HotkeyManager {
                             let empty_text = "".to_string();
 
                             if text.is_empty() {
-                                // TODO: Show error
+                                let err = InputError::EmptySelectionError.into();
+                                StateController::update(
+                                    |this, cx| this.set_error(cx, Some(err)),
+                                    cx,
+                                );
+
                                 return;
                             }
 
+                            StateController::update(|this, cx| this.set_error(cx, None), cx);
                             StateController::update(|this, cx| this.set_input(cx, text), cx);
                             StateController::update(|this, cx| this.set_output(cx, empty_text), cx);
                             StateController::update(|this, cx| this.set_loading(cx, true), cx);

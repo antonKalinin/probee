@@ -2,6 +2,7 @@ use dotenv::dotenv;
 use gpui::*;
 
 mod assets;
+mod errors;
 mod events;
 mod hotkey;
 mod root;
