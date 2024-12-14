@@ -4,7 +4,7 @@ version = "0.1.8"
 edition = "2021"
 
 [package.metadata.packager]
-product_name = "Cmdi"
+product_name = "cmdi"
 identifier = "io.github.antonkalinin.cmdi"
 copyright = "Copyright (c) Anton Kalinin 2024. All rights reserved."
 category = "Productivity"
