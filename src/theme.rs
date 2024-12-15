@@ -57,6 +57,7 @@ pub struct Theme {
     pub font_mono: SharedString,
     pub line_height: Rems,
     pub text_size: Pixels,
+    pub subtext_size: Pixels,
 
     // window
     pub window_background: Option<WindowBackgroundAppearanceContent>,
@@ -126,6 +127,7 @@ impl Theme {
             font_mono: "JetBrains Mono".into(),
             line_height: rems(1.25),
             text_size: px(14.),
+            subtext_size: px(12.),
         };
 
         cx.set_global(theme);

@@ -8,6 +8,7 @@ use crate::views::*;
 
 pub struct Root {
     error_view: View<ErrorView>,
+    intro_view: View<Intro>,
     output_view: View<Output>,
     loading_view: View<Loading>,
 
@@ -20,6 +21,7 @@ impl Root {
     pub fn build(cx: &mut WindowContext) -> View<Self> {
         let view = cx.new_view(|cx| {
             let state = StateController::init(cx).model;
+            let intro_view = cx.new_view(|cx| Intro::new(cx, &state));
             let output_view = cx.new_view(|cx| Output::new(cx, &state));
             let loading_view = cx.new_view(|cx| Loading::new(cx, &state));
             let error_view = cx.new_view(|cx| ErrorView::new(cx, &state));
@@ -50,6 +52,7 @@ impl Root {
             .detach();
 
             Root {
+                intro_view,
                 error_view,
                 output_view,
                 loading_view,
@@ -99,6 +102,7 @@ impl Render for Root {
             StateController::update(|this, cx| this.set_output_size(cx, size), cx);
         };
 
+        let intro = div().child(self.intro_view.clone());
         let error = div().child(self.error_view.clone());
         let output = div().child(self.output_view.clone());
         let loading = div().child(self.loading_view.clone());
@@ -115,7 +119,7 @@ impl Render for Root {
             .child(
                 size_observer()
                     .on_sized(on_content_sized)
-                    .child(content_col.children([loading, error, output])),
+                    .child(content_col.children([intro, loading, error, output])),
             )
     }
 }

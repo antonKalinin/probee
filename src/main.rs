@@ -26,6 +26,7 @@ async fn main() {
 
     app.run(|cx: &mut AppContext| {
         Assistant::init(cx);
+        Clipboard::init(cx);
         Theme::init(cx);
         Window::init(cx);
 

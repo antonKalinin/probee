@@ -114,6 +114,7 @@ impl StateController {
     pub fn set_mode(&self, wcx: &mut WindowContext, mode: AssistMode) {
         self.model.update(wcx, |model, cx| {
             model.mode = mode;
+            model.active_view = ActiveView::AssitantView;
             cx.notify();
         });
     }

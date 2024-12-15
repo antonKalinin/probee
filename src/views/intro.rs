@@ -1,47 +1,49 @@
-use crate::state::State;
+use crate::state::{ActiveView, State};
 use crate::theme::Theme;
 use gpui::*;
 
-pub struct Intro {}
+pub struct Intro {
+    visible: bool,
+}
 
-const INTRO_TEXT: &str = "Hello, this your assistant.\n\n\
-- Cmd + I to run selected command
-- Cmd + Shift + I to switch assistant mode
-- Cmd + Opt + I to hide the assistant";
+const INTRO_TEXT: &str = "\
+Cmdi is a shortcut to ask AI for help.
+
+• Cmd + I to run selected command
+• Cmd + Shift + I to hide the app
+";
 
 impl Intro {
     pub fn new(cx: &mut ViewContext<Self>, state: &Model<State>) -> Self {
         cx.observe(state, |this, model, cx| {
-            this.text = model.read(cx).output.clone();
+            this.visible = model.read(cx).active_view == ActiveView::AppView;
             cx.notify();
         })
         .detach();
 
-        Output {
-            text: INTRO_TEXT.to_string(),
-        }
+        Intro { visible: true }
     }
 }
 
 impl Render for Intro {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
-        let text = self.text.clone();
 
-        if self.text.is_empty() {
+        if !self.visible {
             return div().into_any_element();
         }
 
         div()
             .line_height(theme.line_height)
             .w_full()
-            .mt_2()
+            .mt_4()
+            .px_1()
             .text_color(theme.text)
             .text_size(theme.text_size)
             .line_height(theme.line_height)
             .font_family(theme.font_sans.clone())
             .font_weight(FontWeight::LIGHT)
-            .child(text)
+            .child(INTRO_TEXT.to_string())
             .into_any_element()
     }
 }

@@ -7,7 +7,7 @@ use global_hotkey::{
 };
 
 use crate::errors::*;
-use crate::services::selection;
+use crate::services::Clipboard;
 use crate::state::StateController;
 use crate::window::Window;
 
@@ -45,10 +45,11 @@ impl HotkeyManager {
                                 return;
                             }
 
-                            let selected_text = selection::get_text();
+                            let clipboard = cx.global_mut::<Clipboard>();
+                            let input_text = clipboard.get_text();
 
-                            if selected_text.is_err() {
-                                let err = InputError::SelectionApiError.into();
+                            if input_text.is_err() {
+                                let err = input_text.unwrap_err();
                                 StateController::update(
                                     |this, cx| this.set_error(cx, Some(err)),
                                     cx,
@@ -56,11 +57,11 @@ impl HotkeyManager {
                                 return;
                             }
 
-                            let text = selected_text.unwrap();
+                            let input_text = input_text.unwrap();
                             let empty_text = "".to_string();
 
-                            if text.is_empty() {
-                                let err = InputError::EmptySelectionError.into();
+                            if input_text.is_empty() {
+                                let err = InputError::EmptyTextInputError.into();
                                 StateController::update(
                                     |this, cx| this.set_error(cx, Some(err)),
                                     cx,
@@ -70,7 +71,7 @@ impl HotkeyManager {
                             }
 
                             StateController::update(|this, cx| this.set_error(cx, None), cx);
-                            StateController::update(|this, cx| this.set_input(cx, text), cx);
+                            StateController::update(|this, cx| this.set_input(cx, input_text), cx);
                             StateController::update(|this, cx| this.set_output(cx, empty_text), cx);
                             StateController::update(|this, cx| this.set_loading(cx, true), cx);
                             StateController::update(|this, cx| this.request_assistant(cx), cx);

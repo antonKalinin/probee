@@ -2,9 +2,10 @@
 name = "cmdi"
 version = "0.1.11"
 edition = "2021"
+description = "Cmdi is a shortcut to your own collection of AI prompts."
 
 [package.metadata.packager]
-product_name = "cmdi"
+product_name = "Cmdi"
 identifier = "io.github.antonkalinin.cmdi"
 copyright = "Copyright (c) Anton Kalinin 2024. All rights reserved."
 category = "Productivity"
@@ -15,6 +16,7 @@ entitlements = "macos/entitlements.plist"
 
 [dependencies]
 anyhow = "1.0.91"                                                                                        # error handling
+arboard = "3.4.1"
 async-std = { version = "1.13.0", features = ["attributes", "tokio1"] }
 dotenv = "0.15.0"                                                                                        # env vars
 global-hotkey = "0.6.3"                                                                                  # global hotkeys
