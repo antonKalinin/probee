@@ -8,7 +8,6 @@ product_name = "cmdi"
 identifier = "io.github.antonkalinin.cmdi"
 copyright = "Copyright (c) Anton Kalinin 2024. All rights reserved."
 category = "Productivity"
-target_triple = "aarch64-apple-darwin"
 icons = ["icons/*.png"]
 
 [package.metadata.packager.macos]
