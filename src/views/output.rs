@@ -7,7 +7,7 @@ pub struct Output {
     text: String,
 }
 
-const HINT_TEXT: &str = "Please, copy some text and press Cmd + I";
+const HINT_TEXT: &str = "Please, copy some text and press CMD + I";
 
 impl Output {
     pub fn new(cx: &mut ViewContext<Self>, state: &Model<State>) -> Self {

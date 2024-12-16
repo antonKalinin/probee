@@ -2,9 +2,10 @@ use gpui::*;
 
 use crate::assistant::AssistMode;
 use crate::events::UiEvent;
-use crate::state::StateController;
+use crate::state::{ActiveView, StateController};
 use crate::theme::Theme;
 use crate::views::*;
+use crate::window::Window;
 
 pub struct Root {
     error_view: View<ErrorView>,
@@ -18,8 +19,8 @@ pub struct Root {
 }
 
 impl Root {
-    pub fn build(cx: &mut WindowContext) -> View<Self> {
-        let view = cx.new_view(|cx| {
+    pub fn build(wcx: &mut WindowContext) -> View<Self> {
+        let view = wcx.new_view(|cx| {
             let state = StateController::init(cx).model;
             let intro_view = cx.new_view(|cx| Intro::new(cx, &state));
             let output_view = cx.new_view(|cx| Output::new(cx, &state));
@@ -32,13 +33,19 @@ impl Root {
 
             let mode_buttons = vec![
                 cx.new_view(|cx| ModeButton::new(cx, AssistMode::Translate, false)),
-                cx.new_view(|cx| ModeButton::new(cx, AssistMode::TranslateWordByWord, false)),
+                cx.new_view(|cx| ModeButton::new(cx, AssistMode::WordMorphology, false)),
+                cx.new_view(|cx| ModeButton::new(cx, AssistMode::ELI5, false)),
             ];
 
             mode_buttons.iter().for_each(|button| {
                 cx.subscribe(button, move |_subscriber, _emitter, event, cx| {
                     if let UiEvent::ChangeMode(mode) = event {
-                        StateController::update(|this, cx| this.set_mode(cx, mode.clone()), cx);
+                        let view = ActiveView::AssitantView;
+                        StateController::update(
+                            |this, cx| this.set_mode(cx, Some(mode.clone())),
+                            cx,
+                        );
+                        StateController::update(|this, cx| this.set_active_view(cx, view), cx);
                     }
                 })
                 .detach();
@@ -47,6 +54,21 @@ impl Root {
             cx.subscribe(&close_button, move |_subscriber, _emitter, event, cx| {
                 if let UiEvent::CloseWindow = event {
                     cx.quit();
+                }
+            })
+            .detach();
+
+            cx.subscribe(&hide_button, move |_subscriber, _emitter, event, cx| {
+                if let UiEvent::HideWindow = event {
+                    Window::toggle(cx);
+                }
+            })
+            .detach();
+
+            cx.subscribe(&app_button, move |_subscriber, _emitter, event, cx| {
+                if let UiEvent::ChangeActiveView(view) = event {
+                    StateController::update(|this, cx| this.set_active_view(cx, view.clone()), cx);
+                    StateController::update(|this, cx| this.set_mode(cx, None), cx);
                 }
             })
             .detach();

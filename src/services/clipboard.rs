@@ -25,7 +25,7 @@ impl Clipboard {
     }
 
     pub fn set_text(&mut self, text: &str) {
-        self.provider.set_text(text);
+        let _ = self.provider.set_text(text);
     }
 }
 

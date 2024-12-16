@@ -7,10 +7,10 @@ pub struct Intro {
 }
 
 const INTRO_TEXT: &str = "\
-Cmdi is a shortcut to ask AI for help.
+Cmdi an app to shortcut your request to AI.
 
-• Cmd + I to run selected command
-• Cmd + Shift + I to hide the app
+• CMD+I to run selected command
+• CMD+SHIFT+I to hide the app
 ";
 
 impl Intro {

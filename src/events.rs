@@ -1,8 +1,9 @@
 use crate::assistant::AssistMode;
+use crate::state::ActiveView;
 
 #[derive(Clone)]
 pub enum UiEvent {
-    AppButtonClicked,
+    ChangeActiveView(ActiveView),
     ClearOutput,
     CopyOutput,
     ChangeMode(AssistMode),

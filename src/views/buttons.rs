@@ -42,7 +42,7 @@ impl Render for AppButton {
 
         let on_click = cx.listener({
             move |_this, _event, cx: &mut ViewContext<Self>| {
-                cx.emit(UiEvent::AppButtonClicked);
+                cx.emit(UiEvent::ChangeActiveView(ActiveView::AppView));
             }
         });
 
@@ -67,11 +67,15 @@ pub struct ModeButton {
 impl ModeButton {
     pub fn new(cx: &mut ViewContext<Self>, mode: AssistMode, active: bool) -> Self {
         let state = cx.global::<StateController>().model.clone();
-        let mode_clone = mode.clone();
+        let button_mode = mode.clone();
 
         let _ = cx
             .observe(&state, move |this, state: Model<State>, cx| {
-                this.active = state.read(cx).mode == mode_clone;
+                if let Some(current_mode) = state.read(cx).mode.as_ref() {
+                    this.active = current_mode == &button_mode;
+                } else {
+                    this.active = false;
+                }
                 cx.notify();
             })
             .detach();
@@ -84,7 +88,8 @@ impl ModeButton {
 
         let icon = match self.mode {
             AssistMode::Translate => Icon::Globe,
-            AssistMode::TranslateWordByWord => Icon::Table,
+            AssistMode::WordMorphology => Icon::WholeWord,
+            AssistMode::ELI5 => Icon::Milk,
         };
 
         let text_color = match self.active {
@@ -104,7 +109,8 @@ impl ModeButton {
 
         let text = match self.mode {
             AssistMode::Translate => "Translate",
-            AssistMode::TranslateWordByWord => "Translate word by word",
+            AssistMode::WordMorphology => "Word Morphology",
+            AssistMode::ELI5 => "ELI5",
         };
 
         let text_color = match self.active {

@@ -16,7 +16,7 @@ pub struct State {
     pub error: Option<Error>,
     pub input: Option<String>,
     pub loading: bool,
-    pub mode: AssistMode,
+    pub mode: Option<AssistMode>,
     pub output: String,
     pub output_size: Option<Size<Pixels>>,
 }
@@ -34,7 +34,7 @@ impl StateController {
                 error: None,
                 input: None,
                 loading: false,
-                mode: AssistMode::Translate,
+                mode: Some(AssistMode::Translate),
                 output: "".to_string(),
                 output_size: None,
             }),
@@ -60,6 +60,13 @@ impl StateController {
     ) {
         let _ = cx.update_global::<Self, _>(|this, cx| {
             f(this, cx);
+        });
+    }
+
+    pub fn set_active_view(&self, wcx: &mut WindowContext, view: ActiveView) {
+        self.model.update(wcx, |model, cx| {
+            model.active_view = view;
+            cx.notify();
         });
     }
 
@@ -111,10 +118,9 @@ impl StateController {
         }
     }
 
-    pub fn set_mode(&self, wcx: &mut WindowContext, mode: AssistMode) {
+    pub fn set_mode(&self, wcx: &mut WindowContext, mode: Option<AssistMode>) {
         self.model.update(wcx, |model, cx| {
             model.mode = mode;
-            model.active_view = ActiveView::AssitantView;
             cx.notify();
         });
     }
@@ -128,7 +134,7 @@ impl StateController {
                 return;
             }
 
-            let mode = state.mode.clone();
+            let mode = state.mode.clone().unwrap();
 
             cx.spawn(|mut cx| async move {
                 let output = assistant.ask(mode, &input).await;

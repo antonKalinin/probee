@@ -10,12 +10,14 @@ use std::env;
 #[derive(Debug, Clone, PartialEq)]
 pub enum AssistMode {
     Translate,
-    TranslateWordByWord,
+    WordMorphology,
+    ELI5,
 }
 
 /**
  * By design LLM service should be agnostic to LLM provider.
  * Currently as a short term solution we use Anthropic API.
+ * In the future, we can request own API which is proxy to multiple LLM providers.
 */
 
 #[derive(Serialize)]
@@ -50,7 +52,7 @@ pub struct Assistant {
     client: Client,
 }
 
-const TRANSLATE_MODE_PROMPT: &str = "
+const TRANSLATE_MODE_PROMPT: &str = "\
 You are a highly skilled translator with expertise in many languages. \
 Your task is to identify the language of the text I provide and accurately \
 translate it into the English while preserving the meaning, \
@@ -59,7 +61,7 @@ punctuation including tabulation and new lines in the translated version. \
 Please do not provide any additional information, titles, comments or context \
 beyond the translated text.";
 
-const TRANSLATE_WORD_BY_WORD: &str = "
+const TRANSLATE_WORD_BY_WORD: &str = "\
 You are a highly skilled translator with expertise in many languages. \
 Your task is to identify the language of the text I provide and accurately \
 translate it into the English word by word. Treat each word as separate, without \
@@ -69,18 +71,24 @@ Please provide the translation of each word in a new line in form:\
 Please do not provide any additional information, titles, comments or context \
 beyond the translated formatted text.";
 
-const WORD_FORMS: &str = "
+const WORD_MORPHOLOGY: &str = "\
 You are a highly skilled translator with expertise in many languages. \
 Your task is to identify the language of the text I provide, take the first word, \
 detect its part of speech, and provide all possible forms in the language of the text. \
 Please provide the result in the following format: \
-word - part of speech \
-form1, \
-form2, \
+word (part of speech) - translation
+form1 - translation1,
+form2 - translation2,
 ...
-formN. \
+formN - translationN
 Please do not provide any additional information, titles, comments or context \
 beyond the formatted result.";
+
+const EXPLAIN_LIKE_IM_FIVE: &str = "\
+You are a university professor with a specialization in the subject of the text I provide. \
+Your task is to explain the text to a five-year-old child in a simple and understandable way. \
+If it helps for clarity, you can use analogies, metaphors, or examples. \
+";
 
 impl Assistant {
     pub fn init(cx: &mut AppContext) {
@@ -104,7 +112,8 @@ impl Assistant {
     fn resolve_system_prompt(&self, mode: AssistMode) -> String {
         match mode {
             AssistMode::Translate => TRANSLATE_MODE_PROMPT.to_string(),
-            AssistMode::TranslateWordByWord => TRANSLATE_WORD_BY_WORD.to_string(),
+            AssistMode::WordMorphology => WORD_MORPHOLOGY.to_string(),
+            AssistMode::ELI5 => EXPLAIN_LIKE_IM_FIVE.to_string(),
         }
     }
 
@@ -137,8 +146,6 @@ impl Assistant {
         let anthropic_response: AnthropicResponse = response.json().await?;
 
         if let Some(first_content) = anthropic_response.content.first() {
-            println!("Claude's response: {}", first_content.text);
-
             return Ok(first_content.text.to_string());
         }
 
