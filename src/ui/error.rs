@@ -25,7 +25,7 @@ impl ErrorView {
 
 impl Render for ErrorView {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
-        let theme = cx.global::<Theme>();
+        let _theme = cx.global::<Theme>();
 
         if self.message.is_empty() {
             return div().into_any_element();

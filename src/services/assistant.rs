@@ -11,7 +11,7 @@ use std::env;
 pub enum AssistMode {
     Translate,
     WordMorphology,
-    ELI5,
+    PlainFinnish,
 }
 
 /**
@@ -90,6 +90,14 @@ Your task is to explain the text to a five-year-old child in a simple and unders
 If it helps for clarity, you can use analogies, metaphors, or examples. \
 ";
 
+const BASIC_FINNISH: &str = "\
+You are a highly skilled translator with expertise in Finnish language. \
+Your task is to rewrite the text I provide in a basic Finnish language: \
+- Use simple words and short sentences. \
+- Avoid complex grammar structures. \
+Please do not provide any additional information, titles, comments or context \
+beyond the adapted text.";
+
 impl Assistant {
     pub fn init(cx: &mut AppContext) {
         let api_key = env!("ANTHROPIC_API_KEY");
@@ -113,7 +121,7 @@ impl Assistant {
         match mode {
             AssistMode::Translate => TRANSLATE_MODE_PROMPT.to_string(),
             AssistMode::WordMorphology => WORD_MORPHOLOGY.to_string(),
-            AssistMode::ELI5 => EXPLAIN_LIKE_IM_FIVE.to_string(),
+            AssistMode::PlainFinnish => BASIC_FINNISH.to_string(),
         }
     }
 

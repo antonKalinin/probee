@@ -10,8 +10,7 @@ mod services;
 mod state;
 mod storage;
 mod theme;
-mod utils;
-mod views;
+mod ui;
 mod window;
 
 use crate::{

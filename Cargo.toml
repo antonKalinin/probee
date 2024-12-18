@@ -20,7 +20,7 @@ arboard = "3.4.1"
 async-std = { version = "1.13.0", features = ["attributes", "tokio1"] }
 dotenv = "0.15.0"                                                                                        # env vars
 global-hotkey = "0.6.3"                                                                                  # global hotkeys
-gpui = { git = "https://github.com/antonKalinin/zed", rev = "8bda4c56a8f9c18d6785a2e1e4bc16b3837b7307" } # ui framework (forked and patched to support window size changes)
+gpui = { git = "https://github.com/antonKalinin/zed", rev = "b9b995af25394e05f7753becacf79273d572b243" } # ui framework (forked and patched to support window size changes)
 image = "0.25.4"                                                                                         # image processing
 ocrs = "0.9.0"                                                                                           # text detection and recognition
 reqwest = { version = "0.12.9", features = ["json"] }                                                    # http client

@@ -98,7 +98,7 @@ impl StateController {
         });
     }
 
-    pub fn set_output_size(&self, wcx: &mut WindowContext, size: Size<Pixels>) {
+    pub fn set_view_size(&self, wcx: &mut WindowContext, size: Size<Pixels>) {
         let mut resized = false;
 
         self.model.update(wcx, |model, _cx| {
@@ -114,7 +114,7 @@ impl StateController {
         });
 
         if resized {
-            Window::set_height(wcx, size.height.0 + 80.);
+            Window::set_height(wcx, size.height.0 + 16.);
         }
     }
 

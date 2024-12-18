@@ -977,7 +977,7 @@ dependencies = [
 [[package]]
 name = "collections"
 version = "0.1.0"
-source = "git+https://github.com/antonKalinin/zed?rev=8bda4c56a8f9c18d6785a2e1e4bc16b3837b7307#8bda4c56a8f9c18d6785a2e1e4bc16b3837b7307"
+source = "git+https://github.com/antonKalinin/zed?rev=b9b995af25394e05f7753becacf79273d572b243#b9b995af25394e05f7753becacf79273d572b243"
 dependencies = [
  "rustc-hash 1.1.0",
 ]
@@ -1241,7 +1241,7 @@ dependencies = [
 [[package]]
 name = "derive_refineable"
 version = "0.1.0"
-source = "git+https://github.com/antonKalinin/zed?rev=8bda4c56a8f9c18d6785a2e1e4bc16b3837b7307#8bda4c56a8f9c18d6785a2e1e4bc16b3837b7307"
+source = "git+https://github.com/antonKalinin/zed?rev=b9b995af25394e05f7753becacf79273d572b243#b9b995af25394e05f7753becacf79273d572b243"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1977,7 +1977,7 @@ dependencies = [
 [[package]]
 name = "gpui"
 version = "0.1.0"
-source = "git+https://github.com/antonKalinin/zed?rev=8bda4c56a8f9c18d6785a2e1e4bc16b3837b7307#8bda4c56a8f9c18d6785a2e1e4bc16b3837b7307"
+source = "git+https://github.com/antonKalinin/zed?rev=b9b995af25394e05f7753becacf79273d572b243#b9b995af25394e05f7753becacf79273d572b243"
 dependencies = [
  "anyhow",
  "as-raw-xcb-connection",
@@ -2062,7 +2062,7 @@ dependencies = [
 [[package]]
 name = "gpui_macros"
 version = "0.1.0"
-source = "git+https://github.com/antonKalinin/zed?rev=8bda4c56a8f9c18d6785a2e1e4bc16b3837b7307#8bda4c56a8f9c18d6785a2e1e4bc16b3837b7307"
+source = "git+https://github.com/antonKalinin/zed?rev=b9b995af25394e05f7753becacf79273d572b243#b9b995af25394e05f7753becacf79273d572b243"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2212,7 +2212,7 @@ dependencies = [
 [[package]]
 name = "http_client"
 version = "0.1.0"
-source = "git+https://github.com/antonKalinin/zed?rev=8bda4c56a8f9c18d6785a2e1e4bc16b3837b7307#8bda4c56a8f9c18d6785a2e1e4bc16b3837b7307"
+source = "git+https://github.com/antonKalinin/zed?rev=b9b995af25394e05f7753becacf79273d572b243#b9b995af25394e05f7753becacf79273d572b243"
 dependencies = [
  "anyhow",
  "bytes",
@@ -2678,11 +2678,12 @@ dependencies = [
 [[package]]
 name = "media"
 version = "0.1.0"
-source = "git+https://github.com/antonKalinin/zed?rev=8bda4c56a8f9c18d6785a2e1e4bc16b3837b7307#8bda4c56a8f9c18d6785a2e1e4bc16b3837b7307"
+source = "git+https://github.com/antonKalinin/zed?rev=b9b995af25394e05f7753becacf79273d572b243#b9b995af25394e05f7753becacf79273d572b243"
 dependencies = [
  "anyhow",
  "bindgen",
  "core-foundation 0.9.4",
+ "ctor",
  "foreign-types 0.5.0",
  "metal",
  "objc",
@@ -3663,7 +3664,7 @@ dependencies = [
 [[package]]
 name = "refineable"
 version = "0.1.0"
-source = "git+https://github.com/antonKalinin/zed?rev=8bda4c56a8f9c18d6785a2e1e4bc16b3837b7307#8bda4c56a8f9c18d6785a2e1e4bc16b3837b7307"
+source = "git+https://github.com/antonKalinin/zed?rev=b9b995af25394e05f7753becacf79273d572b243#b9b995af25394e05f7753becacf79273d572b243"
 dependencies = [
  "derive_refineable",
 ]
@@ -4084,7 +4085,7 @@ checksum = "d369a96f978623eb3dc28807c4852d6cc617fed53da5d3c400feff1ef34a714a"
 [[package]]
 name = "semantic_version"
 version = "0.1.0"
-source = "git+https://github.com/antonKalinin/zed?rev=8bda4c56a8f9c18d6785a2e1e4bc16b3837b7307#8bda4c56a8f9c18d6785a2e1e4bc16b3837b7307"
+source = "git+https://github.com/antonKalinin/zed?rev=b9b995af25394e05f7753becacf79273d572b243#b9b995af25394e05f7753becacf79273d572b243"
 dependencies = [
  "anyhow",
  "serde",
@@ -4389,7 +4390,7 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 [[package]]
 name = "sum_tree"
 version = "0.1.0"
-source = "git+https://github.com/antonKalinin/zed?rev=8bda4c56a8f9c18d6785a2e1e4bc16b3837b7307#8bda4c56a8f9c18d6785a2e1e4bc16b3837b7307"
+source = "git+https://github.com/antonKalinin/zed?rev=b9b995af25394e05f7753becacf79273d572b243#b9b995af25394e05f7753becacf79273d572b243"
 dependencies = [
  "arrayvec",
  "log",
@@ -5016,7 +5017,7 @@ checksum = "09cc8ee72d2a9becf2f2febe0205bbed8fc6615b7cb429ad062dc7b7ddd036a9"
 [[package]]
 name = "util"
 version = "0.1.0"
-source = "git+https://github.com/antonKalinin/zed?rev=8bda4c56a8f9c18d6785a2e1e4bc16b3837b7307#8bda4c56a8f9c18d6785a2e1e4bc16b3837b7307"
+source = "git+https://github.com/antonKalinin/zed?rev=b9b995af25394e05f7753becacf79273d572b243#b9b995af25394e05f7753becacf79273d572b243"
 dependencies = [
  "anyhow",
  "async-fs 1.6.0",
@@ -5616,9 +5617,9 @@ dependencies = [
 
 [[package]]
 name = "x11-clipboard"
-version = "0.9.2"
+version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b98785a09322d7446e28a13203d2cae1059a0dd3dfb32cb06d0a225f023d8286"
+checksum = "662d74b3d77e396b8e5beb00b9cad6a9eccf40b2ef68cc858784b14c41d535a3"
 dependencies = [
  "libc",
  "x11rb",

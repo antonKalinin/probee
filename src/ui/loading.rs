@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use crate::state::State;
 use crate::theme::Theme;
-use crate::views::Icon;
+use crate::ui::Icon;
 
 pub struct Loading {
     visible: bool,

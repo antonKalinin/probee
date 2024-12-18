@@ -37,6 +37,7 @@ pub enum Icon {
     BookType,
     CircleX,
     Command,
+    Copy,
     Eraser,
     FilePlus,
     Globe,
@@ -55,6 +56,8 @@ pub enum Icon {
     TableProperties,
     TextCursor,
     TextCursorInput,
+    Trash,
+    Trash2,
     WholeWord,
     X,
 }

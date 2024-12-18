@@ -1,5 +1,6 @@
 use thiserror::Error;
 
+#[allow(dead_code)]
 #[derive(Error, Debug)]
 pub enum InputError {
     #[error("Error while getting screen selection. Please provide Cmdi Accessibility permissions: Settings -> Security & Privacy -> Accessibility")]

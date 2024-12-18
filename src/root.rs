@@ -4,7 +4,7 @@ use crate::assistant::AssistMode;
 use crate::events::UiEvent;
 use crate::state::{ActiveView, StateController};
 use crate::theme::Theme;
-use crate::views::*;
+use crate::ui::*;
 use crate::window::Window;
 
 pub struct Root {
@@ -34,7 +34,7 @@ impl Root {
             let mode_buttons = vec![
                 cx.new_view(|cx| ModeButton::new(cx, AssistMode::Translate, false)),
                 cx.new_view(|cx| ModeButton::new(cx, AssistMode::WordMorphology, false)),
-                cx.new_view(|cx| ModeButton::new(cx, AssistMode::ELI5, false)),
+                cx.new_view(|cx| ModeButton::new(cx, AssistMode::PlainFinnish, false)),
             ];
 
             mode_buttons.iter().for_each(|button| {
@@ -98,7 +98,7 @@ impl Render for Root {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
-        let actions_row = div().flex().flex_row();
+        let actions_row = div().flex().flex_row().flex_wrap();
         let content_col = div().flex().flex_col().flex_grow();
         let title_row = div().flex().flex_row().items_start().mb_2();
 
@@ -115,19 +115,24 @@ impl Render for Root {
         let mut mode_buttons = self
             .mode_buttons
             .iter()
-            .map(|button| div().flex().mr_2().child(button.clone()))
+            .map(|button| div().flex().mt_1().mr_2().child(button.clone()))
             .collect::<Vec<_>>();
 
         mode_buttons.push(Root::render_space());
 
         let on_content_sized = |size, cx: &mut WindowContext<'_>| {
-            StateController::update(|this, cx| this.set_output_size(cx, size), cx);
+            StateController::update(|this, cx| this.set_view_size(cx, size), cx);
         };
 
         let intro = div().child(self.intro_view.clone());
         let error = div().child(self.error_view.clone());
         let output = div().child(self.output_view.clone());
         let loading = div().child(self.loading_view.clone());
+
+        let dynamic_height_content = div()
+            .child(title_row.children(title_buttons))
+            .child(actions_row.children(mode_buttons))
+            .child(content_col.children([intro, loading, error, output]));
 
         div()
             .size_full()
@@ -136,12 +141,10 @@ impl Render for Root {
             .p_2()
             .bg(theme.background)
             .border_color(theme.border)
-            .child(title_row.children(title_buttons))
-            .child(actions_row.children(mode_buttons))
             .child(
                 size_observer()
                     .on_sized(on_content_sized)
-                    .child(content_col.children([intro, loading, error, output])),
+                    .child(dynamic_height_content),
             )
     }
 }
