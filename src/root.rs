@@ -2,7 +2,7 @@ use gpui::*;
 
 use crate::assistant::AssistMode;
 use crate::events::UiEvent;
-use crate::state::{ActiveView, StateController};
+use crate::state::*;
 use crate::theme::Theme;
 use crate::ui::*;
 use crate::window::Window;
@@ -40,12 +40,9 @@ impl Root {
             mode_buttons.iter().for_each(|button| {
                 cx.subscribe(button, move |_subscriber, _emitter, event, cx| {
                     if let UiEvent::ChangeMode(mode) = event {
-                        let view = ActiveView::AssitantView;
-                        StateController::update(
-                            |this, cx| this.set_mode(cx, Some(mode.clone())),
-                            cx,
-                        );
-                        StateController::update(|this, cx| this.set_active_view(cx, view), cx);
+                        set_error(cx, None);
+                        set_mode(cx, Some(mode.clone()));
+                        set_active_view(cx, ActiveView::AssitantView);
                     }
                 })
                 .detach();
@@ -67,8 +64,9 @@ impl Root {
 
             cx.subscribe(&app_button, move |_subscriber, _emitter, event, cx| {
                 if let UiEvent::ChangeActiveView(view) = event {
-                    StateController::update(|this, cx| this.set_active_view(cx, view.clone()), cx);
-                    StateController::update(|this, cx| this.set_mode(cx, None), cx);
+                    set_active_view(cx, view.clone());
+                    set_error(cx, None);
+                    set_mode(cx, None);
                 }
             })
             .detach();
@@ -121,7 +119,7 @@ impl Render for Root {
         mode_buttons.push(Root::render_space());
 
         let handle_size_measured = |size, cx: &mut WindowContext<'_>| {
-            StateController::update(|this, cx| this.set_view_size(cx, size), cx);
+            StateController::update(|this, cx| this.set_content_size(cx, size), cx);
         };
 
         let intro = div().child(self.intro_view.clone());

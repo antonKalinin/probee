@@ -8,7 +8,7 @@ use global_hotkey::{
 
 use crate::errors::*;
 use crate::services::Clipboard;
-use crate::state::StateController;
+use crate::state::*;
 use crate::window::Window;
 
 #[allow(dead_code)]
@@ -56,10 +56,7 @@ impl HotkeyManager {
 
                             if input_text.is_err() {
                                 let err = input_text.unwrap_err();
-                                StateController::update(
-                                    |this, cx| this.set_error(cx, Some(err)),
-                                    cx,
-                                );
+                                set_error(cx, Some(err));
                                 return;
                             }
 
@@ -68,18 +65,16 @@ impl HotkeyManager {
 
                             if input_text.is_empty() {
                                 let err = InputError::EmptyTextInputError.into();
-                                StateController::update(
-                                    |this, cx| this.set_error(cx, Some(err)),
-                                    cx,
-                                );
-
+                                set_error(cx, Some(err));
                                 return;
                             }
 
-                            StateController::update(|this, cx| this.set_error(cx, None), cx);
-                            StateController::update(|this, cx| this.set_input(cx, input_text), cx);
-                            StateController::update(|this, cx| this.set_output(cx, empty_text), cx);
-                            StateController::update(|this, cx| this.set_loading(cx, true), cx);
+                            set_error(cx, None);
+                            set_input(cx, input_text);
+                            set_output(cx, empty_text);
+                            set_loading(cx, true);
+
+                            // TODO: Replace StateController call with observing input changed
                             StateController::update(|this, cx| this.request_assistant(cx), cx);
                         });
                     }

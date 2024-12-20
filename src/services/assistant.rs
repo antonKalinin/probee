@@ -7,6 +7,8 @@ use reqwest::{
 use serde::{Deserialize, Serialize};
 use std::env;
 
+use crate::errors::*;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum AssistMode {
     Translate,
@@ -147,8 +149,7 @@ impl Assistant {
 
         if !response.status().is_success() {
             let error_text = response.text().await?;
-            println!("API request failed: {:?}", error_text);
-            return Err(Error::msg(format!("API request failed: {}", error_text)));
+            return Err(OutputError::AssistantRequestError(error_text).into());
         }
 
         let anthropic_response: AnthropicResponse = response.json().await?;

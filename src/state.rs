@@ -18,7 +18,7 @@ pub struct State {
     pub loading: bool,
     pub mode: Option<AssistMode>,
     pub output: String,
-    pub output_size: Option<Size<Pixels>>,
+    pub content_size: Option<Size<Pixels>>,
 }
 
 #[derive(Clone)]
@@ -36,7 +36,7 @@ impl StateController {
                 loading: false,
                 mode: None,
                 output: "".to_string(),
-                output_size: None,
+                content_size: None,
             }),
         };
 
@@ -98,18 +98,18 @@ impl StateController {
         });
     }
 
-    pub fn set_view_size(&self, wcx: &mut WindowContext, size: Size<Pixels>) {
+    pub fn set_content_size(&self, wcx: &mut WindowContext, size: Size<Pixels>) {
         let mut resized = false;
 
         self.model.update(wcx, |model, _cx| {
-            if let Some(prev_size) = model.output_size {
+            if let Some(prev_size) = model.content_size {
                 resized = prev_size != size;
             } else {
                 resized = true;
             }
 
             if resized {
-                model.output_size = Some(size);
+                model.content_size = Some(size);
             }
         });
 
@@ -139,19 +139,47 @@ impl StateController {
             cx.spawn(|mut cx| async move {
                 let output = assistant.ask(mode, &input).await;
 
-                if let Ok(text) = output {
-                    Self::update_async(
-                        |this, cx| {
-                            this.set_output(cx, text);
-                            this.set_loading(cx, false);
-                        },
-                        &mut cx,
-                    );
-                }
+                Self::update_async(
+                    |this, cx| {
+                        this.set_loading(cx, false);
+
+                        let _ = match output {
+                            Ok(text) => this.set_output(cx, text),
+                            Err(err) => this.set_error(cx, Some(err)),
+                        };
+                    },
+                    &mut cx,
+                );
             })
             .detach();
         }
     }
+}
+
+/* Helper functions */
+
+pub fn set_active_view(cx: &mut WindowContext, view: ActiveView) {
+    StateController::update(|this, cx| this.set_active_view(cx, view), cx);
+}
+
+pub fn set_mode(cx: &mut WindowContext, mode: Option<AssistMode>) {
+    StateController::update(|this, cx| this.set_mode(cx, mode), cx);
+}
+
+pub fn set_input(cx: &mut WindowContext, input: String) {
+    StateController::update(|this, cx| this.set_input(cx, input), cx);
+}
+
+pub fn set_output(cx: &mut WindowContext, output: String) {
+    StateController::update(|this, cx| this.set_output(cx, output), cx);
+}
+
+pub fn set_loading(cx: &mut WindowContext, loading: bool) {
+    StateController::update(|this, cx| this.set_loading(cx, loading), cx);
+}
+
+pub fn set_error(cx: &mut WindowContext, error: Option<Error>) {
+    StateController::update(|this, cx| this.set_error(cx, error), cx);
 }
 
 impl Global for StateController {}

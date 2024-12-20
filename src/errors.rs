@@ -9,9 +9,12 @@ pub enum InputError {
     ClipboardError,
     #[error("No text provided as input. Please copy some text and try again.")]
     EmptyTextInputError,
-    #[error("Oh... We don't know what happened but it's not your fault. Please try again.")]
+    #[error("We don't know what happened but it's not your fault. Please try again.")]
     UnknownError,
 }
 
 #[derive(Error, Debug)]
-pub enum AssistantError {}
+pub enum OutputError {
+    #[error("Request to assistant failed with response:\n{0}")]
+    AssistantRequestError(String),
+}

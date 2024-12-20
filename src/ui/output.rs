@@ -1,5 +1,4 @@
 use gpui::*;
-use std::time::Duration;
 
 use crate::clipboard::Clipboard;
 use crate::events::UiEvent;
@@ -24,10 +23,12 @@ const MAX_HEIGHT: f32 = 320.0;
 impl Output {
     pub fn new(cx: &mut ViewContext<Self>, state: &Model<State>) -> Self {
         cx.observe(state, |this, model, cx| {
+            let error = model.read(cx).error.is_some();
             let loading = model.read(cx).loading;
 
             this.text = model.read(cx).output.clone();
-            this.visible = model.read(cx).active_view == ActiveView::AssitantView && !loading;
+            this.visible =
+                model.read(cx).active_view == ActiveView::AssitantView && !loading && !error;
             cx.notify();
         })
         .detach();
@@ -52,42 +53,42 @@ impl Output {
             scroll_handle: ScrollHandle::new(),
         };
 
-        let scroll_handle = this.scroll_handle.clone();
+        // let scroll_handle = this.scroll_handle.clone();
 
-        cx.spawn(|this, mut cx| async move {
-            let scroll_epsilon = 4.0;
+        // cx.spawn(|this, mut cx| async move {
+        //     let scroll_epsilon = 4.0;
 
-            loop {
-                let scroll_y: f32 = scroll_handle.offset().y.into();
-                let height: f32 = scroll_handle.bounds().size.height.into();
+        //     loop {
+        //         let scroll_y: f32 = scroll_handle.offset().y.into();
+        //         let height: f32 = scroll_handle.bounds().size.height.into();
 
-                if let Some(child_bounds) = scroll_handle.bounds_for_item(0) {
-                    let child_height: f32 = child_bounds.size.height.into();
+        //         if let Some(child_bounds) = scroll_handle.bounds_for_item(0) {
+        //             let child_height: f32 = child_bounds.size.height.into();
 
-                    if child_height <= height {
-                        continue;
-                    }
+        //             if child_height <= height {
+        //                 continue;
+        //             }
 
-                    let scrolled_to_top = -scroll_y <= 0. + scroll_epsilon;
-                    let scrolled_to_bottom = -scroll_y + height >= child_height - scroll_epsilon;
+        //             let scrolled_to_top = -scroll_y <= 0. + scroll_epsilon;
+        //             let scrolled_to_bottom = -scroll_y + height >= child_height - scroll_epsilon;
 
-                    let _ = this.update(&mut cx, |this, cx| {
-                        if this.scrolled_to_top != scrolled_to_top
-                            || this.scrolled_to_bottom != scrolled_to_bottom
-                        {
-                            this.scrolled_to_top = scrolled_to_top;
-                            this.scrolled_to_bottom = scrolled_to_bottom;
-                            cx.notify();
-                        }
-                    });
-                }
+        //             let _ = this.update(&mut cx, |this, cx| {
+        //                 if this.scrolled_to_top != scrolled_to_top
+        //                     || this.scrolled_to_bottom != scrolled_to_bottom
+        //                 {
+        //                     this.scrolled_to_top = scrolled_to_top;
+        //                     this.scrolled_to_bottom = scrolled_to_bottom;
+        //                     cx.notify();
+        //                 }
+        //             });
+        //         }
 
-                cx.background_executor()
-                    .timer(Duration::from_millis(100))
-                    .await;
-            }
-        })
-        .detach();
+        //         cx.background_executor()
+        //             .timer(Duration::from_millis(100))
+        //             .await;
+        //     }
+        // })
+        // .detach();
 
         this
     }
