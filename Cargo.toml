@@ -1,6 +1,6 @@
 [package]
 name = "cmdi"
-version = "0.1.17"
+version = "0.1.18"
 edition = "2021"
 description = "Cmdi is a shortcut to your own collection of AI prompts."
 
