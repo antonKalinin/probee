@@ -37,6 +37,7 @@ impl ModeButton {
             AssistMode::Translate => Icon::Globe,
             AssistMode::WordMorphology => Icon::WholeWord,
             AssistMode::PlainFinnish => Icon::Milk,
+            AssistMode::LearnGrammar => Icon::GraduationCap,
         };
 
         let text_color = match self.active {
@@ -58,6 +59,7 @@ impl ModeButton {
             AssistMode::Translate => "Translate",
             AssistMode::WordMorphology => "Word Morphology",
             AssistMode::PlainFinnish => "In Plain Finnish",
+            AssistMode::LearnGrammar => "Learn Finnish",
         };
 
         let text_color = match self.active {

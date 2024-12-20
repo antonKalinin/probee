@@ -35,6 +35,7 @@ impl Root {
                 cx.new_view(|cx| ModeButton::new(cx, AssistMode::Translate, false)),
                 cx.new_view(|cx| ModeButton::new(cx, AssistMode::WordMorphology, false)),
                 cx.new_view(|cx| ModeButton::new(cx, AssistMode::PlainFinnish, false)),
+                cx.new_view(|cx| ModeButton::new(cx, AssistMode::LearnGrammar, false)),
             ];
 
             mode_buttons.iter().for_each(|button| {

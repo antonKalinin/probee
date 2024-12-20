@@ -8,12 +8,8 @@ use crate::ui::CopyOutputButton;
 
 pub struct Output {
     visible: bool,
-    scrolled_to_top: bool,
-    scrolled_to_bottom: bool,
-
     text: String,
     scroll_handle: ScrollHandle,
-
     copy_button: View<CopyOutputButton>,
 }
 
@@ -43,54 +39,33 @@ impl Output {
         })
         .detach();
 
-        let this = Output {
+        Output {
             visible: false,
             text: HINT_TEXT.to_string(),
-            scrolled_to_top: true,
-            scrolled_to_bottom: true,
-
-            copy_button,
             scroll_handle: ScrollHandle::new(),
-        };
+            copy_button,
+        }
+    }
 
-        // let scroll_handle = this.scroll_handle.clone();
+    fn scroll_gradient_visible(&self) -> [bool; 2] {
+        let scroll_epsilon = 4.0;
+        let scroll_y: f32 = self.scroll_handle.offset().y.into();
+        let view_height: f32 = self.scroll_handle.bounds().size.height.into();
 
-        // cx.spawn(|this, mut cx| async move {
-        //     let scroll_epsilon = 4.0;
+        if let Some(child_bounds) = self.scroll_handle.bounds_for_item(0) {
+            let child_height: f32 = child_bounds.size.height.into();
 
-        //     loop {
-        //         let scroll_y: f32 = scroll_handle.offset().y.into();
-        //         let height: f32 = scroll_handle.bounds().size.height.into();
+            if child_height <= view_height {
+                return [false, false];
+            }
 
-        //         if let Some(child_bounds) = scroll_handle.bounds_for_item(0) {
-        //             let child_height: f32 = child_bounds.size.height.into();
+            let top_gradient_visible = -scroll_y >= 0. + scroll_epsilon;
+            let bottom_gradient_visible = -scroll_y + view_height <= child_height - scroll_epsilon;
 
-        //             if child_height <= height {
-        //                 continue;
-        //             }
+            return [top_gradient_visible, bottom_gradient_visible];
+        }
 
-        //             let scrolled_to_top = -scroll_y <= 0. + scroll_epsilon;
-        //             let scrolled_to_bottom = -scroll_y + height >= child_height - scroll_epsilon;
-
-        //             let _ = this.update(&mut cx, |this, cx| {
-        //                 if this.scrolled_to_top != scrolled_to_top
-        //                     || this.scrolled_to_bottom != scrolled_to_bottom
-        //                 {
-        //                     this.scrolled_to_top = scrolled_to_top;
-        //                     this.scrolled_to_bottom = scrolled_to_bottom;
-        //                     cx.notify();
-        //                 }
-        //             });
-        //         }
-
-        //         cx.background_executor()
-        //             .timer(Duration::from_millis(100))
-        //             .await;
-        //     }
-        // })
-        // .detach();
-
-        this
+        [false, false]
     }
 }
 
@@ -117,7 +92,9 @@ impl Render for Output {
                 .into_any_element();
         }
 
-        let gradient_top = if !self.scrolled_to_top {
+        let [top_gradient_visible, bottom_gradient_visible] = self.scroll_gradient_visible();
+
+        let gradient_top = if top_gradient_visible {
             div().absolute().top_0().w_full().h_10().bg(linear_gradient(
                 180.,
                 linear_color_stop(theme.background, 0.),
@@ -127,7 +104,7 @@ impl Render for Output {
             div()
         };
 
-        let gradient_bottom = if !self.scrolled_to_bottom {
+        let gradient_bottom = if bottom_gradient_visible {
             let grad = div().absolute().bottom_0().w_full().h_10();
             grad.bg(linear_gradient(
                 0.,

@@ -39,7 +39,7 @@ impl Render for AppButton {
             .hover(|style| style.text_color(theme.text))
             .size_full();
 
-        let on_click = cx.listener({
+        let click_handle = cx.listener({
             move |_this, _event, cx: &mut ViewContext<Self>| {
                 cx.emit(UiEvent::ChangeActiveView(ActiveView::AppView));
             }
@@ -48,7 +48,7 @@ impl Render for AppButton {
         let button = div()
             .h_4()
             .w_4()
-            .on_mouse_up(MouseButton::Left, on_click)
+            .on_mouse_up(MouseButton::Left, click_handle)
             .cursor(CursorStyle::PointingHand)
             .child(icon);
 

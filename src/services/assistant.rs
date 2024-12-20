@@ -14,6 +14,7 @@ pub enum AssistMode {
     Translate,
     WordMorphology,
     PlainFinnish,
+    LearnGrammar,
 }
 
 /**
@@ -86,10 +87,23 @@ formN - translationN
 Please do not provide any additional information, titles, comments or context \
 beyond the formatted result.";
 
-const EXPLAIN_LIKE_IM_FIVE: &str = "\
-You are a university professor with a specialization in the subject of the text I provide. \
-Your task is to explain the text to a five-year-old child in a simple and understandable way. \
-If it helps for clarity, you can use analogies, metaphors, or examples. \
+const LEARN_FINNISH: &str = "\
+Вы - высококвалифицированный переводчик с опытом работы с финским языком. \
+Ваша задача - перевести текст на русский язык с сохранением смысла, тона и нюансов оригинала. \
+В переведенной версии после основных глагов в скомбках укажите их оригинальные формы: \
+`перевод (форма используемая в тексте)`. \
+Пожалуйста, сохраните табуляцию и новые строки в переведенной версии.
+Шаблон ответа:
+
+🌐 Перевод:
+{новая строка}
+{Перевод}
+
+📚 Грамматика:
+{новая строка}
+{Короткий разборк основых грамматических конструкций используемых в тексте}
+
+Пожалуйста, не предоставляйте дополнительной информации, кроме той что указана в шаблоне. \
 ";
 
 const BASIC_FINNISH: &str = "\
@@ -124,6 +138,7 @@ impl Assistant {
             AssistMode::Translate => TRANSLATE_MODE_PROMPT.to_string(),
             AssistMode::WordMorphology => WORD_MORPHOLOGY.to_string(),
             AssistMode::PlainFinnish => BASIC_FINNISH.to_string(),
+            AssistMode::LearnGrammar => LEARN_FINNISH.to_string(),
         }
     }
 
