@@ -35,6 +35,7 @@ pub enum Icon {
     BookA,
     BookMarked,
     BookType,
+    Check,
     CircleX,
     Command,
     Copy,

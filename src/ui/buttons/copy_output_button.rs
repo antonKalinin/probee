@@ -1,4 +1,5 @@
 use gpui::*;
+use std::time::Duration;
 
 use crate::events::UiEvent;
 use crate::state::State;
@@ -7,6 +8,7 @@ use crate::ui::Icon;
 
 pub struct CopyOutputButton {
     enabled: bool,
+    succeeded: bool,
 }
 
 impl CopyOutputButton {
@@ -18,7 +20,10 @@ impl CopyOutputButton {
             })
             .detach();
 
-        CopyOutputButton { enabled: false }
+        CopyOutputButton {
+            enabled: false,
+            succeeded: false,
+        }
     }
 }
 
@@ -32,14 +37,29 @@ impl Render for CopyOutputButton {
         };
 
         let icon = svg()
-            .path(Icon::Copy.path())
+            .path(if self.succeeded {
+                Icon::Check.path()
+            } else {
+                Icon::Copy.path()
+            })
             .text_color(icon_color)
             .hover(|style| style.text_color(theme.text))
             .size_full();
 
         let on_click = cx.listener({
-            move |_this, _event, cx: &mut ViewContext<Self>| {
+            move |this, _event, cx: &mut ViewContext<Self>| {
+                this.succeeded = true;
+                cx.notify();
                 cx.emit(UiEvent::CopyOutput);
+
+                cx.spawn(|this, mut cx| async move {
+                    cx.background_executor().timer(Duration::from_secs(1)).await;
+                    let _ = this.update(&mut cx, |this, cx| {
+                        this.succeeded = false;
+                        cx.notify();
+                    });
+                })
+                .detach();
             }
         });
 
@@ -49,7 +69,7 @@ impl Render for CopyOutputButton {
             .p_1()
             .rounded_full()
             .border_1()
-            .on_mouse_up(MouseButton::Left, on_click)
+            .on_mouse_down(MouseButton::Left, on_click)
             .hover(|style| style.bg(theme.secondary_hover))
             .cursor(CursorStyle::PointingHand)
             .child(icon);

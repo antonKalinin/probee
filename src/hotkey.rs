@@ -48,6 +48,12 @@ impl HotkeyManager {
                             let clipboard = cx.global_mut::<Clipboard>();
                             let input_text = clipboard.get_text();
 
+                            let mode = cx.global::<StateController>().model.read(cx).mode.clone();
+
+                            if mode.is_none() {
+                                return;
+                            }
+
                             if input_text.is_err() {
                                 let err = input_text.unwrap_err();
                                 StateController::update(

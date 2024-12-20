@@ -31,7 +31,7 @@ pub fn size_observer() -> SizeObserver {
 }
 
 impl SizeObserver {
-    pub fn on_sized(
+    pub fn on_size_measured(
         mut self,
         callback: impl Fn(Size<Pixels>, &mut WindowContext) + 'static,
     ) -> Self {

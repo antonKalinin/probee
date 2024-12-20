@@ -34,7 +34,7 @@ impl StateController {
                 error: None,
                 input: None,
                 loading: false,
-                mode: Some(AssistMode::Translate),
+                mode: None,
                 output: "".to_string(),
                 output_size: None,
             }),

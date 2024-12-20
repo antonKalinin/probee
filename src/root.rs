@@ -98,9 +98,9 @@ impl Render for Root {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
-        let actions_row = div().flex().flex_row().flex_wrap();
+        let actions_row = div().flex().flex_row().flex_wrap().mb_2();
         let content_col = div().flex().flex_col().flex_grow();
-        let title_row = div().flex().flex_row().items_start().mb_2();
+        let title_row = div().flex().flex_row().items_start();
 
         let app_button = div().flex().child(self.app_button.clone());
         let mut title_buttons = self
@@ -115,12 +115,12 @@ impl Render for Root {
         let mut mode_buttons = self
             .mode_buttons
             .iter()
-            .map(|button| div().flex().mt_1().mr_2().child(button.clone()))
+            .map(|button| div().flex().mt_2().mr_2().child(button.clone()))
             .collect::<Vec<_>>();
 
         mode_buttons.push(Root::render_space());
 
-        let on_content_sized = |size, cx: &mut WindowContext<'_>| {
+        let handle_size_measured = |size, cx: &mut WindowContext<'_>| {
             StateController::update(|this, cx| this.set_view_size(cx, size), cx);
         };
 
@@ -143,7 +143,7 @@ impl Render for Root {
             .border_color(theme.border)
             .child(
                 size_observer()
-                    .on_sized(on_content_sized)
+                    .on_size_measured(handle_size_measured)
                     .child(dynamic_height_content),
             )
     }
