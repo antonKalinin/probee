@@ -881,7 +881,7 @@ dependencies = [
 
 [[package]]
 name = "cmdi"
-version = "0.1.18"
+version = "0.1.19"
 dependencies = [
  "accessibility",
  "accessibility-sys",
