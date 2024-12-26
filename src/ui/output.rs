@@ -41,7 +41,7 @@ impl Output {
 
         Output {
             visible: false,
-            text: HINT_TEXT.to_string(),
+            text: HINT_TEXT.to_owned(),
             scroll_handle: ScrollHandle::new(),
             copy_button,
         }
@@ -88,7 +88,7 @@ impl Render for Output {
                 .justify_center()
                 .text_color(theme.subtext)
                 .text_size(theme.text_size)
-                .child(HINT_TEXT.to_string())
+                .child(HINT_TEXT.to_owned())
                 .into_any_element();
         }
 

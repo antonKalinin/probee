@@ -27,7 +27,7 @@ impl ErrorView {
 
         ErrorView {
             visible: false,
-            message: "".to_string(),
+            message: "".to_owned(),
         }
     }
 }

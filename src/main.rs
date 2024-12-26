@@ -14,7 +14,8 @@ mod ui;
 mod window;
 
 use crate::{
-    assets::Assets, hotkey::HotkeyManager, root::Root, services::*, theme::Theme, window::Window,
+    assets::Assets, hotkey::HotkeyManager, root::Root, services::*, state::*, theme::Theme,
+    window::Window,
 };
 
 #[async_std::main]
@@ -24,18 +25,21 @@ async fn main() {
     let app = App::new().with_assets(Assets);
 
     app.run(|cx: &mut AppContext| {
+        Api::init(cx);
         Assistant::init(cx);
         Clipboard::init(cx);
+        StateController::init(cx);
         Theme::init(cx);
         Window::init(cx);
 
         let window_options = cx.global::<Window>().build_options();
+        let state = cx.global::<StateController>().model.clone();
 
         let _ = cx.open_window(window_options, |cx| {
             HotkeyManager::init(cx);
 
             // builing root view and returning it to render
-            Root::build(cx)
+            Root::build(cx, state)
         });
     });
 }

@@ -133,14 +133,14 @@ impl TextInput {
     fn copy(&mut self, _: &Copy, cx: &mut ViewContext<Self>) {
         if !self.selected_range.is_empty() {
             cx.write_to_clipboard(ClipboardItem::new_string(
-                (&self.content[self.selected_range.clone()]).to_string(),
+                (&self.content[self.selected_range.clone()]).to_owned(),
             ));
         }
     }
     fn cut(&mut self, _: &Copy, cx: &mut ViewContext<Self>) {
         if !self.selected_range.is_empty() {
             cx.write_to_clipboard(ClipboardItem::new_string(
-                (&self.content[self.selected_range.clone()]).to_string(),
+                (&self.content[self.selected_range.clone()]).to_owned(),
             ));
             self.replace_text_in_range(None, "", cx)
         }
@@ -260,7 +260,7 @@ impl ViewInputHandler for TextInput {
         range: Range<usize>,
         _cx: &mut ViewContext<Self>,
     ) -> Option<String> {
-        Some(self.content[range].to_string())
+        Some(self.content[range].to_owned())
     }
 
     fn selected_text_range(

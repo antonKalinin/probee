@@ -44,9 +44,9 @@ pub fn image2text(image: DynamicImage) -> Result<String, Error> {
         .flatten()
         // Filter likely spurious detections. With future model improvements
         // this should become unnecessary.
-        .filter(|l| l.to_string().len() > 1)
+        .filter(|l| l.to_owned().len() > 1)
     {
-        text.push_str(&line.to_string());
+        text.push_str(&line.to_owned());
         text.push_str("\n");
     }
 

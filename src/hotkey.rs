@@ -48,9 +48,9 @@ impl HotkeyManager {
                             let clipboard = cx.global_mut::<Clipboard>();
                             let input_text = clipboard.get_text();
 
-                            let mode = cx.global::<StateController>().model.read(cx).mode.clone();
+                            let active_assistant = get_active_assistant(cx);
 
-                            if mode.is_none() {
+                            if active_assistant.is_none() {
                                 return;
                             }
 
@@ -61,7 +61,7 @@ impl HotkeyManager {
                             }
 
                             let input_text = input_text.unwrap();
-                            let empty_text = "".to_string();
+                            let empty_text = "".to_owned();
 
                             if input_text.is_empty() {
                                 let err = InputError::EmptyTextInputError.into();
@@ -73,9 +73,6 @@ impl HotkeyManager {
                             set_input(cx, input_text);
                             set_output(cx, empty_text);
                             set_loading(cx, true);
-
-                            // TODO: Replace StateController call with observing input changed
-                            StateController::update(|this, cx| this.request_assistant(cx), cx);
                         });
                     }
                 }

@@ -1,6 +1,7 @@
 use anyhow::Error;
 use gpui::*;
 
+use crate::events::*;
 use crate::services::*;
 use crate::window::Window;
 
@@ -12,37 +13,47 @@ pub enum ActiveView {
 
 #[derive(Debug)]
 pub struct State {
+    pub active_assistant_id: Option<String>,
     pub active_view: ActiveView,
+    pub assistants: Vec<AssistantConfig>,
+    pub content_size: Option<Size<Pixels>>,
     pub error: Option<Error>,
     pub input: Option<String>,
     pub loading: bool,
-    pub mode: Option<AssistMode>,
     pub output: String,
-    pub content_size: Option<Size<Pixels>>,
 }
+
+impl EventEmitter<AppEvent> for State {}
 
 #[derive(Clone)]
 pub struct StateController {
     pub model: Model<State>,
 }
 
+impl Global for StateController {}
+
 impl StateController {
-    pub fn init(cx: &mut WindowContext) -> Self {
+    pub fn init(cx: &mut AppContext) {
         let this = Self {
             model: cx.new_model(|_| State {
+                active_assistant_id: None,
                 active_view: ActiveView::AppView,
+                assistants: vec![],
+                content_size: None,
                 error: None,
                 input: None,
                 loading: false,
-                mode: None,
-                output: "".to_string(),
-                content_size: None,
+                output: "".to_owned(),
             }),
         };
 
         cx.set_global(this.clone());
+    }
 
-        this
+    pub fn subscribe(&self, wcx: &mut WindowContext) {
+        let _ = wcx.subscribe(&self.model, |emitter, event, cx| {
+            println!("StateController event: {:?}", event);
+        });
     }
 
     pub fn update(f: impl FnOnce(&mut Self, &mut WindowContext), cx: &mut WindowContext) {
@@ -63,6 +74,31 @@ impl StateController {
         });
     }
 
+    pub fn get_active_assistant(&self, wcx: &WindowContext) -> Option<AssistantConfig> {
+        let state = self.model.read(wcx);
+        let id = state.active_assistant_id.clone().unwrap();
+
+        state
+            .assistants
+            .iter()
+            .find(|assistant| assistant.id == id)
+            .cloned()
+    }
+
+    pub fn set_active_assistant_id(&self, wcx: &mut WindowContext, id: Option<String>) {
+        self.model.update(wcx, |model, cx| {
+            model.active_assistant_id = id;
+            cx.notify();
+        });
+    }
+
+    pub fn set_assistants(&self, wcx: &mut WindowContext, assistants: Vec<AssistantConfig>) {
+        self.model.update(wcx, |model, cx| {
+            model.assistants = assistants;
+            cx.notify();
+        });
+    }
+
     pub fn set_active_view(&self, wcx: &mut WindowContext, view: ActiveView) {
         self.model.update(wcx, |model, cx| {
             model.active_view = view;
@@ -72,7 +108,8 @@ impl StateController {
 
     pub fn set_input(&self, wcx: &mut WindowContext, input: String) {
         self.model.update(wcx, |model, cx| {
-            model.input = Some(input);
+            model.input = Some(input.clone());
+            cx.emit(AppEvent::InputUpdated(input));
             cx.notify();
         });
     }
@@ -118,52 +155,57 @@ impl StateController {
         }
     }
 
-    pub fn set_mode(&self, wcx: &mut WindowContext, mode: Option<AssistMode>) {
-        self.model.update(wcx, |model, cx| {
-            model.mode = mode;
-            cx.notify();
-        });
-    }
+    // pub fn request_assistant(&self, cx: &mut WindowContext) {
+    //     let state = self.model.read(cx);
+    //     let assistant = cx.global::<Assistant>().clone();
 
-    pub fn request_assistant(&self, cx: &mut WindowContext) {
-        let state = self.model.read(cx);
-        let assistant = cx.global::<Assistant>().clone();
+    //     if let Some(input) = state.input.clone() {
+    //         if input.is_empty() {
+    //             return;
+    //         }
 
-        if let Some(input) = state.input.clone() {
-            if input.is_empty() {
-                return;
-            }
+    //         let mode = state.mode.clone().unwrap();
 
-            let mode = state.mode.clone().unwrap();
+    //         cx.spawn(|mut cx| async move {
+    //             let output = assistant.ask(mode, &input).await;
 
-            cx.spawn(|mut cx| async move {
-                let output = assistant.ask(mode, &input).await;
+    //             Self::update_async(
+    //                 |this, cx| {
+    //                     this.set_loading(cx, false);
 
-                Self::update_async(
-                    |this, cx| {
-                        this.set_loading(cx, false);
-
-                        let _ = match output {
-                            Ok(text) => this.set_output(cx, text),
-                            Err(err) => this.set_error(cx, Some(err)),
-                        };
-                    },
-                    &mut cx,
-                );
-            })
-            .detach();
-        }
-    }
+    //                     let _ = match output {
+    //                         Ok(text) => this.set_output(cx, text),
+    //                         Err(err) => this.set_error(cx, Some(err)),
+    //                     };
+    //                 },
+    //                 &mut cx,
+    //             );
+    //         })
+    //         .detach();
+    //     }
+    // }
 }
 
 /* Helper functions */
 
-pub fn set_active_view(cx: &mut WindowContext, view: ActiveView) {
-    StateController::update(|this, cx| this.set_active_view(cx, view), cx);
+pub fn subscribe(cx: &mut WindowContext) {
+    StateController::update(|this, cx| this.subscribe(cx), cx);
 }
 
-pub fn set_mode(cx: &mut WindowContext, mode: Option<AssistMode>) {
-    StateController::update(|this, cx| this.set_mode(cx, mode), cx);
+pub fn get_active_assistant(cx: &WindowContext) -> Option<AssistantConfig> {
+    let state = cx.global::<StateController>().model.read(cx);
+
+    println!("state.active_assistant_id: {:?}", state.active_assistant_id);
+
+    None
+}
+
+pub fn set_active_assistant_id(cx: &mut WindowContext, id: Option<String>) {
+    StateController::update(|this, cx| this.set_active_assistant_id(cx, id), cx);
+}
+
+pub fn set_active_view(cx: &mut WindowContext, view: ActiveView) {
+    StateController::update(|this, cx| this.set_active_view(cx, view), cx);
 }
 
 pub fn set_input(cx: &mut WindowContext, input: String) {
@@ -181,5 +223,3 @@ pub fn set_loading(cx: &mut WindowContext, loading: bool) {
 pub fn set_error(cx: &mut WindowContext, error: Option<Error>) {
     StateController::update(|this, cx| this.set_error(cx, error), cx);
 }
-
-impl Global for StateController {}

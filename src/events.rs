@@ -1,11 +1,15 @@
-use crate::assistant::AssistMode;
 use crate::state::ActiveView;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum UiEvent {
     ChangeActiveView(ActiveView),
+    ChangeAssistant(String),
     CopyOutput,
-    ChangeMode(AssistMode),
     CloseWindow,
     HideWindow,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum AppEvent {
+    InputUpdated(String),
 }

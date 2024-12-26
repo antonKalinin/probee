@@ -43,7 +43,7 @@ impl Render for Intro {
             .line_height(theme.line_height)
             .font_family(theme.font_sans.clone())
             .font_weight(FontWeight::LIGHT)
-            .child(INTRO_TEXT.to_string())
+            .child(INTRO_TEXT.to_owned())
             .into_any_element()
     }
 }

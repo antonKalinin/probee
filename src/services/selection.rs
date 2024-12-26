@@ -91,7 +91,7 @@ fn get_selected_text_fallback() -> Result<String> {
     if output.status.success() {
         let content = String::from_utf8(output.stdout)?;
         let content = content.trim();
-        Ok(content.to_string())
+        Ok(content.to_owned())
     } else {
         let err: String = output
             .stderr

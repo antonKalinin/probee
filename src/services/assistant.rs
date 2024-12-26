@@ -1,4 +1,4 @@
-use anyhow::{Error, Result};
+use anyhow::Result;
 use gpui::{AppContext, Global};
 use reqwest::{
     header::{HeaderMap, HeaderValue},
@@ -7,15 +7,9 @@ use reqwest::{
 use serde::{Deserialize, Serialize};
 use std::env;
 
+use crate::api::AssistantConfig;
 use crate::errors::*;
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum AssistMode {
-    Translate,
-    WordMorphology,
-    PlainFinnish,
-    LearnGrammar,
-}
+use crate::state::*;
 
 /**
  * By design LLM service should be agnostic to LLM provider.
@@ -55,65 +49,6 @@ pub struct Assistant {
     client: Client,
 }
 
-const TRANSLATE_MODE_PROMPT: &str = "\
-You are a highly skilled translator with expertise in many languages. \
-Your task is to identify the language of the text I provide and accurately \
-translate it into the English while preserving the meaning, \
-tone, and nuance of the original text. Please maintain proper grammar, spelling, \
-punctuation including tabulation and new lines in the translated version. \
-Please do not provide any additional information, titles, comments or context \
-beyond the translated text.";
-
-const TRANSLATE_WORD_BY_WORD: &str = "\
-You are a highly skilled translator with expertise in many languages. \
-Your task is to identify the language of the text I provide and accurately \
-translate it into the English word by word. Treat each word as separate, without \
-context of the whole sentence. \
-Please provide the translation of each word in a new line in form:\
-`original word - translation`. \
-Please do not provide any additional information, titles, comments or context \
-beyond the translated formatted text.";
-
-const WORD_MORPHOLOGY: &str = "\
-You are a highly skilled translator with expertise in many languages. \
-Your task is to identify the language of the text I provide, take the first word, \
-detect its part of speech, and provide all possible forms in the language of the text. \
-Please provide the result in the following format: \
-word (part of speech) - translation
-form1 - translation1,
-form2 - translation2,
-...
-formN - translationN
-Please do not provide any additional information, titles, comments or context \
-beyond the formatted result.";
-
-const LEARN_FINNISH: &str = "\
-Вы - высококвалифицированный переводчик с опытом работы с финским языком. \
-Ваша задача - перевести текст на русский язык с сохранением смысла, тона и нюансов оригинала. \
-В переведенной версии после основных глагов в скомбках укажите их оригинальные формы: \
-`перевод (форма используемая в тексте)`. \
-Пожалуйста, сохраните табуляцию и новые строки в переведенной версии.
-Шаблон ответа:
-
-🌐 Перевод:
-{новая строка}
-{Перевод}
-
-📚 Грамматика:
-{новая строка}
-{Короткий разборк основых грамматических конструкций используемых в тексте}
-
-Пожалуйста, не предоставляйте дополнительной информации, кроме той что указана в шаблоне. \
-";
-
-const BASIC_FINNISH: &str = "\
-You are a highly skilled translator with expertise in Finnish language. \
-Your task is to rewrite the text I provide in a basic Finnish language: \
-- Use simple words and short sentences. \
-- Avoid complex grammar structures. \
-Please do not provide any additional information, titles, comments or context \
-beyond the adapted text.";
-
 impl Assistant {
     pub fn init(cx: &mut AppContext) {
         let api_key = env!("ANTHROPIC_API_KEY");
@@ -133,48 +68,53 @@ impl Assistant {
         cx.set_global(Assistant { client });
     }
 
-    fn resolve_system_prompt(&self, mode: AssistMode) -> String {
-        match mode {
-            AssistMode::Translate => TRANSLATE_MODE_PROMPT.to_string(),
-            AssistMode::WordMorphology => WORD_MORPHOLOGY.to_string(),
-            AssistMode::PlainFinnish => BASIC_FINNISH.to_string(),
-            AssistMode::LearnGrammar => LEARN_FINNISH.to_string(),
-        }
-    }
+    // fn resolve_system_prompt(&self, config: AssistantConfig) -> Result<String> {
+    //     let system_prompt = config
+    //         .messages
+    //         .iter()
+    //         .find(|message| message.role == "system");
 
-    pub async fn ask(&self, mode: AssistMode, input: &str) -> Result<String> {
-        let system_prompt = self.resolve_system_prompt(mode);
-        let request = AnthropicRequest {
-            model: "claude-3-5-sonnet-20241022".to_string(),
-            system: system_prompt,
-            temperature: 0.2,
-            messages: vec![Message {
-                role: "user".to_string(),
-                content: input.to_string(),
-            }],
-            max_tokens: 1024,
-        };
+    //     if let Some(system_prompt) = system_prompt {
+    //         return Ok(system_prompt.content.clone());
+    //     } else {
+    //         return Err(InputError::MissingSystemPromptError.into());
+    //     }
+    // }
 
-        let response = self
-            .client
-            .post("https://api.anthropic.com/v1/messages")
-            .json(&request)
-            .send()
-            .await?;
+    // pub async fn request(&self, input: &str) -> Result<String> {
+    //     let config = get_active_assistant();
+    //     let system_prompt = self.resolve_system_prompt(config)?;
+    //     let request = AnthropicRequest {
+    //         model: "claude-3-5-sonnet-20241022".to_owned(),
+    //         system: system_prompt,
+    //         temperature: 0.2,
+    //         messages: vec![Message {
+    //             role: "user".to_owned(),
+    //             content: input.to_owned(),
+    //         }],
+    //         max_tokens: 1024,
+    //     };
 
-        if !response.status().is_success() {
-            let error_text = response.text().await?;
-            return Err(OutputError::AssistantRequestError(error_text).into());
-        }
+    //     let response = self
+    //         .client
+    //         .post("https://api.anthropic.com/v1/messages")
+    //         .json(&request)
+    //         .send()
+    //         .await?;
 
-        let anthropic_response: AnthropicResponse = response.json().await?;
+    //     if !response.status().is_success() {
+    //         let error_text = response.text().await?;
+    //         return Err(OutputError::AssistantRequestError(error_text).into());
+    //     }
 
-        if let Some(first_content) = anthropic_response.content.first() {
-            return Ok(first_content.text.to_string());
-        }
+    //     let anthropic_response: AnthropicResponse = response.json().await?;
 
-        Err(Error::msg("No response from Claude"))
-    }
+    //     if let Some(first_content) = anthropic_response.content.first() {
+    //         return Ok(first_content.text.to_owned());
+    //     }
+
+    //     Err(OutputError::EmptyResponseError.into())
+    // }
 }
 
 impl Global for Assistant {}

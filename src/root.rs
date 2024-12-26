@@ -1,27 +1,30 @@
 use gpui::*;
 
-use crate::assistant::AssistMode;
-use crate::events::UiEvent;
+use crate::api::*;
+use crate::events::*;
 use crate::state::*;
 use crate::theme::Theme;
 use crate::ui::*;
 use crate::window::Window;
 
 pub struct Root {
+    assistant_ids: Vec<String>,
+
     error_view: View<ErrorView>,
     intro_view: View<Intro>,
     output_view: View<Output>,
     loading_view: View<Loading>,
 
     app_button: View<AppButton>,
-    mode_buttons: Vec<View<ModeButton>>,
+    assistant_buttons: Vec<View<AssistantButton>>,
     window_buttons: Vec<View<WindowButton>>,
 }
 
 impl Root {
-    pub fn build(wcx: &mut WindowContext) -> View<Self> {
+    pub fn build(wcx: &mut WindowContext, state: Model<State>) -> View<Self> {
         let view = wcx.new_view(|cx| {
-            let state = StateController::init(cx).model;
+            let api = cx.global::<Api>().clone();
+
             let intro_view = cx.new_view(|cx| Intro::new(cx, &state));
             let output_view = cx.new_view(|cx| Output::new(cx, &state));
             let loading_view = cx.new_view(|cx| Loading::new(cx, &state));
@@ -31,23 +34,24 @@ impl Root {
             let close_button = cx.new_view(|_cx| WindowButton::new(WindowAction::Close));
             let hide_button = cx.new_view(|_cx| WindowButton::new(WindowAction::Hide));
 
-            let mode_buttons = vec![
-                cx.new_view(|cx| ModeButton::new(cx, AssistMode::Translate, false)),
-                cx.new_view(|cx| ModeButton::new(cx, AssistMode::WordMorphology, false)),
-                cx.new_view(|cx| ModeButton::new(cx, AssistMode::PlainFinnish, false)),
-                cx.new_view(|cx| ModeButton::new(cx, AssistMode::LearnGrammar, false)),
-            ];
+            let _ = cx
+                .observe(&state, move |this: &mut Root, state: Model<State>, cx| {
+                    let state_assistant_ids = state
+                        .read(cx)
+                        .assistants
+                        .iter()
+                        .map(|a| a.id.clone())
+                        .collect::<Vec<_>>();
 
-            mode_buttons.iter().for_each(|button| {
-                cx.subscribe(button, move |_subscriber, _emitter, event, cx| {
-                    if let UiEvent::ChangeMode(mode) = event {
-                        set_error(cx, None);
-                        set_mode(cx, Some(mode.clone()));
-                        set_active_view(cx, ActiveView::AssitantView);
+                    if state_assistant_ids != this.assistant_ids {
+                        let assistants = state.read(cx).assistants.clone();
+
+                        this.assistant_ids = state_assistant_ids;
+                        this.assistant_buttons = Root::build_assistant_buttons(assistants, cx);
+                        cx.notify();
                     }
                 })
                 .detach();
-            });
 
             cx.subscribe(&close_button, move |_subscriber, _emitter, event, cx| {
                 if let UiEvent::CloseWindow = event {
@@ -67,24 +71,70 @@ impl Root {
                 if let UiEvent::ChangeActiveView(view) = event {
                     set_active_view(cx, view.clone());
                     set_error(cx, None);
-                    set_mode(cx, None);
+                    set_active_assistant_id(cx, None);
                 }
             })
             .detach();
 
+            // loading assistants in the background
+            cx.spawn(|_weak_root, mut cx| async move {
+                let assistants = api.get_assistants().await;
+
+                StateController::update_async(
+                    |this, cx| match assistants {
+                        Ok(assistants) => {
+                            this.set_assistants(cx, assistants);
+                        }
+                        Err(err) => {
+                            this.set_error(cx, Some(err));
+                        }
+                    },
+                    &mut cx,
+                );
+            })
+            .detach();
+
             Root {
+                // raw data
+                assistant_ids: vec![],
+
+                // views
                 intro_view,
                 error_view,
                 output_view,
                 loading_view,
 
+                // buttons
                 app_button,
-                mode_buttons,
+                assistant_buttons: vec![],
                 window_buttons: vec![close_button, hide_button],
             }
         });
 
         view
+    }
+
+    fn build_assistant_buttons(
+        assistants: Vec<AssistantConfig>,
+        cx: &mut ViewContext<Self>,
+    ) -> Vec<View<AssistantButton>> {
+        let assistant_buttons = assistants
+            .iter()
+            .map(|assistant| cx.new_view(|cx| AssistantButton::new(cx, assistant.clone(), false)))
+            .collect::<Vec<_>>();
+
+        assistant_buttons.iter().for_each(|button| {
+            cx.subscribe(button, move |_subscriber, _emitter, event, cx| {
+                if let UiEvent::ChangeAssistant(id) = event {
+                    set_error(cx, None);
+                    set_active_assistant_id(cx, Some(id.clone()));
+                    set_active_view(cx, ActiveView::AssitantView);
+                }
+            })
+            .detach();
+        });
+
+        assistant_buttons
     }
 
     // TODO: Move to macros
@@ -111,13 +161,13 @@ impl Render for Root {
         title_buttons.push(Root::render_space());
         title_buttons.push(app_button);
 
-        let mut mode_buttons = self
-            .mode_buttons
+        let mut assistant_buttons = self
+            .assistant_buttons
             .iter()
             .map(|button| div().flex().mt_2().mr_2().child(button.clone()))
             .collect::<Vec<_>>();
 
-        mode_buttons.push(Root::render_space());
+        assistant_buttons.push(Root::render_space());
 
         let handle_size_measured = |size, cx: &mut WindowContext<'_>| {
             StateController::update(|this, cx| this.set_content_size(cx, size), cx);
@@ -130,7 +180,7 @@ impl Render for Root {
 
         let dynamic_height_content = div()
             .child(title_row.children(title_buttons))
-            .child(actions_row.children(mode_buttons))
+            .child(actions_row.children(assistant_buttons))
             .child(content_col.children([intro, loading, error, output]));
 
         div()
@@ -147,3 +197,5 @@ impl Render for Root {
             )
     }
 }
+
+impl EventEmitter<AppEvent> for Root {}
