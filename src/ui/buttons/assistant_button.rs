@@ -19,7 +19,6 @@ impl AssistantButton {
         let _ = cx
             .observe(&state, move |this, state: Model<State>, cx| {
                 if let Some(state_assistant_id) = state.read(cx).active_assistant_id.as_ref() {
-                    println!("Current assistant id: {:?}", state_assistant_id);
                     this.active = state_assistant_id == &assistant_id;
                 } else {
                     this.active = false;

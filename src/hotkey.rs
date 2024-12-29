@@ -47,7 +47,6 @@ impl HotkeyManager {
 
                             let clipboard = cx.global_mut::<Clipboard>();
                             let input_text = clipboard.get_text();
-
                             let active_assistant = get_active_assistant(cx);
 
                             if active_assistant.is_none() {

@@ -18,6 +18,8 @@ use crate::{
     window::Window,
 };
 
+struct EventBus;
+
 #[async_std::main]
 async fn main() {
     dotenv().ok();
@@ -37,6 +39,10 @@ async fn main() {
 
         let _ = cx.open_window(window_options, |cx| {
             HotkeyManager::init(cx);
+
+            let _ = cx.subscribe(&state, |emitter, event, cx| {
+                println!("EVENT RECEIVED: {:?}", event);
+            });
 
             // builing root view and returning it to render
             Root::build(cx, state)

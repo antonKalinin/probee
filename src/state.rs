@@ -50,11 +50,19 @@ impl StateController {
         cx.set_global(this.clone());
     }
 
-    pub fn subscribe(&self, wcx: &mut WindowContext) {
-        let _ = wcx.subscribe(&self.model, |emitter, event, cx| {
-            println!("StateController event: {:?}", event);
-        });
-    }
+    // pub fn subscribe(cx: &mut WindowContext) {
+    //     if !cx.has_global::<Self>() {
+    //         return;
+    //     }
+
+    //     cx.update_global::<Self, _>(|this, cx| {
+    //         let state = this.model.read(cx);
+    //         println!("STATE SUBSCRIBED {:?}", state);
+    //         let _ = cx.subscribe(&this.model, |emitter, event, cx| {
+    //             println!("StateController event: {:?}", event);
+    //         });
+    //     });
+    // }
 
     pub fn update(f: impl FnOnce(&mut Self, &mut WindowContext), cx: &mut WindowContext) {
         if !cx.has_global::<Self>() {
@@ -72,17 +80,6 @@ impl StateController {
         let _ = cx.update_global::<Self, _>(|this, cx| {
             f(this, cx);
         });
-    }
-
-    pub fn get_active_assistant(&self, wcx: &WindowContext) -> Option<AssistantConfig> {
-        let state = self.model.read(wcx);
-        let id = state.active_assistant_id.clone().unwrap();
-
-        state
-            .assistants
-            .iter()
-            .find(|assistant| assistant.id == id)
-            .cloned()
     }
 
     pub fn set_active_assistant_id(&self, wcx: &mut WindowContext, id: Option<String>) {
@@ -109,8 +106,9 @@ impl StateController {
     pub fn set_input(&self, wcx: &mut WindowContext, input: String) {
         self.model.update(wcx, |model, cx| {
             model.input = Some(input.clone());
-            cx.emit(AppEvent::InputUpdated(input));
+            println!("EVENT EMITTED");
             cx.notify();
+            cx.emit(AppEvent::InputUpdated(input));
         });
     }
 
@@ -188,16 +186,17 @@ impl StateController {
 
 /* Helper functions */
 
-pub fn subscribe(cx: &mut WindowContext) {
-    StateController::update(|this, cx| this.subscribe(cx), cx);
-}
-
 pub fn get_active_assistant(cx: &WindowContext) -> Option<AssistantConfig> {
     let state = cx.global::<StateController>().model.read(cx);
 
-    println!("state.active_assistant_id: {:?}", state.active_assistant_id);
-
-    None
+    match state.active_assistant_id.clone() {
+        Some(id) => state
+            .assistants
+            .iter()
+            .find(|assistant| assistant.id == id)
+            .cloned(),
+        None => None,
+    }
 }
 
 pub fn set_active_assistant_id(cx: &mut WindowContext, id: Option<String>) {
