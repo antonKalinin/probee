@@ -50,20 +50,6 @@ impl StateController {
         cx.set_global(this.clone());
     }
 
-    // pub fn subscribe(cx: &mut WindowContext) {
-    //     if !cx.has_global::<Self>() {
-    //         return;
-    //     }
-
-    //     cx.update_global::<Self, _>(|this, cx| {
-    //         let state = this.model.read(cx);
-    //         println!("STATE SUBSCRIBED {:?}", state);
-    //         let _ = cx.subscribe(&this.model, |emitter, event, cx| {
-    //             println!("StateController event: {:?}", event);
-    //         });
-    //     });
-    // }
-
     pub fn update(f: impl FnOnce(&mut Self, &mut WindowContext), cx: &mut WindowContext) {
         if !cx.has_global::<Self>() {
             return;
@@ -106,7 +92,6 @@ impl StateController {
     pub fn set_input(&self, wcx: &mut WindowContext, input: String) {
         self.model.update(wcx, |model, cx| {
             model.input = Some(input.clone());
-            println!("EVENT EMITTED");
             cx.notify();
             cx.emit(AppEvent::InputUpdated(input));
         });
@@ -152,36 +137,6 @@ impl StateController {
             Window::set_height(wcx, size.height.0 + 16.);
         }
     }
-
-    // pub fn request_assistant(&self, cx: &mut WindowContext) {
-    //     let state = self.model.read(cx);
-    //     let assistant = cx.global::<Assistant>().clone();
-
-    //     if let Some(input) = state.input.clone() {
-    //         if input.is_empty() {
-    //             return;
-    //         }
-
-    //         let mode = state.mode.clone().unwrap();
-
-    //         cx.spawn(|mut cx| async move {
-    //             let output = assistant.ask(mode, &input).await;
-
-    //             Self::update_async(
-    //                 |this, cx| {
-    //                     this.set_loading(cx, false);
-
-    //                     let _ = match output {
-    //                         Ok(text) => this.set_output(cx, text),
-    //                         Err(err) => this.set_error(cx, Some(err)),
-    //                     };
-    //                 },
-    //                 &mut cx,
-    //             );
-    //         })
-    //         .detach();
-    //     }
-    // }
 }
 
 /* Helper functions */

@@ -8,13 +8,13 @@ use serde::Deserialize;
 use std::env;
 
 #[derive(Clone, Deserialize, Debug)]
-struct Message {
+pub struct Message {
     pub role: String,
     pub content: String,
 }
 
 #[derive(Clone, Deserialize, Debug)]
-struct Provider {
+pub struct Provider {
     pub name: String,
     pub model: String,
 }

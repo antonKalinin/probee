@@ -1,6 +1,7 @@
 use gpui::*;
 
 use crate::api::*;
+use crate::assistant::*;
 use crate::events::*;
 use crate::state::*;
 use crate::theme::Theme;
@@ -21,7 +22,44 @@ pub struct Root {
 }
 
 impl Root {
-    pub fn build(wcx: &mut WindowContext, state: Model<State>) -> View<Self> {
+    pub fn build(wcx: &mut WindowContext) -> View<Self> {
+        let state_controler = wcx.global::<StateController>().clone();
+
+        let _app_events_subscribtion = wcx
+            .subscribe(&state_controler.model, |_model, event, cx| {
+                let _ = match event.clone() {
+                    AppEvent::InputUpdated(input) => {
+                        let assistant = cx.global::<Assistant>().clone();
+                        let assistant_config = get_active_assistant(cx);
+
+                        if assistant_config.is_none() {
+                            // TODO: Show an error
+                            return;
+                        }
+
+                        cx.spawn(|mut cx| async move {
+                            let output = assistant.request(&input, assistant_config.unwrap()).await;
+
+                            StateController::update_async(
+                                |this, cx| {
+                                    this.set_loading(cx, false);
+
+                                    let _ = match output {
+                                        Ok(text) => this.set_output(cx, text),
+                                        Err(err) => this.set_error(cx, Some(err)),
+                                    };
+                                },
+                                &mut cx,
+                            );
+                        })
+                        .detach();
+                    }
+                };
+            })
+            .detach();
+
+        let state = state_controler.model.clone();
+
         let view = wcx.new_view(|cx| {
             let api = cx.global::<Api>().clone();
 
