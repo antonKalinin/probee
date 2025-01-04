@@ -7,10 +7,10 @@ pub struct Intro {
 }
 
 const INTRO_TEXT: &str = "\
-Cmdi an app to shortcut your request to AI.
+⚡ Command I is your shortcut to custom AI prompts.
 
-• CMD+I to run selected command
-• CMD+SHIFT+I to hide the app
+• Cmd+I to run selected command
+• Cmd+Shift+I to hide or show the app
 ";
 
 impl Intro {
