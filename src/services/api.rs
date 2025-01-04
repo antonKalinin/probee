@@ -60,13 +60,15 @@ impl Api {
     }
 
     pub async fn get_assistants(&self) -> Result<Vec<AssistantConfig>> {
-        let url = format!("{}{}", self.base_url, "/v2/assistants");
+        let url = format!("{}{}", self.base_url, "/v1/assistants");
         let response = self
             .client
             .get(url)
             .send()
             .await
             .map_err(|original_err| ApiError::RequestError(original_err))?;
+
+        // TODO: Check response status code and return error if it's not 200
 
         let decoded_response = response
             .json::<GetAssistantsResponse>()
