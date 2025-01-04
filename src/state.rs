@@ -134,7 +134,7 @@ impl StateController {
         });
 
         if resized {
-            Window::set_height(wcx, size.height.0 + 16.);
+            Window::set_height(wcx, size.height.0);
         }
     }
 }

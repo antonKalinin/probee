@@ -185,9 +185,9 @@ impl Render for Root {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
-        let actions_row = div().flex().flex_row().flex_wrap().mb_2();
-        let content_col = div().flex().flex_col().flex_grow();
-        let title_row = div().flex().flex_row().items_start();
+        let actions_row = div().flex().flex_row().flex_wrap().p_2();
+        let content_col = div().flex().flex_col().flex_grow().p_2();
+        let title_row = div().flex().flex_row().items_start().p_2();
 
         let app_button = div().flex().child(self.app_button.clone());
         let mut title_buttons = self
@@ -219,13 +219,13 @@ impl Render for Root {
         let dynamic_height_content = div()
             .child(title_row.children(title_buttons))
             .child(actions_row.children(assistant_buttons))
-            .child(content_col.children([intro, loading, error, output]));
+            .child(content_col.children([intro, loading, output]))
+            .child(error);
 
         div()
             .size_full()
             .flex()
             .flex_col()
-            .p_2()
             .bg(theme.background)
             .border_color(theme.border)
             .child(

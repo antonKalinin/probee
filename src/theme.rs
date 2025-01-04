@@ -83,6 +83,7 @@ pub struct Theme {
     pub subtext: Hsla,
 
     pub amber400: Hsla,
+    pub red100: Hsla,
     pub red500: Hsla,
     pub sky500: Hsla,
     pub sky600: Hsla,
@@ -118,6 +119,7 @@ impl Theme {
 
             // tailwind
             amber400: Hsla::from(rgb(0xfbbf24)),
+            red100: Hsla::from(rgb(0xfee2e2)),
             red500: Hsla::from(rgb(0xef4444)),
             sky500: Hsla::from(rgb(0x0ea5e9)),
             sky600: Hsla::from(rgb(0x0284c7)),

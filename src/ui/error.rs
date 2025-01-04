@@ -2,6 +2,7 @@ use gpui::*;
 
 use crate::state::State;
 use crate::theme::Theme;
+use crate::ui::Icon;
 
 pub struct ErrorView {
     visible: bool,
@@ -40,25 +41,60 @@ impl Render for ErrorView {
             return div().into_any_element();
         }
 
+        let bg_color = linear_gradient(
+            180.,
+            linear_color_stop(theme.background.opacity(0.), 0.),
+            linear_color_stop(theme.red100, 1.),
+        );
+
+        let (error_title, error_body) = self
+            .message
+            .clone()
+            .split_once("\n")
+            .map(|(title, body)| (title.to_string(), body.to_string()))
+            .unwrap_or((
+                String::from("Unknown error"),
+                String::from("Something went wrong"),
+            ));
+
+        let alert_icon = div()
+            .flex()
+            .items_center()
+            .justify_center()
+            .p_2()
+            .mr_2()
+            .rounded_full()
+            .shadow_md()
+            .bg(theme.background)
+            .child(
+                svg()
+                    .path(Icon::TriangleAlert.path())
+                    .text_color(theme.red500)
+                    .w_4()
+                    .h_4(),
+            );
+
         let title = div()
-            .mb_1()
-            .text_color(theme.red500)
+            .text_color(theme.text)
             .text_size(theme.text_size)
-            .child("🙈 Error occurred");
+            .child(error_title);
 
         let body = div()
             .text_color(theme.subtext)
             .text_size(theme.subtext_size)
-            .child(self.message.clone());
+            .child(error_body);
+
+        let row = div().flex().flex_row().items_start();
+        let col = div().flex().flex_col();
 
         return div()
+            .bg(bg_color)
             .flex()
             .flex_col()
             .p_4()
             .w_full()
             .justify_center()
-            .child(title)
-            .child(body)
+            .child(row.child(alert_icon).child(col.child(title).child(body)))
             .into_any_element();
     }
 }

@@ -7,6 +7,8 @@ use reqwest::{
 use serde::Deserialize;
 use std::env;
 
+use crate::errors::ApiError;
+
 #[derive(Clone, Deserialize, Debug)]
 pub struct Message {
     pub role: String,
@@ -58,11 +60,20 @@ impl Api {
     }
 
     pub async fn get_assistants(&self) -> Result<Vec<AssistantConfig>> {
-        let url = format!("{}{}", self.base_url, "/v1/assistants");
-        let response = self.client.get(url).send().await?;
-        let response = response.json::<GetAssistantsResponse>().await?;
+        let url = format!("{}{}", self.base_url, "/v2/assistants");
+        let response = self
+            .client
+            .get(url)
+            .send()
+            .await
+            .map_err(|original_err| ApiError::RequestError(original_err))?;
 
-        let assistants = response.assistants;
+        let decoded_response = response
+            .json::<GetAssistantsResponse>()
+            .await
+            .map_err(|original_err| ApiError::DecodingError(original_err))?;
+
+        let assistants = decoded_response.assistants;
 
         Ok(assistants)
     }

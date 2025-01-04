@@ -59,6 +59,7 @@ pub enum Icon {
     TextCursorInput,
     Trash,
     Trash2,
+    TriangleAlert,
     WholeWord,
     X,
 }
