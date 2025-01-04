@@ -4,29 +4,29 @@ use thiserror::Error;
 pub enum ApiError {
     #[error("Failed to decode response from API\n{0}")]
     DecodingError(reqwest::Error),
-    #[error("Request to API failed with response:\n{0}")]
+    #[error("Request to API failed\n{0}")]
     RequestError(reqwest::Error),
 }
 
 #[allow(dead_code)]
 #[derive(Error, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InputError {
-    #[error("Error while getting screen selection. Please provide Cmdi Accessibility permissions: Settings -> Security & Privacy -> Accessibility")]
+    #[error("Error while getting screen selection\nPlease provide Cmdi Accessibility permissions: Settings -> Security & Privacy -> Accessibility")]
     SelectionApiError,
-    #[error("Error while getting clipboard content. Please try again.")]
+    #[error("Error while getting clipboard content\nPlease try again.")]
     ClipboardError,
-    #[error("No text provided as input. Please copy some text and try again.")]
+    #[error("No text provided as input\nPlease copy some text and try again.")]
     EmptyTextInputError,
     #[error("Can't resolve assistnat intructions")]
     MissingSystemPromptError,
-    #[error("We don't know what happened but it's not your fault. Please try again.")]
+    #[error("We don't know what happened but it's not your fault\nPlease try again.")]
     UnknownError,
 }
 
 #[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum OutputError {
-    #[error("Request to assistant failed with response:\n{0}")]
+    #[error("Request to assistant failed\n{0}")]
     AssistantRequestError(String),
-    #[error("No response from assistant. Please try again.")]
+    #[error("No response from assistant\nPlease try again.")]
     EmptyResponseError,
 }
