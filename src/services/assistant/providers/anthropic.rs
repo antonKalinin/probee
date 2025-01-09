@@ -1,5 +1,4 @@
 use anyhow::Result;
-use gpui::{AppContext, Global};
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client,
@@ -7,14 +6,8 @@ use reqwest::{
 use serde::{Deserialize, Serialize};
 use std::env;
 
-use crate::api::AssistantConfig;
 use crate::errors::*;
-
-/**
- * By design LLM service should be agnostic to LLM provider.
- * Currently as a short term solution we use Anthropic API.
- * In the future, we can request own API which is proxy to multiple LLM providers.
-*/
+use crate::services::assistant::AssistantProvider;
 
 #[derive(Serialize)]
 struct Message {
@@ -43,13 +36,13 @@ struct AnthropicResponse {
     role: String,
 }
 
-#[derive(Clone)]
-pub struct Assistant {
+#[derive(Clone, Debug)]
+pub struct AnthropicProvider {
     client: Client,
 }
 
-impl Assistant {
-    pub fn init(cx: &mut AppContext) {
+impl AnthropicProvider {
+    pub fn new() -> Self {
         let api_key = env!("ANTHROPIC_API_KEY");
 
         if api_key.is_empty() {
@@ -64,31 +57,20 @@ impl Assistant {
 
         let client = Client::builder().default_headers(headers).build().unwrap();
 
-        cx.set_global(Assistant { client });
+        Self { client }
     }
+}
 
-    fn resolve_system_prompt(&self, config: AssistantConfig) -> Result<String> {
-        let system_prompt = config
-            .messages
-            .iter()
-            .find(|message| message.role == "system");
-
-        if let Some(system_prompt) = system_prompt {
-            return Ok(system_prompt.content.clone());
-        } else {
-            return Err(InputError::MissingSystemPromptError.into());
-        }
-    }
-
-    pub async fn request(&self, input: &str, config: AssistantConfig) -> Result<String> {
-        let system_prompt = self.resolve_system_prompt(config)?;
+#[async_trait::async_trait]
+impl AssistantProvider for AnthropicProvider {
+    async fn generate_response(&self, system_prompt: String, user_input: String) -> Result<String> {
         let request = AnthropicRequest {
             model: "claude-3-5-sonnet-20241022".to_owned(),
             system: system_prompt,
             temperature: 0.2,
             messages: vec![Message {
                 role: "user".to_owned(),
-                content: input.to_owned(),
+                content: user_input,
             }],
             max_tokens: 1024,
         };
@@ -113,6 +95,8 @@ impl Assistant {
 
         Err(OutputError::EmptyResponseError.into())
     }
-}
 
-impl Global for Assistant {}
+    fn box_clone(&self) -> Box<dyn AssistantProvider> {
+        Box::new(self.clone())
+    }
+}

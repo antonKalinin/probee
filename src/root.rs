@@ -1,6 +1,7 @@
 use gpui::*;
 
 use crate::assistant::*;
+use crate::errors::*;
 use crate::events::*;
 use crate::state::*;
 use crate::theme::Theme;
@@ -25,17 +26,26 @@ impl Root {
         let _app_events_subscribtion = wcx
             .subscribe(&state_controler.model, |_model, event, cx| {
                 let _ = match event.clone() {
-                    AppEvent::InputUpdated(input) => {
-                        let assistant = cx.global::<Assistant>().clone();
+                    AppEvent::AssistantChanged(_id) => {
+                        // TODO: As soon as assistant is changed, reset it in cx.global
+                    }
+                    AppEvent::InputChanged(input) => {
+                        let mut assistant = cx.global::<Assistant>().clone();
                         let assistant_config = get_active_assistant(cx);
-
                         if assistant_config.is_none() {
-                            // TODO: Show an error
+                            let err = AssistantError::MissingConfig.into();
+                            set_error(cx, Some(err));
                             return;
                         }
 
+                        let _ = assistant.set_config(assistant_config.unwrap().clone());
+
+                        set_error(cx, None);
+                        set_output(cx, "".to_owned());
+                        set_loading(cx, true);
+
                         cx.spawn(|mut cx| async move {
-                            let output = assistant.request(&input, assistant_config.unwrap()).await;
+                            let output = assistant.generate_response(input).await;
 
                             StateController::update_async(
                                 |this, cx| {

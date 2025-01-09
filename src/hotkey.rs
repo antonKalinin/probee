@@ -47,11 +47,6 @@ impl HotkeyManager {
 
                             let clipboard = cx.global_mut::<Clipboard>();
                             let input_text = clipboard.get_text();
-                            let active_assistant = get_active_assistant(cx);
-
-                            if active_assistant.is_none() {
-                                return;
-                            }
 
                             if input_text.is_err() {
                                 let err = input_text.unwrap_err();
@@ -60,7 +55,6 @@ impl HotkeyManager {
                             }
 
                             let input_text = input_text.unwrap();
-                            let empty_text = "".to_owned();
 
                             if input_text.is_empty() {
                                 let err = InputError::EmptyTextInputError.into();
@@ -68,10 +62,7 @@ impl HotkeyManager {
                                 return;
                             }
 
-                            set_error(cx, None);
                             set_input(cx, input_text);
-                            set_output(cx, empty_text);
-                            set_loading(cx, true);
                         });
                     }
                 }

@@ -11,5 +11,6 @@ pub enum UiEvent {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum AppEvent {
-    InputUpdated(String),
+    InputChanged(String),
+    AssistantChanged(String),
 }

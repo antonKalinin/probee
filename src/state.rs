@@ -70,7 +70,12 @@ impl StateController {
 
     pub fn set_active_assistant_id(&self, wcx: &mut WindowContext, id: Option<String>) {
         self.model.update(wcx, |model, cx| {
-            model.active_assistant_id = id;
+            model.active_assistant_id = id.clone();
+
+            if let Some(id) = id {
+                cx.emit(AppEvent::AssistantChanged(id));
+            }
+
             cx.notify();
         });
     }
@@ -93,7 +98,7 @@ impl StateController {
         self.model.update(wcx, |model, cx| {
             model.input = Some(input.clone());
             cx.notify();
-            cx.emit(AppEvent::InputUpdated(input));
+            cx.emit(AppEvent::InputChanged(input));
         });
     }
 

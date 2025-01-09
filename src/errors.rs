@@ -8,6 +8,16 @@ pub enum ApiError {
     RequestError(reqwest::Error),
 }
 
+#[derive(Error, Debug)]
+pub enum AssistantError {
+    #[error("Assistant config is missing\nWe know about this issue and are working on it.")]
+    MissingConfig,
+    #[error("Assistant provider is missing\nWe know about this issue and are working on it.")]
+    MissingProvider,
+    #[error("Unsupported assistant provider\n{0}")]
+    UnsupportedProvider(String),
+}
+
 #[allow(dead_code)]
 #[derive(Error, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InputError {
