@@ -109,6 +109,13 @@ impl StateController {
         });
     }
 
+    pub fn append_output(&self, wcx: &mut WindowContext, output: String) {
+        self.model.update(wcx, |model, cx| {
+            model.output.push_str(&output);
+            cx.notify();
+        });
+    }
+
     pub fn set_error(&self, wcx: &mut WindowContext, error: Option<Error>) {
         self.model.update(wcx, |model, cx| {
             model.error = error;
@@ -175,10 +182,22 @@ pub fn set_output(cx: &mut WindowContext, output: String) {
     StateController::update(|this, cx| this.set_output(cx, output), cx);
 }
 
+pub fn append_output_async(cx: &mut AsyncWindowContext, output: String) {
+    StateController::update_async(|this, cx| this.append_output(cx, output), cx);
+}
+
 pub fn set_loading(cx: &mut WindowContext, loading: bool) {
     StateController::update(|this, cx| this.set_loading(cx, loading), cx);
 }
 
+pub fn set_loading_async(cx: &mut AsyncWindowContext, loading: bool) {
+    StateController::update_async(|this, cx| this.set_loading(cx, loading), cx);
+}
+
 pub fn set_error(cx: &mut WindowContext, error: Option<Error>) {
     StateController::update(|this, cx| this.set_error(cx, error), cx);
+}
+
+pub fn set_error_async(cx: &mut AsyncWindowContext, error: Option<Error>) {
+    StateController::update_async(|this, cx| this.set_error(cx, error), cx);
 }

@@ -16,21 +16,24 @@ entitlements = "macos/entitlements.plist"
 
 [dependencies]
 anyhow = "1.0.91"                                                                                        # error handling
-arboard = "3.4.1"
+arboard = "3.4.1"                                                                                        # clipboard access
 async-std = { version = "1.13.0", features = ["attributes", "tokio1"] }
-async-trait = "0.1.85"
+async-trait = "0.1.85"                                                                                   # async traits for assistant providers
 dotenv = "0.15.0"                                                                                        # env vars
+futures = "0.3.31"                                                                                       # stream processing
 global-hotkey = "0.6.3"                                                                                  # global hotkeys
 gpui = { git = "https://github.com/antonKalinin/zed", rev = "b9b995af25394e05f7753becacf79273d572b243" } # ui framework (forked and patched to support window size changes)
 image = "0.25.4"                                                                                         # image processing
 ocrs = "0.9.0"                                                                                           # text detection and recognition
-reqwest = { version = "0.12.9", features = ["json"] }                                                    # http client
+reqwest = { version = "0.12.9", features = ["json", "stream"] }                                          # http client
 rten = "0.13.1"                                                                                          # nn models and inference
 rust-embed = "8.5.0"                                                                                     # embedding assets
 serde = { version = "1.0.215", features = ["derive"] }                                                   # serialization core
-serde_json = "1.0.133"                                                                                   # json serialization
+serde_json = "1.0.133"                                                                                   # json de/serialization
 smallvec = "1.13.2"                                                                                      # optimized vector struct used in gpui elements
 thiserror = "2.0.7"                                                                                      # custom errors
+tokio = { version = "1.43.0", features = ["sync"] }
+tokio-stream = "0.1.17"
 unicode-segmentation = "1.12.0"                                                                          # character segmentation for input handling
 
 [build-dependencies]

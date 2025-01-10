@@ -33,10 +33,11 @@ pub enum InputError {
     UnknownError,
 }
 
+#[allow(dead_code)]
 #[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum OutputError {
     #[error("Request to assistant failed\n{0}")]
     AssistantRequestError(String),
     #[error("No response from assistant\nPlease try again.")]
-    EmptyResponseError,
+    NoResponseError,
 }

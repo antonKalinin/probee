@@ -1,10 +1,13 @@
 use anyhow::Result;
+use futures::StreamExt;
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client,
 };
 use serde::{Deserialize, Serialize};
 use std::env;
+use tokio::sync::mpsc::channel;
+use tokio_stream::wrappers::ReceiverStream;
 
 use crate::errors::*;
 use crate::services::assistant::AssistantProvider;
@@ -22,18 +25,78 @@ struct AnthropicRequest {
     messages: Vec<Message>,
     temperature: f32,
     max_tokens: i32,
+    stream: bool,
 }
 
-#[derive(Deserialize, Debug)]
-struct Content {
+#[derive(Debug, Deserialize)]
+#[serde(tag = "type")]
+enum StreamEvent {
+    #[serde(rename = "message_start")]
+    MessageStart,
+
+    #[serde(rename = "content_block_start")]
+    ContentBlockStart,
+
+    #[serde(rename = "content_block_delta")]
+    ContentBlockDelta { delta: Delta },
+
+    #[serde(rename = "content_block_stop")]
+    ContentBlockStop,
+
+    #[serde(rename = "message_delta")]
+    MessageDelta,
+
+    #[serde(rename = "message_stop")]
+    MessageStop,
+
+    #[serde(rename = "ping")]
+    Ping,
+}
+
+#[derive(Debug, Deserialize)]
+struct StreamMessage {
+    id: String,
+    #[serde(rename = "type")]
+    message_type: String,
+    role: String,
+    content: Vec<ContentBlock>,
+    model: String,
+    stop_reason: Option<String>,
+    stop_sequence: Option<String>,
+    usage: Usage,
+}
+
+#[derive(Debug, Deserialize)]
+struct ContentBlock {
+    #[serde(rename = "type")]
+    block_type: String,
     text: String,
 }
 
-#[derive(Deserialize, Debug)]
-struct AnthropicResponse {
-    content: Vec<Content>,
-    model: String,
-    role: String,
+#[derive(Debug, Deserialize)]
+struct Usage {
+    input_tokens: u32,
+    output_tokens: u32,
+}
+
+#[derive(Debug, Deserialize)]
+struct ContentBlockStart {
+    #[serde(rename = "type")]
+    block_type: String,
+    text: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct Delta {
+    #[serde(rename = "type")]
+    delta_type: String,
+    text: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct MessageDeltaContent {
+    stop_reason: Option<String>,
+    stop_sequence: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -61,9 +124,15 @@ impl AnthropicProvider {
     }
 }
 
+type ResultStream = ReceiverStream<String>;
+
 #[async_trait::async_trait]
 impl AssistantProvider for AnthropicProvider {
-    async fn generate_response(&self, system_prompt: String, user_input: String) -> Result<String> {
+    async fn generate_response(
+        &self,
+        system_prompt: String,
+        user_input: String,
+    ) -> Result<ResultStream> {
         let request = AnthropicRequest {
             model: "claude-3-5-sonnet-20241022".to_owned(),
             system: system_prompt,
@@ -73,6 +142,7 @@ impl AssistantProvider for AnthropicProvider {
                 content: user_input,
             }],
             max_tokens: 1024,
+            stream: true,
         };
 
         let response = self
@@ -87,13 +157,58 @@ impl AssistantProvider for AnthropicProvider {
             return Err(OutputError::AssistantRequestError(error_text).into());
         }
 
-        let anthropic_response: AnthropicResponse = response.json().await?;
+        let (tx, rx) = channel(1);
+        let output_stream = ReceiverStream::new(rx);
+        let mut response_stream = response.bytes_stream();
 
-        if let Some(first_content) = anthropic_response.content.first() {
-            return Ok(first_content.text.to_owned());
-        }
+        tokio::spawn(async move {
+            while let Some(chunk) = response_stream.next().await {
+                if chunk.is_err() {
+                    continue;
+                }
+                let chunk = chunk.unwrap();
+                let chunk_str = String::from_utf8_lossy(&chunk);
 
-        Err(OutputError::EmptyResponseError.into())
+                // Split the chunk into individual events
+                for line in chunk_str.lines() {
+                    if line.starts_with("event: ") {
+                        let _event_type = &line["event: ".len()..];
+                        continue;
+                    }
+
+                    if line.starts_with("data: ") {
+                        let event_data = &line["data: ".len()..];
+
+                        // Skip empty events
+                        if event_data.trim().is_empty() {
+                            continue;
+                        }
+
+                        if let Ok(event) = serde_json::from_str::<StreamEvent>(event_data) {
+                            match event {
+                                StreamEvent::ContentBlockDelta { delta } => {
+                                    if tx.send(delta.text).await.is_err() {
+                                        break;
+                                    }
+                                }
+                                _ => { /*
+                                        Ignore other events:
+                                        - content_block_start
+                                        - content_block_stop
+                                        - message_start
+                                        - message_stop
+                                        - message_delta
+                                        - ping
+                                     */
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        Ok(output_stream)
     }
 
     fn box_clone(&self) -> Box<dyn AssistantProvider> {

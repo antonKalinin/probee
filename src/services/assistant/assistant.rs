@@ -1,14 +1,21 @@
 use anyhow::{Ok, Result};
 use gpui::{AppContext, Global};
+use tokio_stream::wrappers::ReceiverStream;
 
 use crate::api::AssistantConfig;
 use crate::errors::*;
 
 use super::providers::*;
 
+type ResultStream = ReceiverStream<String>;
+
 #[async_trait::async_trait]
 pub trait AssistantProvider {
-    async fn generate_response(&self, system_prompt: String, user_input: String) -> Result<String>;
+    async fn generate_response(
+        &self,
+        system_prompt: String,
+        user_input: String,
+    ) -> Result<ResultStream>;
 
     fn box_clone(&self) -> Box<dyn AssistantProvider>;
 }
@@ -60,7 +67,6 @@ impl Assistant {
             "anthropic" => {
                 self.config = Some(config);
                 self.provider = Some(Box::new(AnthropicProvider::new()));
-                println!("Provider: {:?}", &self.provider.is_some());
             }
             _ => {
                 return Err(AssistantError::UnsupportedProvider(provider_name).into());
@@ -70,7 +76,7 @@ impl Assistant {
         Ok(())
     }
 
-    pub async fn generate_response(&self, input: String) -> Result<String> {
+    pub async fn generate_response(&self, input: String) -> Result<ResultStream> {
         if self.provider.is_none() {
             return Err(AssistantError::MissingProvider.into());
         }
@@ -78,9 +84,9 @@ impl Assistant {
         let system_prompt = self.resolve_system_prompt()?;
         let provider = self.provider.as_ref().unwrap();
 
-        return provider
+        provider
             .generate_response(system_prompt, input.to_owned())
-            .await;
+            .await
     }
 }
 

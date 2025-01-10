@@ -1,3 +1,4 @@
+use async_std::stream::StreamExt;
 use gpui::*;
 
 use crate::assistant::*;
@@ -48,17 +49,16 @@ impl Root {
                         cx.spawn(|mut cx| async move {
                             let output = assistant.generate_response(input).await;
 
-                            StateController::update_async(
-                                |this, cx| {
-                                    this.set_loading(cx, false);
+                            set_loading_async(&mut cx, false);
 
-                                    let _ = match output {
-                                        Ok(text) => this.set_output(cx, text),
-                                        Err(err) => this.set_error(cx, Some(err)),
-                                    };
-                                },
-                                &mut cx,
-                            );
+                            let _ = match output {
+                                Ok(mut stream) => {
+                                    while let Some(item) = stream.next().await {
+                                        append_output_async(&mut cx, item);
+                                    }
+                                }
+                                Err(err) => set_error_async(&mut cx, Some(err)),
+                            };
                         })
                         .detach();
                     }
