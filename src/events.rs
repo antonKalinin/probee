@@ -7,6 +7,7 @@ pub enum UiEvent {
     CopyOutput,
     CloseWindow,
     HideWindow,
+    Login,
 }
 
 #[derive(Debug, Clone, PartialEq)]

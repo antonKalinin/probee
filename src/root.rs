@@ -16,6 +16,7 @@ pub struct Root {
     loading_view: View<Loading>,
 
     app_button: View<AppButton>,
+    login_button: View<LoginButton>,
     window_buttons: Vec<View<WindowButton>>,
 }
 
@@ -75,6 +76,7 @@ impl Root {
             let error_view = cx.new_view(|cx| ErrorView::new(cx, &state));
 
             let app_button = cx.new_view(|cx| AppButton::new(cx, &state));
+            let login_button = cx.new_view(|cx| LoginButton::new(cx, &state));
             let close_button = cx.new_view(|_cx| WindowButton::new(WindowAction::Close));
             let hide_button = cx.new_view(|_cx| WindowButton::new(WindowAction::Hide));
 
@@ -101,6 +103,21 @@ impl Root {
             })
             .detach();
 
+            cx.subscribe(&login_button, move |_subscriber, _emitter, event, cx| {
+                if let UiEvent::Login = event {
+                    cx.spawn(|_weak_root, mut cx| async move {
+                        let _background = cx.background_executor().clone();
+
+                        let result =
+                            cx.update(|cx| cx.open_url("https://cmdi.app/login?from=native"));
+
+                        println!("Tried to open url: {:?}", result);
+                    })
+                    .detach();
+                }
+            })
+            .detach();
+
             Root {
                 assistants_view,
                 intro_view,
@@ -109,6 +126,7 @@ impl Root {
                 loading_view,
 
                 app_button,
+                login_button,
                 window_buttons: vec![close_button, hide_button],
             }
         });
@@ -130,7 +148,8 @@ impl Render for Root {
         let assistants_row = div().pb_2().px_2();
         let content_col = div().flex().flex_col().flex_grow().pb_2().px_2();
 
-        let app_button = div().flex().child(self.app_button.clone());
+        let app_button = div().flex().ml_2().child(self.app_button.clone());
+        let login_button = div().flex().child(self.login_button.clone());
         let mut title_buttons = self
             .window_buttons
             .iter()
@@ -138,6 +157,8 @@ impl Render for Root {
             .collect::<Vec<_>>();
 
         title_buttons.push(Root::render_space());
+        // TODO: show if not auithenticated
+        title_buttons.push(login_button);
         title_buttons.push(app_button);
 
         let handle_size_measured = |size, cx: &mut WindowContext<'_>| {
