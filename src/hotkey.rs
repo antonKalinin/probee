@@ -48,18 +48,12 @@ impl HotkeyManager {
                             // First try to get screen text by selection
                             let input_text = selection::get_text();
 
-                            if input_text.is_err() {
-                                let err = input_text.unwrap_err();
-                                set_error(cx, Some(err));
-                                return;
-                            }
-
                             if let Some(input_text) = input_text.ok() {
                                 set_input(cx, input_text);
                                 return;
                             }
 
-                            // If selection is empty, try to get text from clipboard
+                            // If selection failed, try to get text from clipboard
                             let clipboard = cx.global_mut::<Clipboard>();
                             let input_text = clipboard.get_text();
 
