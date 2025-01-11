@@ -49,7 +49,7 @@ impl Assistant {
         if let Some(system_prompt) = system_prompt {
             return Ok(system_prompt.content.clone());
         } else {
-            return Err(InputError::MissingSystemPromptError.into());
+            return Err(AssistantError::MissingSystemPrompt.into());
         }
     }
 

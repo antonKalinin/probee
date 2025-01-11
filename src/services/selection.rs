@@ -3,6 +3,8 @@ use accessibility_sys::{kAXFocusedUIElementAttribute, kAXSelectedTextAttribute};
 use anyhow::{bail, Result};
 use core_foundation::string::CFString;
 
+use crate::errors::InputError;
+
 const APPLE_SCRIPT: &str = r#"
 use AppleScript version "2.4"
 use scripting additions
@@ -63,7 +65,7 @@ fn get_selected_text_by_ax() -> Result<String> {
         .ok()
         .flatten()
     else {
-        bail!("No selected element");
+        bail!(InputError::AccessibilityPermissionsMissing);
     };
 
     let Some(selected_text) = selected_element
@@ -74,7 +76,7 @@ fn get_selected_text_by_ax() -> Result<String> {
         .ok()
         .flatten()
     else {
-        bail!("No selected text")
+        bail!(InputError::TextSelectionMissing)
     };
 
     Ok(selected_text.to_string())
@@ -87,10 +89,22 @@ fn get_selected_text_fallback() -> Result<String> {
     let output = std::process::Command::new("osascript")
         .arg("-e")
         .arg(APPLE_SCRIPT)
-        .output()?;
+        .output();
+
+    if let Err(err) = output {
+        bail!(InputError::AppleScriptFailed(err.to_string()));
+    }
+
+    let output = output.unwrap();
+
     if output.status.success() {
         let content = String::from_utf8(output.stdout)?;
         let content = content.trim();
+
+        if content.is_empty() {
+            bail!(InputError::TextSelectionMissing);
+        }
+
         Ok(content.to_owned())
     } else {
         let err: String = output
@@ -100,6 +114,6 @@ fn get_selected_text_fallback() -> Result<String> {
             .collect::<String>()
             .into();
 
-        bail!(err)
+        bail!(InputError::UnknownError(err))
     }
 }
