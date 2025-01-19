@@ -1,1 +1,183 @@
-// TODO SQLite storage to keep user requests and integrations
+use std::collections::HashMap;
+use std::fs::{self, File};
+use std::io::{Read, Write};
+use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
+
+use aes_gcm::AeadCore;
+use aes_gcm::{
+    aead::{Aead, KeyInit},
+    Aes256Gcm, Nonce,
+};
+use anyhow::Result;
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+
+use crate::errors::StorageError;
+
+#[derive(Serialize, Deserialize)]
+struct EncryptedData {
+    nonce: Vec<u8>,
+    data: Vec<u8>,
+}
+
+pub struct Storage {
+    data: Arc<Mutex<HashMap<String, String>>>,
+    path: PathBuf,
+    cipher: Aes256Gcm,
+}
+
+impl Storage {
+    pub fn new(path: PathBuf, salt: &[u8]) -> Result<Self> {
+        // Create a 32-byte key by hashing the salt
+        let hash = Sha256::digest(salt);
+        // Create a cipher using the provided hashed salt
+        let cipher =
+            Aes256Gcm::new_from_slice(&hash).map_err(|_| StorageError::StorageCreationError)?;
+
+        let data = Arc::new(Mutex::new(HashMap::new()));
+        let store = Self { data, path, cipher };
+
+        // Load existing data if available
+        store.load()?;
+
+        Ok(store)
+    }
+
+    pub fn set(&self, key: String, value: String) -> Result<()> {
+        {
+            let mut data = self.data.lock().unwrap();
+            data.insert(key, value);
+        }
+
+        self.flush()?;
+
+        Ok(())
+    }
+
+    pub fn get(&self, key: &str) -> Option<String> {
+        let data = self.data.lock().unwrap();
+        data.get(key).cloned()
+    }
+
+    pub fn delete(&self, key: &str) -> Result<()> {
+        {
+            let mut data = self.data.lock().unwrap();
+            data.remove(key);
+        }
+
+        self.flush()?;
+
+        Ok(())
+    }
+
+    // TODO: Implement non blocking flush
+    fn flush(&self) -> Result<()> {
+        let data = self.data.lock().unwrap();
+        let serialized = serde_json::to_string(&*data)?;
+
+        // Generate a random nonce
+        let nonce = Aes256Gcm::generate_nonce(&mut rand::thread_rng());
+
+        // Encrypt the data
+        let encrypted = self
+            .cipher
+            .encrypt(&nonce, serialized.as_bytes())
+            .map_err(|err| StorageError::Encryption(err))?;
+
+        let encrypted_data = EncryptedData {
+            nonce: nonce.to_vec(),
+            data: encrypted,
+        };
+
+        // Serialize the encrypted data to JSON
+        let final_data = serde_json::to_string(&encrypted_data)?;
+
+        println!("Final data: {:?}", final_data);
+
+        // Write to temporary file first
+        let temp_path = self.path.with_extension("tmp");
+        let mut file = File::create(&temp_path)?;
+        file.write_all(final_data.as_bytes())?;
+        file.sync_all()?;
+
+        // Rename temporary file to actual file
+        fs::rename(temp_path, &self.path)?;
+
+        Ok(())
+    }
+
+    fn load(&self) -> Result<()> {
+        if !self.path.exists() {
+            return Ok(());
+        }
+
+        let mut file = File::open(&self.path)?;
+        let mut contents = String::new();
+        file.read_to_string(&mut contents)?;
+
+        let encrypted_data: EncryptedData = serde_json::from_str(&contents)?;
+
+        // Create nonce from stored data
+        let nonce = Nonce::from_slice(&encrypted_data.nonce);
+
+        // Decrypt the data
+        let decrypted = self
+            .cipher
+            .decrypt(nonce, encrypted_data.data.as_ref())
+            .map_err(|_| StorageError::Decryption)?;
+
+        // Convert decrypted bytes to string and parse JSON
+        let decrypted_str = String::from_utf8(decrypted).map_err(|_| StorageError::Decryption)?;
+        let loaded_data: HashMap<String, String> = serde_json::from_str(&decrypted_str)?;
+
+        let mut data = self.data.lock().unwrap();
+        *data = loaded_data;
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_basic_operations() -> Result<()> {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("store.db");
+        let salt = b"an-example-very-very-secret-key-32";
+
+        let store = Storage::new(path.clone(), salt)?;
+
+        // Test set and get
+        store.set("key1".to_string(), "value1".to_string())?;
+        assert_eq!(store.get("key1"), Some("value1".to_string()));
+
+        // Test delete
+        store.delete("key1")?;
+        assert_eq!(store.get("key1"), None);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_persistence() -> Result<()> {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("store.db");
+        let salt = b"an-example-very-very-secret-key-32";
+
+        // Create store and add data
+        {
+            let store = Storage::new(path.clone(), salt)?;
+            store.set("key1".to_string(), "value1".to_string())?;
+        }
+
+        // Create new store instance and verify data
+        let store2 = Storage::new(path.clone(), salt)?;
+        assert_eq!(store2.get("key1"), Some("value1".to_string()));
+
+        Ok(())
+    }
+}

@@ -104,7 +104,7 @@ impl Theme {
             text_foreground: Hsla::from(rgb(0xf5f5f4)),
             subtext: Hsla::from(rgb(0xa8a29e)),
             border: Hsla::from(rgb(0x78716c)),
-            border_secondary: Hsla::from(rgb(0xa8a29e)),
+            border_secondary: Hsla::from(rgb(0xd6d3d1)),
             primary: Hsla::from(rgb(0x78716c)),
             primary_hover: Hsla::from(rgb(0x57534e)),
             primary_foreground: Hsla::from(rgb(0xfafaf9)),

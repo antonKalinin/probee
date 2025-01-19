@@ -27,8 +27,10 @@ async fn main() {
     app.run(|cx: &mut AppContext| {
         Api::init(cx);
         Assistant::init(cx);
+        Auth::init(cx);
         Clipboard::init(cx);
         StateController::init(cx);
+        // Storage::init(cx);
         Theme::init(cx);
         Window::init(cx);
 

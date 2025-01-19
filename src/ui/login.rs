@@ -2,27 +2,27 @@ use crate::state::{ActiveView, State};
 use crate::theme::Theme;
 use gpui::*;
 
-pub struct Intro {
+pub struct Login {
     visible: bool,
 }
 
-const INTRO_TEXT: &str = "\
-⚡ Command I is your shortcut to custom AI prompts.
+const TEXT: &str = "\
+Please check yor email for the sign in link. \
 ";
 
-impl Intro {
+impl Login {
     pub fn new(cx: &mut ViewContext<Self>, state: &Model<State>) -> Self {
         cx.observe(state, |this, model, cx| {
-            this.visible = model.read(cx).active_view == ActiveView::IntroView;
+            this.visible = model.read(cx).active_view == ActiveView::LoginView;
             cx.notify();
         })
         .detach();
 
-        Intro { visible: true }
+        Login { visible: true }
     }
 }
 
-impl Render for Intro {
+impl Render for Login {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
@@ -40,7 +40,7 @@ impl Render for Intro {
             .line_height(theme.line_height)
             .font_family(theme.font_sans.clone())
             .font_weight(FontWeight::LIGHT)
-            .child(INTRO_TEXT.to_owned())
+            .child(TEXT.to_owned())
             .into_any_element()
     }
 }

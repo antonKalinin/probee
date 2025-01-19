@@ -32,6 +32,7 @@ impl fmt::Display for Icon {
 #[allow(dead_code)]
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Icon {
+    ArrowBigUp,
     BookA,
     BookMarked,
     BookType,

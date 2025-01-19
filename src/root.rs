@@ -4,6 +4,7 @@ use gpui::*;
 use crate::assistant::*;
 use crate::errors::*;
 use crate::events::*;
+use crate::services::Auth;
 use crate::state::*;
 use crate::theme::Theme;
 use crate::ui::*;
@@ -12,11 +13,12 @@ use crate::window::Window;
 pub struct Root {
     assistants_view: View<Assistants>,
     error_view: View<ErrorView>,
+    footer_view: View<Footer>,
     intro_view: View<Intro>,
-    output_view: View<Output>,
     loading_view: View<Loading>,
+    login_view: View<Login>,
+    output_view: View<Output>,
 
-    app_button: View<AppButton>,
     login_button: View<LoginButton>,
     window_buttons: Vec<View<WindowButton>>,
 }
@@ -40,6 +42,7 @@ impl Root {
                             return;
                         }
 
+                        // TODO: Config should not be reset on every input change
                         let _ = assistant.set_config(assistant_config.unwrap().clone());
 
                         set_error(cx, None);
@@ -62,6 +65,21 @@ impl Root {
                         })
                         .detach();
                     }
+                    AppEvent::EmailFormSubmitted(email) => {
+                        let auth = cx.global::<Auth>().clone();
+
+                        cx.spawn(|mut cx| async move {
+                            let result = auth.login_with_email(cx, email.as_str()).await;
+
+                            match result {
+                                Ok(_) => {}
+                                Err(err) => {
+                                    // set_error_async(&mut cx, Some(err));
+                                }
+                            }
+                        })
+                        .detach();
+                    }
                 };
             })
             .detach();
@@ -70,12 +88,13 @@ impl Root {
 
         let view = wcx.new_view(|cx| {
             let assistants_view = cx.new_view(|cx| Assistants::new(cx, &state));
-            let intro_view = cx.new_view(|cx| Intro::new(cx, &state));
-            let output_view = cx.new_view(|cx| Output::new(cx, &state));
-            let loading_view = cx.new_view(|cx| Loading::new(cx, &state));
             let error_view = cx.new_view(|cx| ErrorView::new(cx, &state));
+            let footer_view = cx.new_view(|cx| Footer::new(cx, &state));
+            let intro_view = cx.new_view(|cx| Intro::new(cx, &state));
+            let loading_view = cx.new_view(|cx| Loading::new(cx, &state));
+            let login_view = cx.new_view(|cx| Login::new(cx, &state));
+            let output_view = cx.new_view(|cx| Output::new(cx, &state));
 
-            let app_button = cx.new_view(|cx| AppButton::new(cx, &state));
             let login_button = cx.new_view(|cx| LoginButton::new(cx, &state));
             let close_button = cx.new_view(|_cx| WindowButton::new(WindowAction::Close));
             let hide_button = cx.new_view(|_cx| WindowButton::new(WindowAction::Hide));
@@ -94,7 +113,7 @@ impl Root {
             })
             .detach();
 
-            cx.subscribe(&app_button, move |_subscriber, _emitter, event, cx| {
+            cx.subscribe(&login_button, move |_subscriber, _emitter, event, cx| {
                 if let UiEvent::ChangeActiveView(view) = event {
                     set_active_view(cx, view.clone());
                     set_error(cx, None);
@@ -103,29 +122,15 @@ impl Root {
             })
             .detach();
 
-            cx.subscribe(&login_button, move |_subscriber, _emitter, event, cx| {
-                if let UiEvent::Login = event {
-                    cx.spawn(|_weak_root, mut cx| async move {
-                        let _background = cx.background_executor().clone();
-
-                        let result =
-                            cx.update(|cx| cx.open_url("https://cmdi.app/login?from=native"));
-
-                        println!("Tried to open url: {:?}", result);
-                    })
-                    .detach();
-                }
-            })
-            .detach();
-
             Root {
                 assistants_view,
-                intro_view,
                 error_view,
-                output_view,
+                footer_view,
+                intro_view,
                 loading_view,
+                login_view,
+                output_view,
 
-                app_button,
                 login_button,
                 window_buttons: vec![close_button, hide_button],
             }
@@ -148,8 +153,7 @@ impl Render for Root {
         let assistants_row = div().pb_2().px_2();
         let content_col = div().flex().flex_col().flex_grow().pb_2().px_2();
 
-        let app_button = div().flex().ml_2().child(self.app_button.clone());
-        let login_button = div().flex().child(self.login_button.clone());
+        let login_button = div().flex().mr_1().child(self.login_button.clone());
         let mut title_buttons = self
             .window_buttons
             .iter()
@@ -159,21 +163,22 @@ impl Render for Root {
         title_buttons.push(Root::render_space());
         // TODO: show if not auithenticated
         title_buttons.push(login_button);
-        title_buttons.push(app_button);
 
         let handle_size_measured = |size, cx: &mut WindowContext<'_>| {
             StateController::update(|this, cx| this.set_content_size(cx, size), cx);
         };
 
         let intro = div().child(self.intro_view.clone());
+        let login = div().child(self.login_view.clone());
         let output = div().child(self.output_view.clone());
         let loading = div().child(self.loading_view.clone());
 
         let dynamic_height_content = div()
             .child(title_row.children(title_buttons))
             .child(assistants_row.child(self.assistants_view.clone()))
-            .child(content_col.children([intro, loading, output]))
-            .child(self.error_view.clone());
+            .child(content_col.children([intro, login, loading, output]))
+            .child(self.error_view.clone())
+            .child(self.footer_view.clone());
 
         div()
             .size_full()

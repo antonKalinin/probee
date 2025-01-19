@@ -1,4 +1,5 @@
 use thiserror::Error;
+use url::ParseError;
 
 #[derive(Error, Debug)]
 pub enum ApiError {
@@ -9,10 +10,22 @@ pub enum ApiError {
 }
 
 #[derive(Error, Debug)]
+pub enum AuthError {
+    #[error("Error while logging in\n{0}")]
+    EmailLoginRequestError(reqwest::Error),
+    #[error("Error while loggin in\nTime out while waiting for magic link to be used. Please try to log in again.")]
+    EmailLoginTimeoutError,
+    #[error("Error while logging in\nCan't get auth code from the request. Please try again.")]
+    EmailLoginNoAuthCode,
+    #[error("Error while logging in\n{0}")]
+    EmailLoginParseError(ParseError),
+}
+
+#[derive(Error, Debug)]
 pub enum AssistantError {
-    #[error("Assistant config is missing\nWe know about this issue and are working on it.")]
+    #[error("Assistant config is missing\nIt seems that you haven't selected any assistant. In case you have, please try again or restart the app.")]
     MissingConfig,
-    #[error("Assistant provider is missing\nWe know about this issue and are working on it.")]
+    #[error("Assistant provider is missing\nPlease try again or restart the app.")]
     MissingProvider,
     #[error("Can't resolve assistnat intructions")]
     MissingSystemPrompt,
@@ -29,7 +42,7 @@ pub enum InputError {
     AppleScriptFailed(String),
     #[error("No text selected\nPlease select some text and try again.")]
     TextSelectionMissing,
-    #[error("Error while getting clipboard content\nPlease try again.")]
+    #[error("Error while getting clipboard content\nIt might be you don't have any text copied. Please copy some text and try again.")]
     ClipboardError,
     #[error("No text provided as input\nPlease copy some text and try again.")]
     EmptyTextInputError,
@@ -44,4 +57,18 @@ pub enum OutputError {
     AssistantRequestError(String),
     #[error("No response from assistant\nPlease try again.")]
     NoResponseError,
+}
+
+#[derive(Error, Debug)]
+pub enum StorageError {
+    #[error("Error while creating a storage\n")]
+    StorageCreationError,
+    #[error("Error while reading storage from disk\n{0}")]
+    Io(#[from] std::io::Error),
+    #[error("JSON error\n{0}")]
+    Json(#[from] serde_json::Error),
+    #[error("Encryption error\n{0}")]
+    Encryption(aes_gcm::Error),
+    #[error("Decryption error")]
+    Decryption,
 }

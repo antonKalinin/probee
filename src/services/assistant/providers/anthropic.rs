@@ -38,7 +38,7 @@ enum StreamEvent {
     ContentBlockStart,
 
     #[serde(rename = "content_block_delta")]
-    ContentBlockDelta { delta: Delta },
+    ContentBlockDelta { delta: Delta, index: u32 },
 
     #[serde(rename = "content_block_stop")]
     ContentBlockStop,
@@ -109,7 +109,7 @@ impl AnthropicProvider {
         let api_key = env!("ANTHROPIC_API_KEY");
 
         if api_key.is_empty() {
-            // set state error
+            // TODO: set state error
         }
 
         let mut headers = HeaderMap::new();
@@ -186,7 +186,8 @@ impl AssistantProvider for AnthropicProvider {
 
                         if let Ok(event) = serde_json::from_str::<StreamEvent>(event_data) {
                             match event {
-                                StreamEvent::ContentBlockDelta { delta } => {
+                                StreamEvent::ContentBlockDelta { delta, index } => {
+                                    // TODO: Use index to determine the order of the blocks
                                     if tx.send(delta.text).await.is_err() {
                                         break;
                                     }

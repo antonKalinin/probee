@@ -7,11 +7,11 @@ pub enum UiEvent {
     CopyOutput,
     CloseWindow,
     HideWindow,
-    Login,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum AppEvent {
     InputChanged(String),
+    EmailFormSubmitted(String),
     AssistantChanged(String),
 }
