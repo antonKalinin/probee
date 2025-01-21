@@ -2,18 +2,21 @@ use gpui::*;
 
 use crate::clipboard::Clipboard;
 use crate::events::UiEvent;
+use crate::get_active_assistant;
 use crate::state::{ActiveView, State};
 use crate::theme::Theme;
-use crate::ui::CopyOutputButton;
+
+use super::copy_output_button::CopyOutputButton;
 
 pub struct Output {
     visible: bool,
     text: String,
+    description: String,
+
     scroll_handle: ScrollHandle,
     copy_button: View<CopyOutputButton>,
 }
 
-const HINT_TEXT: &str = "Please, copy some text and press CMD + I";
 const MAX_HEIGHT: f32 = 320.0;
 
 impl Output {
@@ -21,8 +24,10 @@ impl Output {
         cx.observe(state, |this, model, cx| {
             let error = model.read(cx).error.is_some();
             let loading = model.read(cx).loading;
+            let assistant = get_active_assistant(cx);
 
             this.text = model.read(cx).output.clone();
+            this.description = assistant.map(|a| a.description.clone()).unwrap_or_default();
             this.visible =
                 model.read(cx).active_view == ActiveView::AssitantView && !loading && !error;
             cx.notify();
@@ -41,7 +46,8 @@ impl Output {
 
         Output {
             visible: false,
-            text: HINT_TEXT.to_owned(),
+            text: "".to_owned(),
+            description: "".to_owned(),
             scroll_handle: ScrollHandle::new(),
             copy_button,
         }
@@ -77,6 +83,7 @@ impl Render for Output {
             return div().into_any_element();
         }
 
+        // Render assisntant description
         if self.text.is_empty() {
             return div()
                 .flex()
@@ -85,10 +92,12 @@ impl Render for Output {
                 .w_full()
                 .h_16()
                 .items_center()
-                .justify_center()
+                .justify_start()
+                .content_center()
+                .px_2()
                 .text_color(theme.subtext)
-                .text_size(theme.text_size)
-                .child(HINT_TEXT.to_owned())
+                .text_size(theme.subtext_size)
+                .child(self.description.clone())
                 .into_any_element();
         }
 

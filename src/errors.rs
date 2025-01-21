@@ -19,6 +19,10 @@ pub enum AuthError {
     EmailLoginNoAuthCode,
     #[error("Error while logging in\n{0}")]
     EmailLoginParseError(ParseError),
+    #[error("Error while logging in\n{0}")]
+    EmailLoginCodeError(reqwest::Error),
+    #[error("Error while logging in\nAccess token or user is missing in the response. Please try again.")]
+    EmailLoginInvalidPayload,
 }
 
 #[derive(Error, Debug)]

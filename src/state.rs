@@ -7,7 +7,6 @@ use crate::window::Window;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ActiveView {
-    IntroView,
     LoginView,
     AssitantView,
 }
@@ -22,7 +21,6 @@ pub struct State {
     pub input: Option<String>,
     pub loading: bool,
     pub output: String,
-    pub email_form_visible: bool,
 }
 
 impl EventEmitter<AppEvent> for State {}
@@ -39,14 +37,13 @@ impl StateController {
         let this = Self {
             model: cx.new_model(|_| State {
                 active_assistant_id: None,
-                active_view: ActiveView::IntroView,
+                active_view: ActiveView::AssitantView,
                 assistants: vec![],
                 content_size: None,
                 error: None,
                 input: None,
                 loading: false,
                 output: "".to_owned(),
-                email_form_visible: false,
             }),
         };
 

@@ -2,7 +2,7 @@ use gpui::*;
 
 use crate::api::AssistantConfig;
 use crate::events::UiEvent;
-use crate::state::{State, StateController};
+use crate::state::State;
 use crate::theme::Theme;
 use crate::ui::Icon;
 
@@ -12,12 +12,12 @@ pub struct AssistantButton {
 }
 
 impl AssistantButton {
-    pub fn new(cx: &mut ViewContext<Self>, config: AssistantConfig, active: bool) -> Self {
-        let state = cx.global::<StateController>().model.clone();
+    pub fn new(cx: &mut ViewContext<Self>, config: AssistantConfig, state: &Model<State>) -> Self {
         let assistant_id = config.id.clone();
+        let active = state.read(cx).active_assistant_id == Some(assistant_id.clone());
 
         let _ = cx
-            .observe(&state, move |this, state: Model<State>, cx| {
+            .observe(state, move |this, state: Model<State>, cx| {
                 if let Some(state_assistant_id) = state.read(cx).active_assistant_id.as_ref() {
                     this.active = state_assistant_id == &assistant_id;
                 } else {

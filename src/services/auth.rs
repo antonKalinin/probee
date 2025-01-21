@@ -6,6 +6,7 @@ use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client,
 };
+use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::time::Duration;
 use tiny_http::Server;
@@ -21,6 +22,22 @@ pub struct Auth {
     base_url: String,
     callback_url: String,
     client: reqwest::Client,
+}
+
+#[derive(Clone, Debug)]
+pub struct AccessToken {
+    access_token: String,
+    expires_in: u64,
+    expires_at: u64,
+    refresh_token: String,
+}
+
+#[derive(Clone, Debug)]
+pub struct User {
+    id: String,
+    email: String,
+    avatar_url: String,
+    full_name: String,
 }
 
 impl Global for Auth {}
@@ -61,7 +78,11 @@ impl Auth {
      *
      * This method uses PKCE.
      */
-    pub async fn login_with_email(&self, cx: AsyncWindowContext, email: &str) -> Result<()> {
+    pub async fn login_with_email(
+        &self,
+        cx: AsyncWindowContext,
+        email: &str,
+    ) -> Result<(AccessToken, User)> {
         let background = cx.background_executor().clone();
         let code_verifier = generate_code_verifier();
         let code_challenge = generate_code_challenge(&code_verifier);
@@ -88,14 +109,6 @@ impl Auth {
         // Setup local server to receive the request from the browser
         let server_addr = "127.0.0.1:3100".to_owned(); // TODO: Derive from callback URL
         let server = Server::http(server_addr.clone()).expect("Failed to start server");
-
-        // cx.update(|cx| {
-        //     cx.spawn(move |mut cx| async move {
-        //         let url = open_url_rx.await?;
-        //         cx.update(|cx| cx.open_url(&url))
-        //     })
-        //     .detach_and_log_err(cx);
-        // });
 
         let code = background
             .spawn(async move {
@@ -142,24 +155,16 @@ impl Auth {
             })
             .await?;
 
-        self.exchange_code_for_token(&code, &code_verifier).await?;
+        let credentials = self.exchange_code_for_token(&code, &code_verifier).await?;
 
-        Ok(())
+        Ok(credentials)
     }
 
-    // pub fn login_with_github(&self) {
-    //     let code_verifier = generate_code_verifier();
-    //     let code_challenge = generate_code_challenge(&code_verifier);
-
-    //     let url = format!(
-    //             "{}/authorize?provider=github&response_type=code&code_challenge_method=S256&code_challenge={}&redirect_to={}",
-    //             self.base_url, code_challenge, self.callback_url
-    //         );
-
-    //     // Open the browser to the auth URL
-    // }
-
-    async fn exchange_code_for_token(&self, code: &str, code_verifier: &str) -> Result<()> {
+    async fn exchange_code_for_token(
+        &self,
+        code: &str,
+        code_verifier: &str,
+    ) -> Result<(AccessToken, User)> {
         let url = format!("{}/token?grant_type=pkce", self.base_url);
 
         let payload = serde_json::json!({
@@ -167,27 +172,53 @@ impl Auth {
             "code_verifier": code_verifier,
         });
 
-        println!("Token exchange payload: {:?}", payload);
-
         let response = self
             .client
             .post(url)
             .json(&payload)
             .send()
             .await
-            .map_err(|original_err| AuthError::EmailLoginRequestError(original_err))?;
+            .map_err(|original_err| AuthError::EmailLoginCodeError(original_err))?;
 
-        println!("Token exchange response: {:?}", response);
+        let data = response.json::<serde_json::Value>().await?;
 
-        let token = response.json::<serde_json::Value>().await?;
+        let access_token = data.get("access_token");
+        let user = data.get("user");
 
-        println!("Token: {:?}", token);
+        if access_token.is_none() || user.is_none() {
+            return Err(AuthError::EmailLoginInvalidPayload.into());
+        }
 
-        Ok(())
+        let token = AccessToken {
+            access_token: access_token.unwrap().as_str().unwrap().to_owned(),
+            expires_in: data.get("expires_in").unwrap().as_u64().unwrap(),
+            expires_at: data.get("expires_at").unwrap().as_u64().unwrap(),
+            refresh_token: data
+                .get("refresh_token")
+                .unwrap()
+                .as_str()
+                .unwrap()
+                .to_owned(),
+        };
+
+        let user_metadata = user.unwrap().get("user_metadata").unwrap();
+
+        let user = User {
+            id: unwrap_value_to_string(user.unwrap().get("id")),
+            email: unwrap_value_to_string(user.unwrap().get("email")),
+            avatar_url: unwrap_value_to_string(user_metadata.get("avatar_url")),
+            full_name: unwrap_value_to_string(user_metadata.get("full_name")),
+        };
+
+        Ok((token, user))
     }
 }
 
 const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+
+fn unwrap_value_to_string(value: Option<&Value>) -> String {
+    value.unwrap().as_str().unwrap().to_owned()
+}
 
 // Generate code verifier (random string between 43-128 chars)
 fn generate_code_verifier() -> String {

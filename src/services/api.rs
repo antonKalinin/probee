@@ -59,7 +59,7 @@ impl Api {
         });
     }
 
-    pub async fn get_assistants(&self) -> Result<Vec<AssistantConfig>> {
+    pub async fn get_public_assistants(&self) -> Result<Vec<AssistantConfig>> {
         let url = format!("{}{}", self.base_url, "/v1/assistants");
         let response = self
             .client

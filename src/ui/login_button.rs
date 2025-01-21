@@ -8,7 +8,7 @@ use crate::theme::Theme;
 pub struct LoginButton;
 
 impl LoginButton {
-    pub fn new(cx: &mut ViewContext<Self>, _state: &Model<State>) -> Self {
+    pub fn new(_cx: &mut ViewContext<Self>, _state: &Model<State>) -> Self {
         LoginButton {}
     }
 }

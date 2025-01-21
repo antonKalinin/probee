@@ -2,7 +2,7 @@ use crate::state::{ActiveView, State};
 use crate::theme::Theme;
 use gpui::*;
 
-pub struct Login {
+pub struct LoginView {
     visible: bool,
 }
 
@@ -10,7 +10,7 @@ const TEXT: &str = "\
 Please check yor email for the sign in link. \
 ";
 
-impl Login {
+impl LoginView {
     pub fn new(cx: &mut ViewContext<Self>, state: &Model<State>) -> Self {
         cx.observe(state, |this, model, cx| {
             this.visible = model.read(cx).active_view == ActiveView::LoginView;
@@ -18,11 +18,11 @@ impl Login {
         })
         .detach();
 
-        Login { visible: true }
+        LoginView { visible: false }
     }
 }
 
-impl Render for Login {
+impl Render for LoginView {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 

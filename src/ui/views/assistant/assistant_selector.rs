@@ -5,16 +5,17 @@ use crate::api::*;
 use crate::events::UiEvent;
 use crate::state::*;
 use crate::theme::Theme;
-use crate::ui::*;
 
-pub struct Assistants {
+use super::assistant_button::AssistantButton;
+
+pub struct AssistantSelector {
     assistant_ids: Vec<String>,
     assistant_buttons: Vec<View<AssistantButton>>,
 
     loading: bool,
 }
 
-impl Assistants {
+impl AssistantSelector {
     pub fn new(cx: &mut ViewContext<Self>, state: &Model<State>) -> Self {
         let api = cx.global::<Api>().clone();
 
@@ -31,7 +32,9 @@ impl Assistants {
                     let assistants = model.read(cx).assistants.clone();
 
                     this.assistant_ids = state_assistant_ids;
-                    this.assistant_buttons = Assistants::build_assistant_buttons(assistants, cx);
+                    this.assistant_buttons =
+                        AssistantSelector::build_assistant_buttons(assistants, &model, cx);
+
                     this.loading = false;
                     cx.notify();
                 }
@@ -40,17 +43,21 @@ impl Assistants {
 
         // loading assistants in the background
         cx.spawn(|weak_view, mut cx| async move {
-            let _ = weak_view.update(&mut cx, |this: &mut Assistants, cx| {
+            let _ = weak_view.update(&mut cx, |this: &mut AssistantSelector, cx| {
                 this.loading = true;
                 cx.notify();
             });
 
-            let assistants = api.get_assistants().await;
+            let assistants = api.get_public_assistants().await;
 
             StateController::update_async(
                 |this, cx| match assistants {
                     Ok(assistants) => {
-                        this.set_assistants(cx, assistants);
+                        this.set_assistants(cx, assistants.clone());
+
+                        if let Some(first_assistant) = assistants.first() {
+                            this.set_active_assistant_id(cx, Some(first_assistant.id.clone()));
+                        }
                     }
                     Err(err) => {
                         this.set_error(cx, Some(err));
@@ -61,7 +68,7 @@ impl Assistants {
         })
         .detach();
 
-        Assistants {
+        AssistantSelector {
             assistant_ids: vec![],
             assistant_buttons: vec![],
 
@@ -71,11 +78,12 @@ impl Assistants {
 
     fn build_assistant_buttons(
         assistants: Vec<AssistantConfig>,
+        state: &Model<State>,
         cx: &mut ViewContext<Self>,
     ) -> Vec<View<AssistantButton>> {
         let assistant_buttons = assistants
             .iter()
-            .map(|assistant| cx.new_view(|cx| AssistantButton::new(cx, assistant.clone(), false)))
+            .map(|assistant| cx.new_view(|cx| AssistantButton::new(cx, assistant.clone(), state)))
             .collect::<Vec<_>>();
 
         assistant_buttons.iter().for_each(|button| {
@@ -93,7 +101,7 @@ impl Assistants {
     }
 }
 
-impl Render for Assistants {
+impl Render for AssistantSelector {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
         let assistant_buttons = self
@@ -139,4 +147,4 @@ impl Render for Assistants {
     }
 }
 
-impl EventEmitter<UiEvent> for Assistants {}
+impl EventEmitter<UiEvent> for AssistantSelector {}

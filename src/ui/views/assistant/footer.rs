@@ -86,7 +86,6 @@ impl Render for Footer {
             .flex_row()
             .w_full()
             .mt_4()
-            .p_2()
             .text_color(theme.subtext)
             .text_size(theme.subtext_size)
             .line_height(theme.line_height)
