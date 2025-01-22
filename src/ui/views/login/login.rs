@@ -13,7 +13,8 @@ Please check yor email for the sign in link. \
 impl LoginView {
     pub fn new(cx: &mut ViewContext<Self>, state: &Model<State>) -> Self {
         cx.observe(state, |this, model, cx| {
-            this.visible = model.read(cx).active_view == ActiveView::LoginView;
+            let data = model.read(cx);
+            this.visible = data.active_view == ActiveView::LoginView && !data.authenticated;
             cx.notify();
         })
         .detach();

@@ -7,8 +7,9 @@ use crate::window::Window;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ActiveView {
-    LoginView,
     AssitantView,
+    LoginView,
+    ProfileView,
 }
 
 #[derive(Debug)]
@@ -16,11 +17,13 @@ pub struct State {
     pub active_assistant_id: Option<String>,
     pub active_view: ActiveView,
     pub assistants: Vec<AssistantConfig>,
+    pub authenticated: bool,
     pub content_size: Option<Size<Pixels>>,
     pub error: Option<Error>,
     pub input: Option<String>,
     pub loading: bool,
     pub output: String,
+    pub user: Option<User>,
 }
 
 impl EventEmitter<AppEvent> for State {}
@@ -39,11 +42,13 @@ impl StateController {
                 active_assistant_id: None,
                 active_view: ActiveView::AssitantView,
                 assistants: vec![],
+                authenticated: false,
                 content_size: None,
                 error: None,
                 input: None,
                 loading: false,
                 output: "".to_owned(),
+                user: None,
             }),
         };
 
@@ -156,6 +161,20 @@ impl StateController {
             Window::set_height(wcx, size.height.0);
         }
     }
+
+    pub fn set_authenticated(&self, wcx: &mut WindowContext, authenticated: bool) {
+        self.model.update(wcx, |model, cx| {
+            model.authenticated = authenticated;
+            cx.notify();
+        });
+    }
+
+    pub fn set_user(&self, wcx: &mut WindowContext, user: Option<User>) {
+        self.model.update(wcx, |model, cx| {
+            model.user = user;
+            cx.notify();
+        });
+    }
 }
 
 /* Helper functions */
@@ -179,6 +198,10 @@ pub fn set_active_assistant_id(cx: &mut WindowContext, id: Option<String>) {
 
 pub fn set_active_view(cx: &mut WindowContext, view: ActiveView) {
     StateController::update(|this, cx| this.set_active_view(cx, view), cx);
+}
+
+pub fn set_active_view_async(cx: &mut AsyncWindowContext, view: ActiveView) {
+    StateController::update_async(|this, cx| this.set_active_view(cx, view), cx);
 }
 
 pub fn set_input(cx: &mut WindowContext, input: String) {
@@ -207,4 +230,16 @@ pub fn set_error(cx: &mut WindowContext, error: Option<Error>) {
 
 pub fn set_error_async(cx: &mut AsyncWindowContext, error: Option<Error>) {
     StateController::update_async(|this, cx| this.set_error(cx, error), cx);
+}
+
+pub fn set_authenticated(cx: &mut WindowContext, authenticated: bool) {
+    StateController::update(|this, cx| this.set_authenticated(cx, authenticated), cx);
+}
+
+pub fn set_authenticated_async(cx: &mut AsyncWindowContext, authenticated: bool) {
+    StateController::update_async(|this, cx| this.set_authenticated(cx, authenticated), cx);
+}
+
+pub fn set_user_async(cx: &mut AsyncWindowContext, user: Option<User>) {
+    StateController::update_async(|this, cx| this.set_user(cx, user), cx);
 }

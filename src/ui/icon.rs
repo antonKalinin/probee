@@ -38,6 +38,7 @@ pub enum Icon {
     BookType,
     Check,
     CircleX,
+    CircleUserRound,
     Command,
     Copy,
     Eraser,

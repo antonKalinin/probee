@@ -62,15 +62,17 @@ impl Window {
         options
     }
 
-    pub fn toggle(cx: &mut WindowContext) {
+    pub fn show(cx: &mut WindowContext) {
         cx.update_global::<Self, _>(|this, cx| {
-            if this.hidden {
-                cx.activate_window();
-                this.hidden = false;
-            } else {
-                cx.hide();
-                this.hidden = true;
-            }
+            cx.activate_window();
+            this.hidden = false;
+        });
+    }
+
+    pub fn hide(cx: &mut WindowContext) {
+        cx.update_global::<Self, _>(|this, cx| {
+            cx.hide();
+            this.hidden = true;
         });
     }
 

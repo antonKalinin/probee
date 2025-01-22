@@ -4,7 +4,7 @@ use gpui::*;
 use crate::assistant::*;
 use crate::errors::*;
 use crate::events::*;
-use crate::services::Auth;
+use crate::services::{Auth, Storage};
 use crate::state::*;
 use crate::theme::Theme;
 use crate::ui::*;
@@ -63,19 +63,37 @@ impl Root {
                     }
                     AppEvent::EmailFormSubmitted(email) => {
                         let auth = cx.global::<Auth>().clone();
+                        let storage = cx.global::<Storage>().clone();
 
                         cx.spawn(|mut cx| async move {
-                            let credentials = auth.login_with_email(cx, email.as_str()).await;
+                            let credentials = auth.login_with_email(&cx, email.as_str()).await;
 
                             match credentials {
                                 Ok((token, user)) => {
-                                    println!("TOKEN: {:?}", token);
-                                    println!("USER: {:?}", user);
+                                    let a = storage.set("access_token".into(), token.access_token);
+                                    let b =
+                                        storage.set("refresh_token".into(), token.refresh_token);
+                                    let c = storage.set(
+                                        "access_token_expires_at".into(),
+                                        token.expires_at.to_string(),
+                                    );
+
+                                    match (a, b, c) {
+                                        (Ok(_), Ok(_), Ok(_)) => {
+                                            set_authenticated_async(&mut cx, true);
+                                            set_user_async(&mut cx, Some(user));
+                                            set_active_view_async(&mut cx, ActiveView::ProfileView);
+                                        }
+                                        _ => {
+                                            let err = StorageError::SetError.into();
+                                            set_error_async(&mut cx, Some(err));
+                                        }
+                                    }
                                 }
                                 Err(err) => {
-                                    // set_error_async(&mut cx, Some(err));
+                                    set_error_async(&mut cx, Some(err));
                                 }
-                            }
+                            };
                         })
                         .detach();
                     }
@@ -103,7 +121,7 @@ impl Root {
 
             cx.subscribe(&hide_button, move |_subscriber, _emitter, event, cx| {
                 if let UiEvent::HideWindow = event {
-                    Window::toggle(cx);
+                    Window::hide(cx);
                 }
             })
             .detach();

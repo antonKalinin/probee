@@ -21,6 +21,7 @@ arboard = "3.4.1"                                                               
 async-std = { version = "1.13.0", features = ["attributes", "tokio1"] }
 async-trait = "0.1.85"                                                                                   # async traits for assistant providers
 base64 = "0.22.1"                                                                                        # authentication
+dirs = "6.0.0"                                                                                           # app data directory
 dotenv = "0.15.0"                                                                                        # env vars
 futures = "0.3.31"                                                                                       # stream processing
 global-hotkey = "0.6.3"                                                                                  # global hotkeys

@@ -75,4 +75,6 @@ pub enum StorageError {
     Encryption(aes_gcm::Error),
     #[error("Decryption error")]
     Decryption,
+    #[error("Error while setting a value\nPlease try to perform the operation again.")]
+    SetError,
 }

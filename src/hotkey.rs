@@ -41,9 +41,11 @@ impl HotkeyManager {
                     if event.state == global_hotkey::HotKeyState::Released {
                         let _ = cx.update_global::<HotkeyManager, _>(|_manager, cx| {
                             if event.id() == appearence_hotkey.id() {
-                                Window::toggle(cx);
+                                Window::hide(cx);
                                 return;
                             }
+
+                            Window::show(cx);
 
                             // First try to get screen text by selection
                             let input_text = selection::get_text();

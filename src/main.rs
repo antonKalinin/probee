@@ -1,3 +1,5 @@
+use std::env::set_var;
+
 use dotenv::dotenv;
 use gpui::*;
 
@@ -8,7 +10,6 @@ mod hotkey;
 mod root;
 mod services;
 mod state;
-mod storage;
 mod theme;
 mod ui;
 mod window;
@@ -30,7 +31,7 @@ async fn main() {
         Auth::init(cx);
         Clipboard::init(cx);
         StateController::init(cx);
-        // Storage::init(cx);
+        Storage::init(cx);
         Theme::init(cx);
         Window::init(cx);
 
@@ -38,6 +39,15 @@ async fn main() {
 
         let _ = cx.open_window(window_options, |cx| {
             HotkeyManager::init(cx);
+
+            // reading storage and initalizing state
+            let storage = cx.global::<Storage>();
+            let access_token = storage.get("access_token");
+
+            if let Some(_) = access_token {
+                println!("Authenticated");
+                set_authenticated(cx, true);
+            }
 
             // builing root view and returning it to render
             Root::build(cx)

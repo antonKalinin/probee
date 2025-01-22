@@ -10,6 +10,7 @@ use aes_gcm::{
     Aes256Gcm, Nonce,
 };
 use anyhow::Result;
+use gpui::{AppContext, Global};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
@@ -21,6 +22,7 @@ struct EncryptedData {
     data: Vec<u8>,
 }
 
+#[derive(Clone)]
 pub struct Storage {
     data: Arc<Mutex<HashMap<String, String>>>,
     path: PathBuf,
@@ -28,7 +30,27 @@ pub struct Storage {
 }
 
 impl Storage {
+    pub fn init(cx: &mut AppContext) {
+        let storage_salt = env!("STORAGE_SALT");
+
+        if storage_salt.is_empty() {
+            println!("Storage salt is not set as env variable. Storage won't be initalized.");
+            // TODO: set state error
+            return;
+        }
+
+        let mut app_dir = dirs::home_dir().expect("Could not find home directory");
+        app_dir.push(".cmdi/storage.db");
+
+        let storage = Storage::new(app_dir, storage_salt.as_bytes()).unwrap();
+
+        cx.set_global(storage);
+    }
+
     pub fn new(path: PathBuf, salt: &[u8]) -> Result<Self> {
+        // Create the storage directory if it doesn't exist
+        fs::create_dir_all(path.parent().unwrap())?;
+
         // Create a 32-byte key by hashing the salt
         let hash = Sha256::digest(salt);
         // Create a cipher using the provided hashed salt
@@ -92,8 +114,6 @@ impl Storage {
 
         // Serialize the encrypted data to JSON
         let final_data = serde_json::to_string(&encrypted_data)?;
-
-        println!("Final data: {:?}", final_data);
 
         // Write to temporary file first
         let temp_path = self.path.with_extension("tmp");
@@ -181,3 +201,5 @@ mod tests {
         Ok(())
     }
 }
+
+impl Global for Storage {}

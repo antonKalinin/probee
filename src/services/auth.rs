@@ -26,10 +26,10 @@ pub struct Auth {
 
 #[derive(Clone, Debug)]
 pub struct AccessToken {
-    access_token: String,
+    pub access_token: String,
     expires_in: u64,
-    expires_at: u64,
-    refresh_token: String,
+    pub expires_at: u64,
+    pub refresh_token: String,
 }
 
 #[derive(Clone, Debug)]
@@ -80,7 +80,7 @@ impl Auth {
      */
     pub async fn login_with_email(
         &self,
-        cx: AsyncWindowContext,
+        cx: &AsyncWindowContext,
         email: &str,
     ) -> Result<(AccessToken, User)> {
         let background = cx.background_executor().clone();
@@ -103,8 +103,6 @@ impl Auth {
             .send()
             .await
             .map_err(|original_err| AuthError::EmailLoginRequestError(original_err))?;
-
-        println!("Login with email response: {:?}", response);
 
         // Setup local server to receive the request from the browser
         let server_addr = "127.0.0.1:3100".to_owned(); // TODO: Derive from callback URL
