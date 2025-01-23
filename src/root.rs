@@ -4,7 +4,7 @@ use gpui::*;
 use crate::assistant::*;
 use crate::errors::*;
 use crate::events::*;
-use crate::services::{Auth, Storage};
+use crate::services::Auth;
 use crate::state::*;
 use crate::theme::Theme;
 use crate::ui::*;
@@ -14,8 +14,9 @@ pub struct Root {
     assistant_view: View<AssistantView>,
     error_view: View<ErrorView>,
     login_view: View<LoginView>,
+    profile_view: View<ProfileView>,
 
-    login_button: View<LoginButton>,
+    profile_button: View<ProfileButton>,
     window_buttons: Vec<View<WindowButton>>,
 }
 
@@ -63,32 +64,15 @@ impl Root {
                     }
                     AppEvent::EmailFormSubmitted(email) => {
                         let auth = cx.global::<Auth>().clone();
-                        let storage = cx.global::<Storage>().clone();
 
                         cx.spawn(|mut cx| async move {
-                            let credentials = auth.login_with_email(&cx, email.as_str()).await;
+                            let login_result = auth.login_with_email(&mut cx, email.as_str()).await;
 
-                            match credentials {
-                                Ok((token, user)) => {
-                                    let a = storage.set("access_token".into(), token.access_token);
-                                    let b =
-                                        storage.set("refresh_token".into(), token.refresh_token);
-                                    let c = storage.set(
-                                        "access_token_expires_at".into(),
-                                        token.expires_at.to_string(),
-                                    );
-
-                                    match (a, b, c) {
-                                        (Ok(_), Ok(_), Ok(_)) => {
-                                            set_authenticated_async(&mut cx, true);
-                                            set_user_async(&mut cx, Some(user));
-                                            set_active_view_async(&mut cx, ActiveView::ProfileView);
-                                        }
-                                        _ => {
-                                            let err = StorageError::SetError.into();
-                                            set_error_async(&mut cx, Some(err));
-                                        }
-                                    }
+                            match login_result {
+                                Ok(user) => {
+                                    set_user_async(&mut cx, Some(user));
+                                    set_authenticated_async(&mut cx, true);
+                                    set_active_view_async(&mut cx, ActiveView::ProfileView);
                                 }
                                 Err(err) => {
                                     set_error_async(&mut cx, Some(err));
@@ -107,8 +91,9 @@ impl Root {
             let assistant_view = cx.new_view(|cx| AssistantView::new(cx, &state));
             let error_view = cx.new_view(|cx| ErrorView::new(cx, &state));
             let login_view = cx.new_view(|cx| LoginView::new(cx, &state));
+            let profile_view = cx.new_view(|cx| ProfileView::new(cx, &state));
 
-            let login_button = cx.new_view(|cx| LoginButton::new(cx, &state));
+            let profile_button = cx.new_view(|cx| ProfileButton::new(cx, &state));
             let close_button = cx.new_view(|_cx| WindowButton::new(WindowAction::Close));
             let hide_button = cx.new_view(|_cx| WindowButton::new(WindowAction::Hide));
 
@@ -126,7 +111,7 @@ impl Root {
             })
             .detach();
 
-            cx.subscribe(&login_button, move |_subscriber, _emitter, event, cx| {
+            cx.subscribe(&profile_button, move |_subscriber, _emitter, event, cx| {
                 if let UiEvent::ChangeActiveView(view) = event {
                     set_active_view(cx, view.clone());
                     set_error(cx, None);
@@ -138,8 +123,9 @@ impl Root {
                 assistant_view,
                 error_view,
                 login_view,
+                profile_view,
 
-                login_button,
+                profile_button,
                 window_buttons: vec![close_button, hide_button],
             }
         });
@@ -160,7 +146,7 @@ impl Render for Root {
         let title_row = div().flex().flex_row().items_start().p_2();
         let content = div().flex().flex_col().flex_grow().pb_2().px_2();
 
-        let login_button = div().flex().mr_1().child(self.login_button.clone());
+        let profile_button = div().flex().mr_1().child(self.profile_button.clone());
         let mut title_buttons = self
             .window_buttons
             .iter()
@@ -169,18 +155,19 @@ impl Render for Root {
 
         title_buttons.push(Root::render_space());
         // TODO: show if not auithenticated
-        title_buttons.push(login_button);
+        title_buttons.push(profile_button);
 
         let handle_size_measured = |size, cx: &mut WindowContext<'_>| {
             StateController::update(|this, cx| this.set_content_size(cx, size), cx);
         };
 
-        let login_view = div().child(self.login_view.clone());
         let assistant_view = div().child(self.assistant_view.clone());
+        let login_view = div().child(self.login_view.clone());
+        let profile_view = div().child(self.profile_view.clone());
 
         let dynamic_height_content = div()
             .child(title_row.children(title_buttons))
-            .child(content.children([login_view, assistant_view])) // only one view is visible
+            .child(content.children([assistant_view, login_view, profile_view])) // only one view is visible per time
             .child(self.error_view.clone());
 
         div()

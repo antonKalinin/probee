@@ -13,6 +13,7 @@ use tiny_http::Server;
 use url::Url;
 
 use crate::errors::AuthError;
+use crate::services::Storage;
 
 /*
  * Auth service that uses Supabase Auth API as the backend.
@@ -78,11 +79,7 @@ impl Auth {
      *
      * This method uses PKCE.
      */
-    pub async fn login_with_email(
-        &self,
-        cx: &AsyncWindowContext,
-        email: &str,
-    ) -> Result<(AccessToken, User)> {
+    pub async fn login_with_email(&self, cx: &mut AsyncWindowContext, email: &str) -> Result<User> {
         let background = cx.background_executor().clone();
         let code_verifier = generate_code_verifier();
         let code_challenge = generate_code_challenge(&code_verifier);
@@ -96,7 +93,7 @@ impl Auth {
             "code_challenge_method": "s256",
         });
 
-        let response = self
+        let _ = self
             .client
             .post(url)
             .json(&payload)
@@ -153,9 +150,21 @@ impl Auth {
             })
             .await?;
 
-        let credentials = self.exchange_code_for_token(&code, &code_verifier).await?;
+        let (token, user) = self.exchange_code_for_token(&code, &code_verifier).await?;
+        let user_id = user.id.clone();
 
-        Ok(credentials)
+        let _: Result<()> = cx.read_global(|storage: &Storage, _cx| {
+            let expires_at = token.expires_at.to_string();
+
+            storage.set("user_id".into(), user_id)?;
+            storage.set("access_token".into(), token.access_token)?;
+            storage.set("refresh_token".into(), token.refresh_token)?;
+            storage.set("access_token_expires_at".into(), expires_at)?;
+
+            Ok(())
+        })?;
+
+        Ok(user)
     }
 
     async fn exchange_code_for_token(

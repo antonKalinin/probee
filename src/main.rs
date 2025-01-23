@@ -45,7 +45,6 @@ async fn main() {
             let access_token = storage.get("access_token");
 
             if let Some(_) = access_token {
-                println!("Authenticated");
                 set_authenticated(cx, true);
             }
 
