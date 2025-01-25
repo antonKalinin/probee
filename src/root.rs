@@ -22,7 +22,40 @@ pub struct Root {
 
 impl Root {
     pub fn build(wcx: &mut WindowContext) -> View<Self> {
+        let auth = wcx.global::<Auth>().clone();
         let state_controler = wcx.global::<StateController>().clone();
+
+        // Try to authenticate user if token is present
+        // If token is absent, nothing to do, need to login first
+        // If token is expired, try to refresh it and retry to authenticate
+        wcx.spawn(|mut cx| async move {
+            let user = auth.get_user(&mut cx).await;
+
+            match user {
+                Ok(user) => {
+                    set_user_async(&mut cx, Some(user));
+                    set_authenticated_async(&mut cx, true);
+                }
+                Err(err) => match err
+                    .downcast_ref::<AuthError>()
+                    .unwrap_or(&AuthError::UnknownError)
+                {
+                    AuthError::InvalidTokenError(_) => {
+                        let user = auth.refresh_access_token(&mut cx).await;
+
+                        match user {
+                            Ok(user) => {
+                                set_user_async(&mut cx, Some(user));
+                                set_authenticated_async(&mut cx, true);
+                            }
+                            Err(err) => set_error_async(&mut cx, Some(err)),
+                        }
+                    }
+                    _ => set_error_async(&mut cx, Some(err)),
+                },
+            };
+        })
+        .detach();
 
         let _app_events_subscribtion = wcx
             .subscribe(&state_controler.model, |_model, event, cx| {

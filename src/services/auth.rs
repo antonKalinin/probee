@@ -15,6 +15,11 @@ use url::Url;
 use crate::errors::AuthError;
 use crate::services::Storage;
 
+const STORAGE_USER_ID_KEY: &str = "user_id";
+const STORAGE_ACCESS_TOKEN_KEY: &str = "access_token";
+const STORAGE_REFRESH_TOKEN_KEY: &str = "refresh_token";
+const STORAGE_ACCESS_TOKEN_EXPIRES_AT_KEY: &str = "access_token_expires_at";
+
 /*
  * Auth service that uses Supabase Auth API as the backend.
  */
@@ -70,6 +75,30 @@ impl Auth {
 
         cx.set_global(auth);
     }
+
+    fn get_access_token(cx: &mut AsyncWindowContext) -> Option<String> {
+        cx.read_global(|storage: &Storage, _cx| storage.get(STORAGE_ACCESS_TOKEN_KEY))
+            .unwrap_or(None)
+    }
+
+    fn get_refresh_token(cx: &mut AsyncWindowContext) -> Option<String> {
+        cx.read_global(|storage: &Storage, _cx| storage.get(STORAGE_REFRESH_TOKEN_KEY))
+            .unwrap_or(None)
+    }
+
+    // fn set_token_to_store(cx: &mut AsyncWindowContext, token: AccessToken) -> Result<()> {
+    //     cx.read_global(|storage: &Storage, _cx| {
+    //         let expires_at = token.expires_at.to_string();
+
+    //         storage.set(STORAGE_ACCESS_TOKEN_KEY.into(), token.access_token)?;
+    //         storage.set(STORAGE_REFRESH_TOKEN_KEY.into(), token.refresh_token)?;
+    //         storage.set(STORAGE_ACCESS_TOKEN_EXPIRES_AT_KEY.into(), expires_at)?;
+
+    //         Ok(())
+    //     })?;
+
+    //     Ok(())
+    // }
 
     /**
      * Log in a user using magiclink.
@@ -193,7 +222,7 @@ impl Auth {
         let user = data.get("user");
 
         if access_token.is_none() || user.is_none() {
-            return Err(AuthError::EmailLoginInvalidPayload.into());
+            return Err(AuthError::EmailLoginInvalidPayloadError.into());
         }
 
         let token = AccessToken {
@@ -218,6 +247,117 @@ impl Auth {
         };
 
         Ok((token, user))
+    }
+
+    pub async fn refresh_access_token(&self, cx: &mut AsyncWindowContext) -> Result<User> {
+        let refresh_token = Auth::get_refresh_token(cx);
+
+        if refresh_token.is_none() {
+            return Err(AuthError::NoTokenError.into());
+        }
+
+        let url = format!("{}/token?grant_type=refresh_token", self.base_url);
+
+        let payload = serde_json::json!({
+            "refresh_token": refresh_token,
+        });
+
+        let response = self
+            .client
+            .post(url)
+            .json(&payload)
+            .send()
+            .await
+            .map_err(|original_err| AuthError::RefreshTokenRequestError(original_err))?;
+
+        let data = response.json::<serde_json::Value>().await?;
+
+        let access_token = data.get("access_token");
+        let user = data.get("user");
+
+        if access_token.is_none() || user.is_none() {
+            return Err(AuthError::RefreshTokenIvalidPayloadError.into());
+        }
+
+        let token = AccessToken {
+            access_token: access_token.unwrap().as_str().unwrap().to_owned(),
+            expires_in: data.get("expires_in").unwrap().as_u64().unwrap(),
+            expires_at: data.get("expires_at").unwrap().as_u64().unwrap(),
+            refresh_token: data
+                .get("refresh_token")
+                .unwrap()
+                .as_str()
+                .unwrap()
+                .to_owned(),
+        };
+
+        let user_metadata = user.unwrap().get("user_metadata").unwrap();
+
+        let user = User {
+            id: unwrap_value_to_string(user.unwrap().get("id")),
+            email: unwrap_value_to_string(user.unwrap().get("email")),
+            avatar_url: unwrap_value_to_string(user_metadata.get("avatar_url")),
+            full_name: unwrap_value_to_string(user_metadata.get("full_name")),
+        };
+
+        let user_id = user.id.clone();
+
+        let _: Result<()> = cx.read_global(|storage: &Storage, _cx| {
+            let expires_at = token.expires_at.to_string();
+
+            storage.set("user_id".into(), user_id)?;
+            storage.set("access_token".into(), token.access_token)?;
+            storage.set("refresh_token".into(), token.refresh_token)?;
+            storage.set("access_token_expires_at".into(), expires_at)?;
+
+            Ok(())
+        })?;
+
+        Ok(user)
+    }
+
+    pub async fn get_user(&self, cx: &mut AsyncWindowContext) -> Result<User> {
+        let access_token = Auth::get_access_token(cx);
+
+        if access_token.is_none() {
+            return Err(AuthError::NoTokenError.into());
+        }
+
+        let url = format!("{}/user", self.base_url);
+
+        let response = self
+            .client
+            .get(url)
+            .header("Authorization", format!("Bearer {}", access_token.unwrap()))
+            .send()
+            .await
+            .map_err(|original_err| AuthError::GetUserRequestError(original_err))?;
+
+        let status = response.status();
+        let data = response.json::<serde_json::Value>().await?;
+
+        if !status.is_success() {
+            let message = data
+                .get("msg")
+                .unwrap()
+                .as_str()
+                .unwrap_or("unknown reason of error")
+                .into();
+
+            return Err(AuthError::InvalidTokenError(message).into());
+        }
+
+        let data = data.get("data").unwrap();
+        let user_metadata = data.get("user_metadata").unwrap();
+
+        let user = User {
+            id: unwrap_value_to_string(data.get("id")),
+            email: unwrap_value_to_string(data.get("email")),
+            avatar_url: unwrap_value_to_string(user_metadata.get("avatar_url")),
+            full_name: unwrap_value_to_string(user_metadata.get("full_name")),
+        };
+
+        Ok(user)
     }
 }
 

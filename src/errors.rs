@@ -22,7 +22,19 @@ pub enum AuthError {
     #[error("Error while logging in\n{0}")]
     EmailLoginCodeError(reqwest::Error),
     #[error("Error while logging in\nAccess token or user is missing in the response. Please try again.")]
-    EmailLoginInvalidPayload,
+    EmailLoginInvalidPayloadError,
+    #[error("Error while getting user\n{0}")]
+    GetUserRequestError(reqwest::Error),
+    #[error("\nNot authenticated\nPlease log in first.")]
+    NoTokenError,
+    #[error("Access token is invalid\n{0}")]
+    InvalidTokenError(String),
+    #[error("Error while refreshing access token\n{0}")]
+    RefreshTokenRequestError(reqwest::Error),
+    #[error("Error while refreshing access token\nAccess token or user is missing in the response. Please try again.")]
+    RefreshTokenIvalidPayloadError,
+    #[error("Unknown error while trying to authenticate")]
+    UnknownError,
 }
 
 #[derive(Error, Debug)]

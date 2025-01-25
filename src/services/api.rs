@@ -50,6 +50,10 @@ impl Api {
         let mut headers = HeaderMap::new();
 
         headers.insert("content-type", HeaderValue::from_static("application/json"));
+        headers.insert(
+            "authorization",
+            HeaderValue::from_str("Bearer token").unwrap(),
+        );
 
         let client = Client::builder().default_headers(headers).build().unwrap();
 
@@ -69,6 +73,25 @@ impl Api {
             .map_err(|original_err| ApiError::RequestError(original_err))?;
 
         // TODO: Check response status code and return error if it's not 200
+
+        let decoded_response = response
+            .json::<GetAssistantsResponse>()
+            .await
+            .map_err(|original_err| ApiError::DecodingError(original_err))?;
+
+        let assistants = decoded_response.assistants;
+
+        Ok(assistants)
+    }
+
+    pub async fn get_user_assistnants(&self, user_id: &str) -> Result<Vec<AssistantConfig>> {
+        let url = format!("{}/v1/users/{}/assistants", self.base_url, user_id);
+        let response = self
+            .client
+            .get(url)
+            .send()
+            .await
+            .map_err(|original_err| ApiError::RequestError(original_err))?;
 
         let decoded_response = response
             .json::<GetAssistantsResponse>()

@@ -1,5 +1,3 @@
-use std::env::set_var;
-
 use dotenv::dotenv;
 use gpui::*;
 
@@ -14,10 +12,13 @@ mod theme;
 mod ui;
 mod window;
 
-use crate::{
-    assets::Assets, hotkey::HotkeyManager, root::Root, services::*, state::*, theme::Theme,
-    window::Window,
-};
+use crate::assets::Assets;
+use crate::hotkey::HotkeyManager;
+use crate::root::Root;
+use crate::services::*;
+use crate::state::*;
+use crate::theme::Theme;
+use crate::window::Window;
 
 #[async_std::main]
 async fn main() {
@@ -38,15 +39,8 @@ async fn main() {
         let window_options = cx.global::<Window>().build_options();
 
         let _ = cx.open_window(window_options, |cx| {
+            // hotkey manager requires window context
             HotkeyManager::init(cx);
-
-            // reading storage and initalizing state
-            let storage = cx.global::<Storage>();
-            let access_token = storage.get("access_token");
-
-            if let Some(_) = access_token {
-                set_authenticated(cx, true);
-            }
 
             // builing root view and returning it to render
             Root::build(cx)
