@@ -5,8 +5,6 @@ pub enum UiEvent {
     ChangeActiveView(ActiveView),
     ChangeAssistant(String),
     CopyOutput,
-    CloseWindow,
-    HideWindow,
 }
 
 #[derive(Debug, Clone, PartialEq)]

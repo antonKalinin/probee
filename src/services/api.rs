@@ -1,5 +1,5 @@
 use anyhow::Result;
-use gpui::{AppContext, Global};
+use gpui::{App, Global};
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client,
@@ -8,6 +8,15 @@ use serde::Deserialize;
 use std::env;
 
 use crate::errors::ApiError;
+
+/*
+ * Api service that uses Supabase REST API as the backend.
+ */
+#[derive(Clone)]
+pub struct Api {
+    base_url: String,
+    client: reqwest::Client,
+}
 
 #[derive(Clone, Deserialize, Debug)]
 pub struct Message {
@@ -38,33 +47,33 @@ pub struct GetAssistantsResponse {
     assistants: Vec<AssistantConfig>,
 }
 
-#[derive(Clone)]
-pub struct Api {
-    client: Client,
-    base_url: String,
-}
-
 impl Api {
-    pub fn init(cx: &mut AppContext) {
-        let api_url = env!("CMDI_API_URL");
+    pub fn init(cx: &mut App) {
+        let supabase_public_url = env!("SUPABASE_PUBLIC_URL");
+        let supabase_public_key = env!("SUPABASE_PUBLIC_ANON_KEY");
+
+        if supabase_public_url.is_empty() || supabase_public_key.is_empty() {
+            // TODO: set state error
+        }
+
         let mut headers = HeaderMap::new();
+        let api_key_header = HeaderValue::from_str(supabase_public_key).unwrap();
 
         headers.insert("content-type", HeaderValue::from_static("application/json"));
-        headers.insert(
-            "authorization",
-            HeaderValue::from_str("Bearer token").unwrap(),
-        );
+        headers.insert("apikey", api_key_header);
+        headers.insert("X-Client-Info", HeaderValue::from_static("cmdi-rs/0.1.0"));
 
         let client = Client::builder().default_headers(headers).build().unwrap();
 
         cx.set_global(Api {
             client,
-            base_url: api_url.to_owned(),
+            base_url: supabase_public_url.to_owned(),
         });
     }
 
     pub async fn get_public_assistants(&self) -> Result<Vec<AssistantConfig>> {
-        let url = format!("{}{}", self.base_url, "/v1/assistants");
+        let url = format!("{}{}", self.base_url, "/rest/v1/assistants");
+
         let response = self
             .client
             .get(url)
@@ -73,25 +82,6 @@ impl Api {
             .map_err(|original_err| ApiError::RequestError(original_err))?;
 
         // TODO: Check response status code and return error if it's not 200
-
-        let decoded_response = response
-            .json::<GetAssistantsResponse>()
-            .await
-            .map_err(|original_err| ApiError::DecodingError(original_err))?;
-
-        let assistants = decoded_response.assistants;
-
-        Ok(assistants)
-    }
-
-    pub async fn get_user_assistnants(&self, user_id: &str) -> Result<Vec<AssistantConfig>> {
-        let url = format!("{}/v1/users/{}/assistants", self.base_url, user_id);
-        let response = self
-            .client
-            .get(url)
-            .send()
-            .await
-            .map_err(|original_err| ApiError::RequestError(original_err))?;
 
         let decoded_response = response
             .json::<GetAssistantsResponse>()

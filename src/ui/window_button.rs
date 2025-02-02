@@ -1,6 +1,5 @@
 use gpui::*;
 
-use crate::events::UiEvent;
 use crate::theme::Theme;
 
 pub enum WindowAction {
@@ -19,7 +18,7 @@ impl WindowButton {
 }
 
 impl Render for WindowButton {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
         let bg_color = match self.action {
@@ -28,13 +27,11 @@ impl Render for WindowButton {
         };
 
         let on_click = cx.listener({
-            move |this, _event, cx: &mut ViewContext<Self>| {
-                let app_event = match this.action {
-                    WindowAction::Hide => UiEvent::HideWindow,
-                    WindowAction::Close => UiEvent::CloseWindow,
+            move |this, _event, _window, cx: &mut Context<Self>| {
+                match this.action {
+                    WindowAction::Hide => cx.hide(),
+                    WindowAction::Close => cx.quit(),
                 };
-
-                cx.emit(app_event);
             }
         });
 
@@ -49,5 +46,3 @@ impl Render for WindowButton {
         button
     }
 }
-
-impl EventEmitter<UiEvent> for WindowButton {}

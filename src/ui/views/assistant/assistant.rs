@@ -8,26 +8,26 @@ use super::loading::Loading;
 use super::output::Output;
 
 pub struct AssistantView {
-    assistant_selector_view: View<AssistantSelector>,
-    footer_view: View<Footer>,
-    loading_view: View<Loading>,
-    output_view: View<Output>,
+    assistant_selector_view: Entity<AssistantSelector>,
+    footer_view: Entity<Footer>,
+    loading_view: Entity<Loading>,
+    output_view: Entity<Output>,
 
     visible: bool,
 }
 
 impl AssistantView {
-    pub fn new(cx: &mut ViewContext<Self>, state: &Model<State>) -> Self {
+    pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
         cx.observe(state, |this, model, cx| {
             this.visible = model.read(cx).active_view == ActiveView::AssitantView;
             cx.notify();
         })
         .detach();
 
-        let assistant_selector_view = cx.new_view(|cx| AssistantSelector::new(cx, &state));
-        let footer_view = cx.new_view(|cx| Footer::new(cx, &state));
-        let loading_view = cx.new_view(|cx| Loading::new(cx, &state));
-        let output_view = cx.new_view(|cx| Output::new(cx, &state));
+        let assistant_selector_view = cx.new(|cx| AssistantSelector::new(cx, &state));
+        let footer_view = cx.new(|cx| Footer::new(cx, &state));
+        let loading_view = cx.new(|cx| Loading::new(cx, &state));
+        let output_view = cx.new(|cx| Output::new(cx, &state));
 
         AssistantView {
             assistant_selector_view,
@@ -41,7 +41,7 @@ impl AssistantView {
 }
 
 impl Render for AssistantView {
-    fn render(&mut self, _cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         if !self.visible {
             return div().into_any_element();
         }

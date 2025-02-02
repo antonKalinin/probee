@@ -1,5 +1,5 @@
 use async_std::stream::StreamExt;
-use gpui::*;
+use gpui::{div, prelude::*, App, Div, Entity, EventEmitter, Render, Window};
 
 use crate::assistant::*;
 use crate::errors::*;
@@ -8,27 +8,27 @@ use crate::services::Auth;
 use crate::state::*;
 use crate::theme::Theme;
 use crate::ui::*;
-use crate::window::Window;
+use crate::utils;
 
 pub struct Root {
-    assistant_view: View<AssistantView>,
-    error_view: View<ErrorView>,
-    login_view: View<LoginView>,
-    profile_view: View<ProfileView>,
+    assistant_view: Entity<AssistantView>,
+    error_view: Entity<ErrorView>,
+    login_view: Entity<LoginView>,
+    profile_view: Entity<ProfileView>,
 
-    profile_button: View<ProfileButton>,
-    window_buttons: Vec<View<WindowButton>>,
+    profile_button: Entity<ProfileButton>,
+    window_buttons: Vec<Entity<WindowButton>>,
 }
 
 impl Root {
-    pub fn build(wcx: &mut WindowContext) -> View<Self> {
-        let auth = wcx.global::<Auth>().clone();
-        let state_controler = wcx.global::<StateController>().clone();
+    pub fn build(cx: &mut App, _window: &mut Window) -> Entity<Self> {
+        let auth = cx.global::<Auth>().clone();
+        let global_state = cx.global::<GlobalState>().clone();
 
         // Try to authenticate user if token is present
         // If token is absent, nothing to do, need to login first
         // If token is expired, try to refresh it and retry to authenticate
-        wcx.spawn(|mut cx| async move {
+        cx.spawn(|mut cx| async move {
             let user = auth.get_user(&mut cx).await;
 
             match user {
@@ -48,7 +48,9 @@ impl Root {
                                 set_user_async(&mut cx, Some(user));
                                 set_authenticated_async(&mut cx, true);
                             }
-                            Err(err) => set_error_async(&mut cx, Some(err)),
+                            Err(_err) => {
+                                // refresh token is probably expired, need to login again
+                            }
                         }
                     }
                     _ => set_error_async(&mut cx, Some(err)),
@@ -57,8 +59,8 @@ impl Root {
         })
         .detach();
 
-        let _app_events_subscribtion = wcx
-            .subscribe(&state_controler.model, |_model, event, cx| {
+        let _app_events_subscribtion = cx
+            .subscribe(&global_state.state, |_model, event, cx| {
                 let _ = match event.clone() {
                     AppEvent::AssistantChanged(_id) => {
                         // TODO: As soon as assistant is changed, reset it in cx.global
@@ -118,31 +120,17 @@ impl Root {
             })
             .detach();
 
-        let state = state_controler.model.clone();
+        let state = global_state.state.clone();
 
-        let view = wcx.new_view(|cx| {
-            let assistant_view = cx.new_view(|cx| AssistantView::new(cx, &state));
-            let error_view = cx.new_view(|cx| ErrorView::new(cx, &state));
-            let login_view = cx.new_view(|cx| LoginView::new(cx, &state));
-            let profile_view = cx.new_view(|cx| ProfileView::new(cx, &state));
+        let view = cx.new(|cx| {
+            let assistant_view = cx.new(|cx| AssistantView::new(cx, &state));
+            let error_view = cx.new(|cx| ErrorView::new(cx, &state));
+            let login_view = cx.new(|cx| LoginView::new(cx, &state));
+            let profile_view = cx.new(|cx| ProfileView::new(cx, &state));
 
-            let profile_button = cx.new_view(|cx| ProfileButton::new(cx, &state));
-            let close_button = cx.new_view(|_cx| WindowButton::new(WindowAction::Close));
-            let hide_button = cx.new_view(|_cx| WindowButton::new(WindowAction::Hide));
-
-            cx.subscribe(&close_button, move |_subscriber, _emitter, event, cx| {
-                if let UiEvent::CloseWindow = event {
-                    cx.quit();
-                }
-            })
-            .detach();
-
-            cx.subscribe(&hide_button, move |_subscriber, _emitter, event, cx| {
-                if let UiEvent::HideWindow = event {
-                    Window::hide(cx);
-                }
-            })
-            .detach();
+            let profile_button = cx.new(|cx| ProfileButton::new(cx, &state));
+            let close_button = cx.new(|_cx| WindowButton::new(WindowAction::Close));
+            let hide_button = cx.new(|_cx| WindowButton::new(WindowAction::Hide));
 
             cx.subscribe(&profile_button, move |_subscriber, _emitter, event, cx| {
                 if let UiEvent::ChangeActiveView(view) = event {
@@ -173,7 +161,7 @@ impl Root {
 }
 
 impl Render for Root {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
         let title_row = div().flex().flex_row().items_start().p_2();
@@ -187,18 +175,17 @@ impl Render for Root {
             .collect::<Vec<_>>();
 
         title_buttons.push(Root::render_space());
-        // TODO: show if not auithenticated
         title_buttons.push(profile_button);
-
-        let handle_size_measured = |size, cx: &mut WindowContext<'_>| {
-            StateController::update(|this, cx| this.set_content_size(cx, size), cx);
-        };
 
         let assistant_view = div().child(self.assistant_view.clone());
         let login_view = div().child(self.login_view.clone());
         let profile_view = div().child(self.profile_view.clone());
 
-        let dynamic_height_content = div()
+        let content = div()
+            .on_children_prepainted(move |bounds, window, cx| {
+                let content_height: f32 = bounds.iter().map(|b| b.size.height.0).sum();
+                window.set_frame(utils::window_bounds(cx, content_height));
+            })
             .child(title_row.children(title_buttons))
             .child(content.children([assistant_view, login_view, profile_view])) // only one view is visible per time
             .child(self.error_view.clone());
@@ -209,11 +196,7 @@ impl Render for Root {
             .flex_col()
             .bg(theme.background)
             .border_color(theme.border)
-            .child(
-                size_observer()
-                    .on_size_measured(handle_size_measured)
-                    .child(dynamic_height_content),
-            )
+            .child(content)
     }
 }
 

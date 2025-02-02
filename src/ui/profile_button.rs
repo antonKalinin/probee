@@ -12,12 +12,12 @@ pub struct ProfileButton {
 }
 
 impl ProfileButton {
-    pub fn new(cx: &mut ViewContext<Self>, state: &Model<State>) -> Self {
+    pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
         let authenticated = state.read(cx).authenticated;
         let active = state.read(cx).active_view == ActiveView::ProfileView;
 
         let _ = cx
-            .observe(state, move |this, state: Model<State>, cx| {
+            .observe(state, move |this, state, cx| {
                 this.authenticated = state.read(cx).authenticated;
                 this.active = state.read(cx).active_view == ActiveView::ProfileView;
                 cx.notify();
@@ -32,12 +32,12 @@ impl ProfileButton {
 }
 
 impl Render for ProfileButton {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
         if !self.authenticated {
             let click_handle = cx.listener({
-                move |_this, _event, cx: &mut ViewContext<Self>| {
+                move |_this, _event, _window, cx: &mut Context<Self>| {
                     cx.emit(UiEvent::ChangeActiveView(ActiveView::LoginView));
                 }
             });
@@ -53,7 +53,7 @@ impl Render for ProfileButton {
         }
 
         let click_handle = cx.listener({
-            move |_this, _event, cx: &mut ViewContext<Self>| {
+            move |_this, _event, _window, cx: &mut Context<Self>| {
                 cx.emit(UiEvent::ChangeActiveView(ActiveView::ProfileView));
             }
         });

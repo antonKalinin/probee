@@ -10,7 +10,7 @@ use aes_gcm::{
     Aes256Gcm, Nonce,
 };
 use anyhow::Result;
-use gpui::{AppContext, Global};
+use gpui::{App, Global};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
@@ -30,7 +30,7 @@ pub struct Storage {
 }
 
 impl Storage {
-    pub fn init(cx: &mut AppContext) {
+    pub fn init(cx: &mut App) {
         let storage_salt = env!("STORAGE_SALT");
 
         if storage_salt.is_empty() {

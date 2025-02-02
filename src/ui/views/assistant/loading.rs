@@ -10,7 +10,7 @@ pub struct Loading {
 }
 
 impl Loading {
-    pub fn new(cx: &mut ViewContext<Self>, state: &Model<State>) -> Self {
+    pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
         cx.observe(state, |this, model, cx| {
             this.visible = model.read(cx).loading.clone();
             cx.notify();
@@ -22,7 +22,7 @@ impl Loading {
 }
 
 impl Render for Loading {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
         if !self.visible {

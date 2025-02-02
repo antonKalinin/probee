@@ -12,9 +12,9 @@ pub struct CopyOutputButton {
 }
 
 impl CopyOutputButton {
-    pub fn new(cx: &mut ViewContext<Self>, state: &Model<State>) -> Self {
+    pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
         let _ = cx
-            .observe(state, move |this, state: Model<State>, cx| {
+            .observe(state, move |this, state, cx| {
                 this.enabled = !state.read(cx).output.is_empty();
                 cx.notify();
             })
@@ -28,7 +28,7 @@ impl CopyOutputButton {
 }
 
 impl Render for CopyOutputButton {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
         let icon_color = match self.enabled {
@@ -47,7 +47,7 @@ impl Render for CopyOutputButton {
             .size_full();
 
         let on_click = cx.listener({
-            move |this, _event, cx: &mut ViewContext<Self>| {
+            move |this, _event, _window, cx: &mut Context<Self>| {
                 this.succeeded = true;
                 cx.notify();
                 cx.emit(UiEvent::CopyOutput);

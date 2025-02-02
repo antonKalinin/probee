@@ -10,9 +10,9 @@ pub struct ErrorView {
 }
 
 impl ErrorView {
-    pub fn new(cx: &mut ViewContext<Self>, state: &Model<State>) -> Self {
-        cx.observe(state, |this, model, cx| {
-            let error_occured = model.read(cx).error.is_some();
+    pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
+        cx.observe(state, |this, state, cx| {
+            let error_occured = state.read(cx).error.is_some();
 
             if this.visible != error_occured {
                 this.visible = error_occured;
@@ -20,7 +20,7 @@ impl ErrorView {
             }
 
             if error_occured {
-                this.message = model.read(cx).error.as_ref().unwrap().to_string();
+                this.message = state.read(cx).error.as_ref().unwrap().to_string();
                 cx.notify();
             }
         })
@@ -34,7 +34,7 @@ impl ErrorView {
 }
 
 impl Render for ErrorView {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
         if !self.visible {
@@ -80,6 +80,7 @@ impl Render for ErrorView {
             .child(error_title);
 
         let body = div()
+            .w_72()
             .text_color(theme.subtext)
             .text_size(theme.subtext_size)
             .child(error_body);

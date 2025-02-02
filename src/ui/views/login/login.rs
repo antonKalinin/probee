@@ -11,7 +11,7 @@ Please check yor email for the sign in link. \
 ";
 
 impl LoginView {
-    pub fn new(cx: &mut ViewContext<Self>, state: &Model<State>) -> Self {
+    pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
         cx.observe(state, |this, model, cx| {
             let data = model.read(cx);
             this.visible = data.active_view == ActiveView::LoginView && !data.authenticated;
@@ -24,12 +24,24 @@ impl LoginView {
 }
 
 impl Render for LoginView {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
         if !self.visible {
             return div().into_any_element();
         }
+
+        // let text_input = cx.new(|cx| TextInput {
+        //     focus_handle: cx.focus_handle(),
+        //     content: "".into(),
+        //     placeholder: "Type here...".into(),
+        //     selected_range: 0..0,
+        //     selection_reversed: false,
+        //     marked_range: None,
+        //     last_layout: None,
+        //     last_bounds: None,
+        //     is_selecting: false,
+        // });
 
         div()
             .line_height(theme.line_height)

@@ -1,6 +1,6 @@
 use anyhow::Result;
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
-use gpui::{AppContext, AsyncWindowContext, Global};
+use gpui::{App, AsyncApp, Global};
 use rand::Rng;
 use reqwest::{
     header::{HeaderMap, HeaderValue},
@@ -33,7 +33,6 @@ pub struct Auth {
 #[derive(Clone, Debug)]
 pub struct AccessToken {
     pub access_token: String,
-    expires_in: u64,
     pub expires_at: u64,
     pub refresh_token: String,
 }
@@ -49,11 +48,11 @@ pub struct User {
 impl Global for Auth {}
 
 impl Auth {
-    pub fn init(cx: &mut AppContext) {
+    pub fn init(cx: &mut App) {
         let supabase_public_url = env!("SUPABASE_PUBLIC_URL");
-        let supabase_public_anon_key = env!("SUPABASE_PUBLIC_ANON_KEY");
+        let supabase_public_key = env!("SUPABASE_PUBLIC_ANON_KEY");
 
-        if supabase_public_url.is_empty() || supabase_public_anon_key.is_empty() {
+        if supabase_public_url.is_empty() || supabase_public_key.is_empty() {
             // TODO: set state error
         }
 
@@ -61,7 +60,7 @@ impl Auth {
 
         headers.insert(
             "apikey",
-            HeaderValue::from_str(supabase_public_anon_key).unwrap(),
+            HeaderValue::from_str(supabase_public_key).unwrap(),
         );
         headers.insert("X-Client-Info", HeaderValue::from_static("cmdi-rs/0.1.0"));
 
@@ -76,17 +75,17 @@ impl Auth {
         cx.set_global(auth);
     }
 
-    fn get_access_token(cx: &mut AsyncWindowContext) -> Option<String> {
+    fn get_access_token(cx: &mut AsyncApp) -> Option<String> {
         cx.read_global(|storage: &Storage, _cx| storage.get(STORAGE_ACCESS_TOKEN_KEY))
             .unwrap_or(None)
     }
 
-    fn get_refresh_token(cx: &mut AsyncWindowContext) -> Option<String> {
+    fn get_refresh_token(cx: &mut AsyncApp) -> Option<String> {
         cx.read_global(|storage: &Storage, _cx| storage.get(STORAGE_REFRESH_TOKEN_KEY))
             .unwrap_or(None)
     }
 
-    // fn set_token_to_store(cx: &mut AsyncWindowContext, token: AccessToken) -> Result<()> {
+    // fn set_token_to_store(cx: &mut AsyncApp, token: AccessToken) -> Result<()> {
     //     cx.read_global(|storage: &Storage, _cx| {
     //         let expires_at = token.expires_at.to_string();
 
@@ -108,7 +107,7 @@ impl Auth {
      *
      * This method uses PKCE.
      */
-    pub async fn login_with_email(&self, cx: &mut AsyncWindowContext, email: &str) -> Result<User> {
+    pub async fn login_with_email(&self, cx: &mut AsyncApp, email: &str) -> Result<User> {
         let background = cx.background_executor().clone();
         let code_verifier = generate_code_verifier();
         let code_challenge = generate_code_challenge(&code_verifier);
@@ -227,7 +226,6 @@ impl Auth {
 
         let token = AccessToken {
             access_token: access_token.unwrap().as_str().unwrap().to_owned(),
-            expires_in: data.get("expires_in").unwrap().as_u64().unwrap(),
             expires_at: data.get("expires_at").unwrap().as_u64().unwrap(),
             refresh_token: data
                 .get("refresh_token")
@@ -249,7 +247,7 @@ impl Auth {
         Ok((token, user))
     }
 
-    pub async fn refresh_access_token(&self, cx: &mut AsyncWindowContext) -> Result<User> {
+    pub async fn refresh_access_token(&self, cx: &mut AsyncApp) -> Result<User> {
         let refresh_token = Auth::get_refresh_token(cx);
 
         if refresh_token.is_none() {
@@ -270,18 +268,25 @@ impl Auth {
             .await
             .map_err(|original_err| AuthError::RefreshTokenRequestError(original_err))?;
 
+        let status = response.status();
         let data = response.json::<serde_json::Value>().await?;
+
+        if !status.is_success() {
+            let message = data
+                .get("msg")
+                .unwrap()
+                .as_str()
+                .unwrap_or("unknown reason of error")
+                .into();
+
+            return Err(AuthError::InvalidRefreshTokenError(message).into());
+        }
 
         let access_token = data.get("access_token");
         let user = data.get("user");
 
-        if access_token.is_none() || user.is_none() {
-            return Err(AuthError::RefreshTokenIvalidPayloadError.into());
-        }
-
         let token = AccessToken {
             access_token: access_token.unwrap().as_str().unwrap().to_owned(),
-            expires_in: data.get("expires_in").unwrap().as_u64().unwrap(),
             expires_at: data.get("expires_at").unwrap().as_u64().unwrap(),
             refresh_token: data
                 .get("refresh_token")
@@ -316,7 +321,7 @@ impl Auth {
         Ok(user)
     }
 
-    pub async fn get_user(&self, cx: &mut AsyncWindowContext) -> Result<User> {
+    pub async fn get_user(&self, cx: &mut AsyncApp) -> Result<User> {
         let access_token = Auth::get_access_token(cx);
 
         if access_token.is_none() {
@@ -347,7 +352,6 @@ impl Auth {
             return Err(AuthError::InvalidTokenError(message).into());
         }
 
-        let data = data.get("data").unwrap();
         let user_metadata = data.get("user_metadata").unwrap();
 
         let user = User {

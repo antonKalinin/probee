@@ -1,6 +1,6 @@
 use anyhow::Result;
 use arboard;
-use gpui::{AppContext, Global};
+use gpui::{App, Global};
 
 use crate::errors::InputError;
 
@@ -9,7 +9,7 @@ pub struct Clipboard {
 }
 
 impl Clipboard {
-    pub fn init(cx: &mut AppContext) {
+    pub fn init(cx: &mut App) {
         let clipboard = Clipboard {
             provider: arboard::Clipboard::new().unwrap(),
         };

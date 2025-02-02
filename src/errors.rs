@@ -31,8 +31,8 @@ pub enum AuthError {
     InvalidTokenError(String),
     #[error("Error while refreshing access token\n{0}")]
     RefreshTokenRequestError(reqwest::Error),
-    #[error("Error while refreshing access token\nAccess token or user is missing in the response. Please try again.")]
-    RefreshTokenIvalidPayloadError,
+    #[error("Error while refreshing access token\n{0}")]
+    InvalidRefreshTokenError(String),
     #[error("Unknown error while trying to authenticate")]
     UnknownError,
 }

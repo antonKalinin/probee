@@ -9,7 +9,7 @@ pub struct Footer {
 }
 
 impl Footer {
-    pub fn new(cx: &mut ViewContext<Self>, state: &Model<State>) -> Self {
+    pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
         cx.observe(state, |this, model, cx| {
             this.visible = model.read(cx).active_view == ActiveView::AssitantView
                 && model.read(cx).output.is_empty();
@@ -32,7 +32,7 @@ fn cmd_icon(theme: Theme) -> Div {
 }
 
 impl Render for Footer {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         if !self.visible {
             return div().into_any_element();
         }

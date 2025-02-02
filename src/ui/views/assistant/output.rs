@@ -2,7 +2,7 @@ use gpui::*;
 
 use crate::clipboard::Clipboard;
 use crate::events::UiEvent;
-use crate::get_active_assistant;
+use crate::state::get_active_assistant;
 use crate::state::{ActiveView, State};
 use crate::theme::Theme;
 
@@ -14,27 +14,27 @@ pub struct Output {
     description: String,
 
     scroll_handle: ScrollHandle,
-    copy_button: View<CopyOutputButton>,
+    copy_button: Entity<CopyOutputButton>,
 }
 
 const MAX_HEIGHT: f32 = 320.0;
 
 impl Output {
-    pub fn new(cx: &mut ViewContext<Self>, state: &Model<State>) -> Self {
-        cx.observe(state, |this, model, cx| {
-            let error = model.read(cx).error.is_some();
-            let loading = model.read(cx).loading;
+    pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
+        cx.observe(state, |this, state, cx| {
+            let error = state.read(cx).error.is_some();
+            let loading = state.read(cx).loading;
             let assistant = get_active_assistant(cx);
 
-            this.text = model.read(cx).output.clone();
+            this.text = state.read(cx).output.clone();
             this.description = assistant.map(|a| a.description.clone()).unwrap_or_default();
             this.visible =
-                model.read(cx).active_view == ActiveView::AssitantView && !loading && !error;
+                state.read(cx).active_view == ActiveView::AssitantView && !loading && !error;
             cx.notify();
         })
         .detach();
 
-        let copy_button = cx.new_view(|cx| CopyOutputButton::new(cx, &state));
+        let copy_button = cx.new(|cx| CopyOutputButton::new(cx, &state));
 
         cx.subscribe(&copy_button, move |subscriber, _emitter, event, cx| {
             if UiEvent::CopyOutput == *event && !subscriber.text.is_empty() {
@@ -76,7 +76,7 @@ impl Output {
 }
 
 impl Render for Output {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
         if !self.visible {

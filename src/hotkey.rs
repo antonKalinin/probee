@@ -1,4 +1,4 @@
-use gpui::*;
+use gpui::{App, Global};
 use std::time::Duration;
 
 use global_hotkey::{
@@ -9,7 +9,6 @@ use global_hotkey::{
 use crate::errors::*;
 use crate::services::{selection, Clipboard};
 use crate::state::*;
-use crate::window::Window;
 
 #[allow(dead_code)]
 pub struct HotkeyManager {
@@ -19,7 +18,7 @@ pub struct HotkeyManager {
 impl Global for HotkeyManager {}
 
 impl HotkeyManager {
-    pub fn init(cx: &mut WindowContext) {
+    pub fn init(cx: &mut App) {
         let manager = GlobalHotKeyManager::new().unwrap();
         let receiver = GlobalHotKeyEvent::receiver().clone();
 
@@ -35,18 +34,17 @@ impl HotkeyManager {
 
         cx.set_global::<HotkeyManager>(HotkeyManager { manager });
 
-        cx.spawn(|mut cx| async move {
+        cx.spawn(|cx| async move {
             loop {
                 if let Ok(event) = receiver.try_recv() {
                     if event.state == global_hotkey::HotKeyState::Released {
                         let _ = cx.update_global::<HotkeyManager, _>(|_manager, cx| {
                             if event.id() == appearence_hotkey.id() {
-                                Window::hide(cx);
+                                cx.hide();
                                 return;
                             }
 
-                            Window::show(cx);
-
+                            cx.activate(true);
                             // First try to get screen text by selection
                             let input_text = selection::get_text();
 

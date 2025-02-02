@@ -1,5 +1,5 @@
 use anyhow::{Ok, Result};
-use gpui::{AppContext, Global};
+use gpui::{App, Global};
 use tokio_stream::wrappers::ReceiverStream;
 
 use crate::api::AssistantConfig;
@@ -53,7 +53,7 @@ impl Assistant {
         }
     }
 
-    pub fn init(cx: &mut AppContext) {
+    pub fn init(cx: &mut App) {
         cx.set_global(Assistant {
             config: None,
             provider: None,

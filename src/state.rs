@@ -1,9 +1,8 @@
 use anyhow::Error;
-use gpui::*;
+use gpui::{App, AppContext, AsyncApp, BorrowAppContext, Entity, EventEmitter, Global};
 
-use crate::events::*;
-use crate::services::*;
-use crate::window::Window;
+use crate::events::AppEvent;
+use crate::services::{AssistantConfig, User};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ActiveView {
@@ -18,7 +17,6 @@ pub struct State {
     pub active_view: ActiveView,
     pub assistants: Vec<AssistantConfig>,
     pub authenticated: bool,
-    pub content_size: Option<Size<Pixels>>,
     pub error: Option<Error>,
     pub input: Option<String>,
     pub loading: bool,
@@ -29,148 +27,119 @@ pub struct State {
 impl EventEmitter<AppEvent> for State {}
 
 #[derive(Clone)]
-pub struct StateController {
-    pub model: Model<State>,
+pub struct GlobalState {
+    pub state: Entity<State>,
 }
 
-impl Global for StateController {}
+impl Global for GlobalState {}
 
-impl StateController {
-    pub fn init(cx: &mut AppContext) {
-        let this = Self {
-            model: cx.new_model(|_| State {
-                active_assistant_id: None,
-                active_view: ActiveView::AssitantView,
-                assistants: vec![],
-                authenticated: false,
-                content_size: None,
-                error: None,
-                input: None,
-                loading: false,
-                output: "".to_owned(),
-                user: None,
-            }),
-        };
+impl GlobalState {
+    pub fn init(cx: &mut App) {
+        let state: Entity<State> = cx.new(|_cx| State {
+            active_assistant_id: None,
+            active_view: ActiveView::AssitantView,
+            assistants: vec![],
+            authenticated: false,
+            error: None,
+            input: None,
+            loading: false,
+            output: "".to_owned(),
+            user: None,
+        });
 
-        cx.set_global(this.clone());
+        let global_state = GlobalState { state };
+
+        cx.set_global(global_state);
     }
 
-    pub fn update(f: impl FnOnce(&mut Self, &mut WindowContext), cx: &mut WindowContext) {
+    pub fn update(f: impl FnOnce(&mut Self, &mut App), cx: &mut App) {
         if !cx.has_global::<Self>() {
             return;
         }
+
         cx.update_global::<Self, _>(|this, cx| {
             f(this, cx);
-        });
+        })
     }
 
-    pub fn update_async(
-        f: impl FnOnce(&mut Self, &mut WindowContext),
-        cx: &mut AsyncWindowContext,
-    ) {
+    pub fn update_async(f: impl FnOnce(&mut Self, &mut App), cx: &mut AsyncApp) {
         let _ = cx.update_global::<Self, _>(|this, cx| {
             f(this, cx);
         });
     }
 
-    pub fn set_active_assistant_id(&self, wcx: &mut WindowContext, id: Option<String>) {
-        self.model.update(wcx, |model, cx| {
-            model.active_assistant_id = id.clone();
+    pub fn set_active_assistant_id(&self, cx: &mut App, id: Option<String>) {
+        self.state.update(cx, |state, cx| {
+            state.active_assistant_id = id.clone();
 
-            if let Some(id) = id {
-                cx.emit(AppEvent::AssistantChanged(id));
-            }
-
-            cx.notify();
-        });
-    }
-
-    pub fn set_assistants(&self, wcx: &mut WindowContext, assistants: Vec<AssistantConfig>) {
-        self.model.update(wcx, |model, cx| {
-            model.assistants = assistants;
-            cx.notify();
-        });
-    }
-
-    pub fn set_active_view(&self, wcx: &mut WindowContext, view: ActiveView) {
-        self.model.update(wcx, |model, cx| {
-            model.active_view = view.clone();
-
-            if view == ActiveView::LoginView {
-                cx.emit(AppEvent::EmailFormSubmitted(
-                    "hurricanebox@gmail.com".to_owned(),
-                ));
-            }
+            // if let Some(id) = id {
+            //     cx.emit(AppEvent::AssistantChanged(id));
+            // }
 
             cx.notify();
         });
     }
 
-    pub fn set_input(&self, wcx: &mut WindowContext, input: String) {
-        self.model.update(wcx, |model, cx| {
-            model.input = Some(input.clone());
-            cx.notify();
-            cx.emit(AppEvent::InputChanged(input));
-        });
-    }
-
-    pub fn set_output(&self, wcx: &mut WindowContext, output: String) {
-        self.model.update(wcx, |model, cx| {
-            model.output = output;
+    pub fn set_assistants(&self, cx: &mut App, assistants: Vec<AssistantConfig>) {
+        self.state.update(cx, |state, cx| {
+            state.assistants = assistants;
             cx.notify();
         });
     }
 
-    pub fn append_output(&self, wcx: &mut WindowContext, output: String) {
-        self.model.update(wcx, |model, cx| {
-            model.output.push_str(&output);
+    pub fn set_active_view(&self, cx: &mut App, view: ActiveView) {
+        self.state.update(cx, |state, cx| {
+            state.active_view = view.clone();
+
             cx.notify();
         });
     }
 
-    pub fn set_error(&self, wcx: &mut WindowContext, error: Option<Error>) {
-        self.model.update(wcx, |model, cx| {
-            model.error = error;
-            cx.notify();
-        });
-    }
-
-    pub fn set_loading(&self, wcx: &mut WindowContext, loading: bool) {
-        self.model.update(wcx, |model, cx| {
-            model.loading = loading;
-            cx.notify();
-        });
-    }
-
-    pub fn set_content_size(&self, wcx: &mut WindowContext, size: Size<Pixels>) {
-        let mut resized = false;
-
-        self.model.update(wcx, |model, _cx| {
-            if let Some(prev_size) = model.content_size {
-                resized = prev_size != size;
-            } else {
-                resized = true;
-            }
-
-            if resized {
-                model.content_size = Some(size);
-            }
-        });
-
-        if resized {
-            Window::set_height(wcx, size.height.0);
-        }
-    }
-
-    pub fn set_authenticated(&self, wcx: &mut WindowContext, authenticated: bool) {
-        self.model.update(wcx, |model, cx| {
+    pub fn set_authenticated(&self, cx: &mut App, authenticated: bool) {
+        self.state.update(cx, |model, cx| {
             model.authenticated = authenticated;
             cx.notify();
         });
     }
 
-    pub fn set_user(&self, wcx: &mut WindowContext, user: Option<User>) {
-        self.model.update(wcx, |model, cx| {
+    pub fn set_input(&self, cx: &mut App, input: String) {
+        self.state.update(cx, |state, cx| {
+            state.input = Some(input.clone());
+            cx.notify();
+            // cx.emit(AppEvent::InputChanged(input));
+        });
+    }
+
+    pub fn set_output(&self, cx: &mut App, output: String) {
+        self.state.update(cx, |state, cx| {
+            state.output = output;
+            cx.notify();
+        });
+    }
+
+    pub fn append_output(&self, cx: &mut App, output: String) {
+        self.state.update(cx, |state, cx| {
+            state.output.push_str(&output);
+            cx.notify();
+        });
+    }
+
+    pub fn set_error(&self, cx: &mut App, error: Option<Error>) {
+        self.state.update(cx, |state, cx| {
+            state.error = error;
+            cx.notify();
+        });
+    }
+
+    pub fn set_loading(&self, cx: &mut App, loading: bool) {
+        self.state.update(cx, |model, cx| {
+            model.loading = loading;
+            cx.notify();
+        });
+    }
+
+    pub fn set_user(&self, cx: &mut App, user: Option<User>) {
+        self.state.update(cx, |model, cx| {
             model.user = user;
             cx.notify();
         });
@@ -179,8 +148,8 @@ impl StateController {
 
 /* Helper functions */
 
-pub fn get_active_assistant(cx: &WindowContext) -> Option<AssistantConfig> {
-    let state = cx.global::<StateController>().model.read(cx);
+pub fn get_active_assistant(cx: &App) -> Option<AssistantConfig> {
+    let state = cx.global::<GlobalState>().state.read(cx);
 
     match state.active_assistant_id.clone() {
         Some(id) => state
@@ -192,54 +161,54 @@ pub fn get_active_assistant(cx: &WindowContext) -> Option<AssistantConfig> {
     }
 }
 
-pub fn set_active_assistant_id(cx: &mut WindowContext, id: Option<String>) {
-    StateController::update(|this, cx| this.set_active_assistant_id(cx, id), cx);
+pub fn set_active_assistant_id(cx: &mut App, id: Option<String>) {
+    GlobalState::update(|this, cx| this.set_active_assistant_id(cx, id), cx);
 }
 
-pub fn set_active_view(cx: &mut WindowContext, view: ActiveView) {
-    StateController::update(|this, cx| this.set_active_view(cx, view), cx);
+pub fn set_active_view(cx: &mut App, view: ActiveView) {
+    GlobalState::update(|this, cx| this.set_active_view(cx, view), cx);
 }
 
-pub fn set_active_view_async(cx: &mut AsyncWindowContext, view: ActiveView) {
-    StateController::update_async(|this, cx| this.set_active_view(cx, view), cx);
+pub fn set_active_view_async(cx: &mut AsyncApp, view: ActiveView) {
+    GlobalState::update_async(|this, cx| this.set_active_view(cx, view), cx);
 }
 
-pub fn set_input(cx: &mut WindowContext, input: String) {
-    StateController::update(|this, cx| this.set_input(cx, input), cx);
+pub fn set_input(cx: &mut App, input: String) {
+    GlobalState::update(|this, cx| this.set_input(cx, input), cx);
 }
 
-pub fn set_output(cx: &mut WindowContext, output: String) {
-    StateController::update(|this, cx| this.set_output(cx, output), cx);
+pub fn set_output(cx: &mut App, output: String) {
+    GlobalState::update(|this, cx| this.set_output(cx, output), cx);
 }
 
-pub fn append_output_async(cx: &mut AsyncWindowContext, output: String) {
-    StateController::update_async(|this, cx| this.append_output(cx, output), cx);
+pub fn append_output_async(cx: &mut AsyncApp, output: String) {
+    GlobalState::update_async(|this, cx| this.append_output(cx, output), cx);
 }
 
-pub fn set_loading(cx: &mut WindowContext, loading: bool) {
-    StateController::update(|this, cx| this.set_loading(cx, loading), cx);
+pub fn set_loading(cx: &mut App, loading: bool) {
+    GlobalState::update(|this, cx| this.set_loading(cx, loading), cx);
 }
 
-pub fn set_loading_async(cx: &mut AsyncWindowContext, loading: bool) {
-    StateController::update_async(|this, cx| this.set_loading(cx, loading), cx);
+pub fn set_loading_async(cx: &mut AsyncApp, loading: bool) {
+    GlobalState::update_async(|this, cx| this.set_loading(cx, loading), cx);
 }
 
-pub fn set_error(cx: &mut WindowContext, error: Option<Error>) {
-    StateController::update(|this, cx| this.set_error(cx, error), cx);
+pub fn set_error(cx: &mut App, error: Option<Error>) {
+    GlobalState::update(|this, cx| this.set_error(cx, error), cx);
 }
 
-pub fn set_error_async(cx: &mut AsyncWindowContext, error: Option<Error>) {
-    StateController::update_async(|this, cx| this.set_error(cx, error), cx);
+pub fn set_error_async(cx: &mut AsyncApp, error: Option<Error>) {
+    GlobalState::update_async(|this, cx| this.set_error(cx, error), cx);
 }
 
-pub fn set_authenticated(cx: &mut WindowContext, authenticated: bool) {
-    StateController::update(|this, cx| this.set_authenticated(cx, authenticated), cx);
+pub fn set_authenticated(cx: &mut App, authenticated: bool) {
+    GlobalState::update(|this, cx| this.set_authenticated(cx, authenticated), cx);
 }
 
-pub fn set_authenticated_async(cx: &mut AsyncWindowContext, authenticated: bool) {
-    StateController::update_async(|this, cx| this.set_authenticated(cx, authenticated), cx);
+pub fn set_authenticated_async(cx: &mut AsyncApp, authenticated: bool) {
+    GlobalState::update_async(|this, cx| this.set_authenticated(cx, authenticated), cx);
 }
 
-pub fn set_user_async(cx: &mut AsyncWindowContext, user: Option<User>) {
-    StateController::update_async(|this, cx| this.set_user(cx, user), cx);
+pub fn set_user_async(cx: &mut AsyncApp, user: Option<User>) {
+    GlobalState::update_async(|this, cx| this.set_user(cx, user), cx);
 }

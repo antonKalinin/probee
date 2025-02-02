@@ -10,13 +10,13 @@ use super::assistant_button::AssistantButton;
 
 pub struct AssistantSelector {
     assistant_ids: Vec<String>,
-    assistant_buttons: Vec<View<AssistantButton>>,
+    assistant_buttons: Vec<Entity<AssistantButton>>,
 
     loading: bool,
 }
 
 impl AssistantSelector {
-    pub fn new(cx: &mut ViewContext<Self>, state: &Model<State>) -> Self {
+    pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
         let api = cx.global::<Api>().clone();
 
         let _ = cx
@@ -50,7 +50,7 @@ impl AssistantSelector {
 
             let assistants = api.get_public_assistants().await;
 
-            StateController::update_async(
+            GlobalState::update_async(
                 |this, cx| match assistants {
                     Ok(assistants) => {
                         this.set_assistants(cx, assistants.clone());
@@ -78,16 +78,16 @@ impl AssistantSelector {
 
     fn build_assistant_buttons(
         assistants: Vec<AssistantConfig>,
-        state: &Model<State>,
-        cx: &mut ViewContext<Self>,
-    ) -> Vec<View<AssistantButton>> {
+        state: &Entity<State>,
+        cx: &mut App,
+    ) -> Vec<Entity<AssistantButton>> {
         let assistant_buttons = assistants
             .iter()
-            .map(|assistant| cx.new_view(|cx| AssistantButton::new(cx, assistant.clone(), state)))
+            .map(|assistant| cx.new(|cx| AssistantButton::new(cx, assistant.clone(), state)))
             .collect::<Vec<_>>();
 
         assistant_buttons.iter().for_each(|button| {
-            cx.subscribe(button, move |_subscriber, _emitter, event, cx| {
+            cx.subscribe(button, move |_subscriber, event, cx| {
                 if let UiEvent::ChangeAssistant(id) = event {
                     set_error(cx, None);
                     set_active_assistant_id(cx, Some(id.clone()));
@@ -102,7 +102,7 @@ impl AssistantSelector {
 }
 
 impl Render for AssistantSelector {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
         let assistant_buttons = self
             .assistant_buttons

@@ -11,9 +11,9 @@ You are authenticated now. \
 ";
 
 impl ProfileView {
-    pub fn new(cx: &mut ViewContext<Self>, state: &Model<State>) -> Self {
-        cx.observe(state, |this, model, cx| {
-            let data = model.read(cx);
+    pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
+        cx.observe(state, |this, state, cx| {
+            let data = state.read(cx);
             this.visible = data.active_view == ActiveView::ProfileView && data.authenticated;
             cx.notify();
         })
@@ -24,7 +24,7 @@ impl ProfileView {
 }
 
 impl Render for ProfileView {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
         if !self.visible {

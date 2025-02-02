@@ -1,6 +1,6 @@
 use gpui::*;
 
-fn load_fonts(cx: &mut AppContext) -> gpui::Result<()> {
+fn load_fonts(cx: &mut App) -> gpui::Result<()> {
     let font_paths = cx.asset_source().list("fonts")?;
     let mut embedded_fonts = Vec::new();
     for font_path in font_paths {
@@ -90,7 +90,7 @@ pub struct Theme {
 }
 
 impl Theme {
-    pub fn init(cx: &mut AppContext) {
+    pub fn init(cx: &mut App) {
         load_fonts(cx).expect("Failed to load fonts");
 
         // Light theme

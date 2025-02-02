@@ -12,12 +12,12 @@ pub struct AssistantButton {
 }
 
 impl AssistantButton {
-    pub fn new(cx: &mut ViewContext<Self>, config: AssistantConfig, state: &Model<State>) -> Self {
+    pub fn new(cx: &mut Context<Self>, config: AssistantConfig, state: &Entity<State>) -> Self {
         let assistant_id = config.id.clone();
         let active = state.read(cx).active_assistant_id == Some(assistant_id.clone());
 
         let _ = cx
-            .observe(state, move |this, state: Model<State>, cx| {
+            .observe(state, move |this, state, cx| {
                 if let Some(state_assistant_id) = state.read(cx).active_assistant_id.as_ref() {
                     this.active = state_assistant_id == &assistant_id;
                 } else {
@@ -33,7 +33,7 @@ impl AssistantButton {
         }
     }
 
-    fn render_icon(&self, cx: &ViewContext<Self>) -> impl IntoElement {
+    fn render_icon(&self, cx: &Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
         let icon = Icon::Globe;
 
@@ -49,7 +49,7 @@ impl AssistantButton {
         svg.into_any_element()
     }
 
-    fn render_label(&self, cx: &ViewContext<Self>) -> impl IntoElement {
+    fn render_label(&self, cx: &Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
         let text_color = match self.active {
@@ -70,11 +70,11 @@ impl AssistantButton {
 }
 
 impl Render for AssistantButton {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
         let on_click = cx.listener({
-            move |this, _event, cx: &mut ViewContext<Self>| {
+            move |this, _event, _window, cx: &mut Context<Self>| {
                 let assistant_id = this.assistant.id.clone();
                 cx.emit(UiEvent::ChangeAssistant(assistant_id));
             }
