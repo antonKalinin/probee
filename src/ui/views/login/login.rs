@@ -1,9 +1,12 @@
+use gpui::*;
+
 use crate::state::{ActiveView, State};
 use crate::theme::Theme;
-use gpui::*;
+use crate::ui::TextInput;
 
 pub struct LoginView {
     visible: bool,
+    email_input: Entity<TextInput>,
 }
 
 const TEXT: &str = "\
@@ -19,29 +22,22 @@ impl LoginView {
         })
         .detach();
 
-        LoginView { visible: false }
+        let email_input = cx.new(|cx| TextInput::new(String::from("Email"), cx));
+
+        LoginView {
+            visible: false,
+            email_input,
+        }
     }
 }
 
 impl Render for LoginView {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let theme = cx.global::<Theme>();
-
         if !self.visible {
             return div().into_any_element();
         }
 
-        // let text_input = cx.new(|cx| TextInput {
-        //     focus_handle: cx.focus_handle(),
-        //     content: "".into(),
-        //     placeholder: "Type here...".into(),
-        //     selected_range: 0..0,
-        //     selection_reversed: false,
-        //     marked_range: None,
-        //     last_layout: None,
-        //     last_bounds: None,
-        //     is_selecting: false,
-        // });
+        let theme = cx.global::<Theme>();
 
         div()
             .line_height(theme.line_height)
@@ -54,6 +50,7 @@ impl Render for LoginView {
             .font_family(theme.font_sans.clone())
             .font_weight(FontWeight::LIGHT)
             .child(TEXT.to_owned())
+            .child(self.email_input.clone())
             .into_any_element()
     }
 }
