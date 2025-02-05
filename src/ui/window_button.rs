@@ -22,8 +22,8 @@ impl Render for WindowButton {
         let theme = cx.global::<Theme>();
 
         let bg_color = match self.action {
-            WindowAction::Hide => theme.amber400,
-            WindowAction::Close => theme.red500,
+            WindowAction::Hide => theme.warning,
+            WindowAction::Close => theme.destructive,
         };
 
         let on_click = cx.listener({

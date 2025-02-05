@@ -38,8 +38,8 @@ impl AssistantButton {
         let icon = Icon::Globe;
 
         let text_color = match self.active {
-            true => theme.text_foreground,
-            false => theme.text,
+            true => theme.muted_foreground,
+            false => theme.foreground,
         };
 
         let svg = div()
@@ -53,8 +53,8 @@ impl AssistantButton {
         let theme = cx.global::<Theme>();
 
         let text_color = match self.active {
-            true => theme.text_foreground,
-            false => theme.text,
+            true => theme.muted_foreground,
+            false => theme.foreground,
         };
 
         let label = div()
@@ -86,8 +86,8 @@ impl Render for AssistantButton {
         };
 
         let bg_hover_color = match self.active {
-            true => theme.primary_hover,
-            false => theme.secondary_hover,
+            true => theme.accent_foreground,
+            false => theme.foreground,
         };
 
         let button = div()

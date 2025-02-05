@@ -32,8 +32,8 @@ impl Render for CopyOutputButton {
         let theme = cx.global::<Theme>();
 
         let icon_color = match self.enabled {
-            true => theme.text,
-            false => theme.subtext,
+            true => theme.foreground,
+            false => theme.muted_foreground,
         };
 
         let icon = svg()
@@ -43,7 +43,7 @@ impl Render for CopyOutputButton {
                 Icon::Copy.path()
             })
             .text_color(icon_color)
-            .hover(|style| style.text_color(theme.text))
+            .hover(|style| style.text_color(theme.foreground))
             .size_full();
 
         let on_click = cx.listener({
@@ -70,7 +70,7 @@ impl Render for CopyOutputButton {
             .rounded_full()
             .border_1()
             .on_mouse_down(MouseButton::Left, on_click)
-            .hover(|style| style.bg(theme.secondary_hover))
+            .hover(|style| style.bg(theme.accent_foreground))
             .cursor(CursorStyle::PointingHand)
             .child(icon);
 

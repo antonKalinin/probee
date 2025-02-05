@@ -75,13 +75,13 @@ impl Render for ErrorView {
             );
 
         let title = div()
-            .text_color(theme.text)
+            .text_color(theme.foreground)
             .text_size(theme.text_size)
             .child(error_title);
 
         let body = div()
             .w_72()
-            .text_color(theme.subtext)
+            .text_color(theme.muted_foreground)
             .text_size(theme.subtext_size)
             .child(error_body);
 

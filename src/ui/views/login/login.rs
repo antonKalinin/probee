@@ -44,7 +44,7 @@ impl Render for LoginView {
             .w_full()
             .mt_4()
             .px_1()
-            .text_color(theme.text)
+            .text_color(theme.foreground)
             .text_size(theme.text_size)
             .line_height(theme.line_height)
             .font_family(theme.font_sans.clone())

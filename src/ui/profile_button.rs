@@ -45,8 +45,8 @@ impl Render for ProfileButton {
             return div()
                 .w_auto()
                 .text_size(theme.subtext_size)
-                .text_color(theme.text)
-                .hover(|style| style.text_color(theme.subtext))
+                .text_color(theme.foreground)
+                .hover(|style| style.text_color(theme.muted_foreground))
                 .on_mouse_up(MouseButton::Left, click_handle)
                 .cursor(CursorStyle::PointingHand)
                 .child("Sign in");
@@ -59,8 +59,8 @@ impl Render for ProfileButton {
         });
 
         let icon_color = match self.active {
-            true => theme.text,
-            false => theme.subtext,
+            true => theme.foreground,
+            false => theme.muted_foreground,
         };
 
         let button = div()
@@ -70,7 +70,7 @@ impl Render for ProfileButton {
             .child(
                 svg()
                     .path(Icon::CircleUserRound.path())
-                    .hover(|style| style.text_color(theme.text))
+                    .hover(|style| style.text_color(theme.foreground))
                     .text_color(icon_color)
                     .size_4(),
             );

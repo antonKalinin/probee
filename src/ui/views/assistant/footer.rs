@@ -26,7 +26,7 @@ fn cmd_icon(theme: Theme) -> Div {
     div().h_3().w_3().child(
         svg()
             .path(Icon::Command.path())
-            .text_color(theme.subtext)
+            .text_color(theme.muted_foreground)
             .size_full(),
     )
 }
@@ -42,7 +42,7 @@ impl Render for Footer {
         let shift_icon = div().h_3().w_3().child(
             svg()
                 .path(Icon::ArrowBigUp.path())
-                .text_color(theme.subtext)
+                .text_color(theme.muted_foreground)
                 .size_full(),
         );
 
@@ -56,7 +56,7 @@ impl Render for Footer {
             .bg(theme.secondary)
             .rounded_md()
             .border_1()
-            .border_color(theme.border_secondary)
+            .border_color(theme.border)
             .children([cmd_icon(theme.clone()), div().ml_1().child("I")]);
 
         let cmd_shift_i_key = div()
@@ -67,7 +67,7 @@ impl Render for Footer {
             .bg(theme.secondary)
             .rounded_md()
             .border_1()
-            .border_color(theme.border_secondary)
+            .border_color(theme.border)
             .children([cmd_icon(theme.clone()), shift_icon, i_key]);
 
         let cmd_i_shortcut = div()
@@ -86,7 +86,7 @@ impl Render for Footer {
             .flex_row()
             .w_full()
             .mt_4()
-            .text_color(theme.subtext)
+            .text_color(theme.muted_foreground)
             .text_size(theme.subtext_size)
             .line_height(theme.line_height)
             .font_family(theme.font_sans.clone())

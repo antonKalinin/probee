@@ -8,6 +8,8 @@ use gpui::{
 use std::ops::Range;
 use unicode_segmentation::*;
 
+use crate::theme::Theme;
+
 actions!(
     text_input,
     [
@@ -157,7 +159,7 @@ impl TextInput {
             ));
         }
     }
-    fn cut(&mut self, _: &Copy, window: &mut Window, cx: &mut Context<Self>) {
+    fn cut(&mut self, _: &Cut, window: &mut Window, cx: &mut Context<Self>) {
         if !self.selected_range.is_empty() {
             cx.write_to_clipboard(ClipboardItem::new_string(
                 (&self.content[self.selected_range.clone()]).to_string(),
@@ -547,6 +549,8 @@ impl Element for TextElement {
 
 impl Render for TextInput {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let theme = cx.global::<Theme>();
+
         div()
             .flex()
             .key_context("TextInput")
@@ -569,14 +573,17 @@ impl Render for TextInput {
             .on_mouse_up_out(MouseButton::Left, cx.listener(Self::on_mouse_up))
             .on_mouse_move(cx.listener(Self::on_mouse_move))
             .bg(rgb(0xeeeeee))
-            .line_height(px(30.))
-            .text_size(px(24.))
+            .line_height(px(20.))
+            .text_size(px(14.))
             .child(
                 div()
-                    .h(px(30. + 4. * 2.))
+                    .h(px(38.)) // 20px line height + 8px padding * 2 + 1px border * 2
                     .w_full()
-                    .p(px(4.))
-                    .bg(white())
+                    .p(px(8.))
+                    .border_1()
+                    .border_color(theme.border)
+                    .rounded_lg()
+                    .bg(theme.background)
                     .child(TextElement {
                         input: cx.entity().clone(),
                     }),

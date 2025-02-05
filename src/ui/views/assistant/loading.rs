@@ -32,7 +32,7 @@ impl Render for Loading {
         let svg = div().flex().child(
             svg()
                 .path(Icon::Loader.path())
-                .text_color(theme.subtext)
+                .text_color(theme.muted_foreground)
                 .size_6()
                 .with_animation(
                     "rotating-loader",

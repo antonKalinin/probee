@@ -64,65 +64,71 @@ pub struct Theme {
 
     // colors
     pub background: Hsla,
-    pub background_secondary: Hsla,
+    pub foreground: Hsla,
     pub primary: Hsla,
-    pub primary_hover: Hsla,
     pub primary_foreground: Hsla,
     pub secondary: Hsla,
-    pub secondary_hover: Hsla,
     pub secondary_foreground: Hsla,
     pub muted: Hsla,
     pub muted_foreground: Hsla,
+    pub accent: Hsla,
+    pub accent_foreground: Hsla,
     pub destructive: Hsla,
     pub destructive_foreground: Hsla,
+    pub warning: Hsla,
     pub border: Hsla,
-    pub border_secondary: Hsla,
     pub input: Hsla,
-    pub text: Hsla,
-    pub text_foreground: Hsla,
-    pub subtext: Hsla,
 
-    pub amber400: Hsla,
     pub red100: Hsla,
     pub red500: Hsla,
-    pub sky500: Hsla,
-    pub sky600: Hsla,
 }
 
-impl Theme {
-    pub fn init(cx: &mut App) {
-        load_fonts(cx).expect("Failed to load fonts");
+/**
 
-        // Light theme
-        let theme = Theme {
+Light theme
+
+--background: 0 0% 100%;
+--foreground: 0 0% 3.9%;
+--primary: 0 0% 9%;
+--primary-foreground: 0 0% 98%;
+--secondary: 0 0% 96.1%;
+--secondary-foreground: 0 0% 9%;
+--muted: 0 0% 96.1%;
+--muted-foreground: 0 0% 45.1%;
+--accent: 0 0% 96.1%;
+--accent-foreground: 0 0% 9%;
+--destructive: 0 84.2% 60.2%;
+--destructive-foreground: 0 0% 98%;
+--border: 0 0% 89.8%;
+--input: 0 0% 89.8%;
+
+*/
+
+impl Theme {
+    fn ligth_theme() -> Self {
+        Theme {
             window_background: Some(WindowBackgroundAppearanceContent::Opaque),
 
             // colors
-            background: Hsla::from(rgb(0xfafaf9)),
-            background_secondary: Hsla::from(rgb(0xf5f5f4)),
-            text: Hsla::from(rgb(0x0c0a09)),
-            text_foreground: Hsla::from(rgb(0xf5f5f4)),
-            subtext: Hsla::from(rgb(0xa8a29e)),
-            border: Hsla::from(rgb(0x78716c)),
-            border_secondary: Hsla::from(rgb(0xd6d3d1)),
-            primary: Hsla::from(rgb(0x78716c)),
-            primary_hover: Hsla::from(rgb(0x57534e)),
-            primary_foreground: Hsla::from(rgb(0xfafaf9)),
-            secondary: Hsla::from(rgb(0xe7e5e4)),
-            secondary_hover: Hsla::from(rgb(0xd6d3d1)),
-            secondary_foreground: Hsla::from(rgb(0xf5f5f4)),
-            muted: Hsla::from(rgb(0xf5f5f4)),
-            muted_foreground: Hsla::from(rgb(0x0c0a09)),
-            destructive: Hsla::from(rgb(0xff0000)),
-            destructive_foreground: Hsla::from(rgb(0xf5f5f4)),
-            input: Hsla::from(rgb(0xf5f5f4)),
+            background: hsla(0., 0., 1., 1.),
+            foreground: hsla(0., 0., 0.039, 1.),
+            primary: hsla(0., 0., 0.09, 1.),
+            primary_foreground: hsla(0., 0., 0.98, 1.),
+            secondary: hsla(0., 0., 0.961, 1.),
+            secondary_foreground: hsla(0., 0., 0.09, 1.),
+            muted: hsla(0., 0., 0.961, 1.),
+            muted_foreground: hsla(0., 0., 0.451, 1.),
+            accent: hsla(0., 0., 0.961, 1.),
+            accent_foreground: hsla(0., 0., 0.09, 1.),
+            destructive: hsla(0., 0.842, 0.602, 1.),
+            destructive_foreground: hsla(0., 0., 0.98, 1.),
+            warning: Hsla::from(rgb(0xfbbf24)),
+            border: hsla(0., 0., 0.898, 1.),
+            input: hsla(0., 0., 0.898, 1.),
 
-            // tailwind
-            amber400: Hsla::from(rgb(0xfbbf24)),
+            // overrides, TODO: remove
             red100: Hsla::from(rgb(0xfee2e2)),
             red500: Hsla::from(rgb(0xef4444)),
-            sky500: Hsla::from(rgb(0x0ea5e9)),
-            sky600: Hsla::from(rgb(0x0284c7)),
 
             // typography
             font_sans: "Inter".into(),
@@ -130,7 +136,13 @@ impl Theme {
             line_height: rems(1.25),
             text_size: px(14.),
             subtext_size: px(12.),
-        };
+        }
+    }
+
+    pub fn init(cx: &mut App) {
+        load_fonts(cx).expect("Failed to load fonts");
+
+        let theme = Theme::ligth_theme();
 
         cx.set_global(theme);
     }

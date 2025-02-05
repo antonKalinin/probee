@@ -95,7 +95,7 @@ impl Render for Output {
                 .justify_start()
                 .content_center()
                 .px_2()
-                .text_color(theme.subtext)
+                .text_color(theme.muted_foreground)
                 .text_size(theme.subtext_size)
                 .child(self.description.clone())
                 .into_any_element();
@@ -129,7 +129,7 @@ impl Render for Output {
             .w_full()
             .max_h(px(MAX_HEIGHT))
             .overflow_y_scroll()
-            .text_color(theme.text)
+            .text_color(theme.foreground)
             .line_height(theme.line_height)
             .text_size(theme.text_size)
             .line_height(theme.line_height)
