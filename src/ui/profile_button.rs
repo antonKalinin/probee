@@ -2,31 +2,31 @@ use gpui::*;
 
 use crate::events::UiEvent;
 use crate::state::ActiveView;
-use crate::state::State;
+use crate::state::*;
 use crate::theme::Theme;
 use crate::ui::Icon;
 
 pub struct ProfileButton {
-    active: bool,
+    visible: bool,
     authenticated: bool,
 }
 
 impl ProfileButton {
     pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
         let authenticated = state.read(cx).authenticated;
-        let active = state.read(cx).active_view == ActiveView::ProfileView;
+        let visible = state.read(cx).active_view == ActiveView::AssitantView;
 
         let _ = cx
             .observe(state, move |this, state, cx| {
                 this.authenticated = state.read(cx).authenticated;
-                this.active = state.read(cx).active_view == ActiveView::ProfileView;
+                this.visible = state.read(cx).active_view == ActiveView::AssitantView;
                 cx.notify();
             })
             .detach();
 
         ProfileButton {
             authenticated,
-            active,
+            visible,
         }
     }
 }
@@ -35,10 +35,14 @@ impl Render for ProfileButton {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
+        if !self.visible {
+            return div();
+        }
+
         if !self.authenticated {
             let click_handle = cx.listener({
                 move |_this, _event, _window, cx: &mut Context<Self>| {
-                    cx.emit(UiEvent::ChangeActiveView(ActiveView::LoginView));
+                    set_active_view(cx, ActiveView::LoginView.clone());
                 }
             });
 
@@ -54,16 +58,11 @@ impl Render for ProfileButton {
 
         let click_handle = cx.listener({
             move |_this, _event, _window, cx: &mut Context<Self>| {
-                cx.emit(UiEvent::ChangeActiveView(ActiveView::ProfileView));
+                set_active_view(cx, ActiveView::ProfileView.clone());
             }
         });
 
-        let icon_color = match self.active {
-            true => theme.foreground,
-            false => theme.muted_foreground,
-        };
-
-        let button = div()
+        div()
             .flex()
             .on_mouse_up(MouseButton::Left, click_handle)
             .cursor(CursorStyle::PointingHand)
@@ -71,11 +70,9 @@ impl Render for ProfileButton {
                 svg()
                     .path(Icon::CircleUserRound.path())
                     .hover(|style| style.text_color(theme.foreground))
-                    .text_color(icon_color)
+                    .text_color(theme.foreground)
                     .size_4(),
-            );
-
-        button
+            )
     }
 }
 

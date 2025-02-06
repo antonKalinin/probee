@@ -422,6 +422,8 @@ impl Element for TextElement {
         window: &mut Window,
         cx: &mut App,
     ) -> Self::PrepaintState {
+        let theme = cx.global::<Theme>();
+
         let input = self.input.read(cx);
         let content = input.content.clone();
         let selected_range = input.selected_range.clone();
@@ -482,9 +484,9 @@ impl Element for TextElement {
                 Some(fill(
                     Bounds::new(
                         point(bounds.left() + cursor_pos, bounds.top()),
-                        size(px(2.), bounds.bottom() - bounds.top()),
+                        size(px(1.), bounds.bottom() - bounds.top()),
                     ),
-                    gpui::blue(),
+                    theme.foreground,
                 )),
             )
         } else {
@@ -572,9 +574,9 @@ impl Render for TextInput {
             .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
             .on_mouse_up_out(MouseButton::Left, cx.listener(Self::on_mouse_up))
             .on_mouse_move(cx.listener(Self::on_mouse_move))
-            .bg(rgb(0xeeeeee))
-            .line_height(px(20.))
-            .text_size(px(14.))
+            .bg(theme.background)
+            .line_height(theme.line_height)
+            .text_size(theme.text_size)
             .child(
                 div()
                     .h(px(38.)) // 20px line height + 8px padding * 2 + 1px border * 2

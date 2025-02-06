@@ -90,6 +90,7 @@ impl GlobalState {
     pub fn set_active_view(&self, cx: &mut App, view: ActiveView) {
         self.state.update(cx, |state, cx| {
             state.active_view = view.clone();
+            state.error = None;
 
             cx.notify();
         });

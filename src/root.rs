@@ -16,6 +16,7 @@ pub struct Root {
     login_view: Entity<LoginView>,
     profile_view: Entity<ProfileView>,
 
+    back_button: Entity<BackButton>,
     profile_button: Entity<ProfileButton>,
     window_buttons: Vec<Entity<WindowButton>>,
 }
@@ -128,17 +129,10 @@ impl Root {
             let login_view = cx.new(|cx| LoginView::new(cx, &state));
             let profile_view = cx.new(|cx| ProfileView::new(cx, &state));
 
+            let back_button = cx.new(|cx| BackButton::new(cx, &state));
             let profile_button = cx.new(|cx| ProfileButton::new(cx, &state));
             let close_button = cx.new(|_cx| WindowButton::new(WindowAction::Close));
             let hide_button = cx.new(|_cx| WindowButton::new(WindowAction::Hide));
-
-            cx.subscribe(&profile_button, move |_subscriber, _emitter, event, cx| {
-                if let UiEvent::ChangeActiveView(view) = event {
-                    set_active_view(cx, view.clone());
-                    set_error(cx, None);
-                }
-            })
-            .detach();
 
             Root {
                 assistant_view,
@@ -146,6 +140,7 @@ impl Root {
                 login_view,
                 profile_view,
 
+                back_button,
                 profile_button,
                 window_buttons: vec![close_button, hide_button],
             }
@@ -167,6 +162,7 @@ impl Render for Root {
         let title_row = div().flex().flex_row().items_start().p_2();
         let content = div().flex().flex_col().flex_grow().pb_2().px_2();
 
+        let back_button = div().flex().mr_2().child(self.back_button.clone());
         let profile_button = div().flex().mr_1().child(self.profile_button.clone());
         let mut title_buttons = self
             .window_buttons
@@ -175,6 +171,8 @@ impl Render for Root {
             .collect::<Vec<_>>();
 
         title_buttons.push(Root::render_space());
+        // only one button is visible per time
+        title_buttons.push(back_button);
         title_buttons.push(profile_button);
 
         let assistant_view = div().child(self.assistant_view.clone());

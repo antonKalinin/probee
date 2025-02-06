@@ -56,6 +56,7 @@ pub struct Theme {
     pub font_sans: SharedString,
     pub font_mono: SharedString,
     pub line_height: Rems,
+    pub heading_size: Pixels,
     pub text_size: Pixels,
     pub subtext_size: Pixels,
 
@@ -134,6 +135,7 @@ impl Theme {
             font_sans: "Inter".into(),
             font_mono: "JetBrains Mono".into(),
             line_height: rems(1.25),
+            heading_size: px(18.),
             text_size: px(14.),
             subtext_size: px(12.),
         }
