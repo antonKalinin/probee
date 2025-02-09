@@ -25,7 +25,7 @@ pub enum AuthError {
     EmailLoginInvalidPayloadError,
     #[error("Error while getting user\n{0}")]
     GetUserRequestError(reqwest::Error),
-    #[error("\nNot authenticated\nPlease log in first.")]
+    #[error("Not authenticated\nPlease log in first.")]
     NoTokenError,
     #[error("Access token is invalid\n{0}")]
     InvalidTokenError(String),

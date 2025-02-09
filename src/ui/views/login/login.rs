@@ -11,7 +11,7 @@ use super::utils;
 pub struct LoginView {
     visible: bool,
     enabled: bool,
-    email_sent: bool,
+    email: Option<String>,
     email_input: Entity<TextInput>,
 }
 
@@ -22,6 +22,11 @@ impl LoginView {
         cx.observe(state, |this, model, cx| {
             let data = model.read(cx);
             this.visible = data.active_view == ActiveView::LoginView && !data.authenticated;
+
+            if !data.authenticated {
+                this.email = None;
+            }
+
             cx.notify();
         })
         .detach();
@@ -50,7 +55,7 @@ impl LoginView {
         LoginView {
             enabled: false,
             visible: false,
-            email_sent: false,
+            email: None,
 
             email_input,
         }
@@ -79,7 +84,7 @@ impl Render for LoginView {
                 }
             };
 
-            this.email_sent = true;
+            this.email = Some(email.clone());
             this.email_input.update(cx, |input, _cx| input.reset());
             cx.notify();
 
@@ -135,7 +140,12 @@ impl Render for LoginView {
                 .then(|| theme.primary)
                 .unwrap_or(theme.muted_foreground))
             .text_color(theme.primary_foreground)
-            .hover(|style| style.bg(theme.primary.opacity(0.9)))
+            .hover(|style| {
+                style.bg(self
+                    .enabled
+                    .then(|| theme.primary.opacity(0.9))
+                    .unwrap_or(theme.muted_foreground))
+            })
             .cursor(match self.enabled {
                 true => CursorStyle::PointingHand,
                 false => CursorStyle::OperationNotAllowed,
@@ -154,7 +164,10 @@ impl Render for LoginView {
             .text_size(theme.subtext_size)
             .text_color(theme.primary)
             .font_weight(FontWeight::SEMIBOLD)
-            .child(div().child("Magic link sent to your email."));
+            .child(div().child(format!(
+                "Magic link sent to {}",
+                self.email.clone().unwrap_or("".into())
+            )));
 
         div()
             .line_height(theme.line_height)
@@ -170,7 +183,8 @@ impl Render for LoginView {
             .child(instructions)
             .child(self.email_input.clone())
             .child(
-                self.email_sent
+                self.email
+                    .is_some()
                     .then(|| email_sent_notice)
                     .unwrap_or_else(|| send_button),
             )
