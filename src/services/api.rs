@@ -1,4 +1,5 @@
 use anyhow::Result;
+use futures::TryFutureExt;
 use gpui::{App, Global};
 use reqwest::{
     header::{HeaderMap, HeaderValue},
@@ -81,14 +82,16 @@ impl Api {
             .await
             .map_err(|original_err| ApiError::RequestError(original_err))?;
 
-        // TODO: Check response status code and return error if it's not 200
+        let status = response.status();
 
-        let decoded_response = response
-            .json::<GetAssistantsResponse>()
+        if !status.is_success() {
+            return Ok(vec![]);
+        }
+
+        let assistants = response
+            .json::<Vec<AssistantConfig>>()
             .await
             .map_err(|original_err| ApiError::DecodingError(original_err))?;
-
-        let assistants = decoded_response.assistants;
 
         Ok(assistants)
     }

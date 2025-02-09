@@ -1,13 +1,21 @@
 use gpui::*;
+use std::time::Duration;
 
-use crate::state::{ActiveView, State};
+use crate::services::{Auth, Storage};
+use crate::state::*;
 use crate::theme::Theme;
 use crate::ui::TextInput;
 
+use super::utils;
+
 pub struct LoginView {
     visible: bool,
+    enabled: bool,
+    email_sent: bool,
     email_input: Entity<TextInput>,
 }
+
+const EMAIL_STORAGE_KEY: &str = "recent_email";
 
 impl LoginView {
     pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
@@ -18,10 +26,32 @@ impl LoginView {
         })
         .detach();
 
-        let email_input = cx.new(|cx| TextInput::new(String::from("Enter your email"), cx));
+        let storage = cx.global::<Storage>();
+        let recent_email = storage.get(EMAIL_STORAGE_KEY.into());
+
+        let email_input =
+            cx.new(|cx| TextInput::new(recent_email, Some("Enter your email".into()), cx));
+
+        cx.spawn(|this, mut cx| async move {
+            loop {
+                this.update(&mut cx, |this, cx| {
+                    let input_value = this.email_input.read(cx).get_content();
+                    this.enabled = utils::is_valid_email(&input_value);
+                })
+                .ok();
+
+                cx.background_executor()
+                    .timer(Duration::from_millis(100))
+                    .await;
+            }
+        })
+        .detach();
 
         LoginView {
+            enabled: false,
             visible: false,
+            email_sent: false,
+
             email_input,
         }
     }
@@ -35,10 +65,45 @@ impl Render for LoginView {
 
         let theme = cx.global::<Theme>();
 
-        let click_handle = cx.listener({
-            move |_this, _event, _window, _cx: &mut Context<Self>| {
-                println!("LOGIN");
+        let handle_login = cx.listener(move |this, _event, _window, cx: &mut Context<Self>| {
+            if !this.enabled {
+                return;
             }
+
+            let input_value = this.email_input.read(cx).get_content();
+            let email = match utils::is_valid_email(input_value.trim()) {
+                true => input_value.trim().to_string(),
+                false => {
+                    // TODO: change style of input to error
+                    return;
+                }
+            };
+
+            this.email_sent = true;
+            this.email_input.update(cx, |input, _cx| input.reset());
+            cx.notify();
+
+            let auth = cx.global::<Auth>().clone();
+            let storage = cx.global::<Storage>().clone();
+
+            // Save recently used email to storage to prefill the input on next login
+            let _ = storage.set(EMAIL_STORAGE_KEY.into(), email.clone());
+
+            cx.spawn(|_this, mut cx| async move {
+                let login_result = auth.login_with_email(&mut cx, email.as_str()).await;
+
+                match login_result {
+                    Ok(user) => {
+                        set_user_async(&mut cx, Some(user));
+                        set_authenticated_async(&mut cx, true);
+                        set_active_view_async(&mut cx, ActiveView::ProfileView);
+                    }
+                    Err(err) => {
+                        set_error_async(&mut cx, Some(err));
+                    }
+                };
+            })
+            .detach();
         });
 
         let title = div()
@@ -53,9 +118,9 @@ impl Render for LoginView {
             .mb_4()
             .text_size(theme.subtext_size)
             .text_color(theme.muted_foreground)
-            .child("To use public or personal assistants you need to login. If you don't have an account we will create one for you. To manage your assistants please use cmdi.com");
+            .child("To use public or personal assistants you need to login. If you don't have an account we will create one for you.");
 
-        let button = div()
+        let send_button = div()
             .w_auto()
             .mt_2()
             .px_4()
@@ -65,13 +130,30 @@ impl Render for LoginView {
             .flex_row()
             .justify_center()
             .items_center()
-            .bg(theme.primary)
-            .hover(|style| style.bg(theme.accent_foreground))
+            .bg(self
+                .enabled
+                .then(|| theme.primary)
+                .unwrap_or(theme.muted_foreground))
             .text_color(theme.primary_foreground)
-            .cursor(CursorStyle::PointingHand)
-            .on_mouse_up(MouseButton::Left, click_handle)
+            .cursor(match self.enabled {
+                true => CursorStyle::PointingHand,
+                false => CursorStyle::OperationNotAllowed,
+            })
+            .on_mouse_up(MouseButton::Left, handle_login)
             .cursor(CursorStyle::PointingHand)
             .child("Login with Magic Link");
+
+        let email_sent_notice = div()
+            .mt_4()
+            .flex()
+            .flex()
+            .flex_row()
+            .flex_shrink_0()
+            .justify_center()
+            .text_size(theme.subtext_size)
+            .text_color(theme.primary)
+            .font_weight(FontWeight::SEMIBOLD)
+            .child(div().child("Magic link sent to your email."));
 
         div()
             .line_height(theme.line_height)
@@ -86,7 +168,11 @@ impl Render for LoginView {
             .child(title)
             .child(instructions)
             .child(self.email_input.clone())
-            .child(button)
+            .child(
+                self.email_sent
+                    .then(|| email_sent_notice)
+                    .unwrap_or_else(|| send_button),
+            )
             .into_any_element()
     }
 }

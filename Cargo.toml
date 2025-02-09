@@ -28,6 +28,7 @@ global-hotkey = "0.6.3"                                                         
 gpui = { git = "https://github.com/antonKalinin/zed", rev = "113646bb7de0e1a2ef55783190012eb2c2f9b4bd" } # ui framework (forked and patched to support window size changes)
 image = "0.25.4"                                                                                         # image processing
 rand = "0.8.5"                                                                                           # authentication
+regex = "1.11.1"
 reqwest = { version = "0.12.9", features = ["json", "stream"] }                                          # http client
 rust-embed = "8.5.0"                                                                                     # embedding assets
 serde = { version = "1.0.215", features = ["derive"] }                                                   # serialization core

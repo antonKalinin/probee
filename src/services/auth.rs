@@ -39,10 +39,10 @@ pub struct AccessToken {
 
 #[derive(Clone, Debug)]
 pub struct User {
-    id: String,
-    email: String,
-    avatar_url: String,
-    full_name: String,
+    pub id: String,
+    pub email: String,
+    pub avatar_url: String,
+    pub full_name: String,
 }
 
 impl Global for Auth {}
@@ -362,6 +362,56 @@ impl Auth {
         };
 
         Ok(user)
+    }
+
+    pub async fn logout(&self, cx: &mut AsyncApp) -> Result<()> {
+        let access_token = Auth::get_access_token(cx);
+
+        if access_token.is_none() {
+            return Ok(());
+        }
+
+        /*
+         * Determines which sessions should be logged out.
+         * Global means all sessions by this account.
+         * Local means only this session.
+         * Others means all other sessions except the current one.
+         */
+        let scope = "local";
+        let url = format!("{}/logout?scope={}", self.base_url, scope);
+
+        let response = self
+            .client
+            .post(url)
+            .header("Authorization", format!("Bearer {}", access_token.unwrap()))
+            .send()
+            .await
+            .map_err(|original_err| AuthError::LogoutRequestError(original_err))?;
+
+        let status = response.status();
+
+        if !status.is_success() {
+            let data = response.json::<serde_json::Value>().await?;
+            let message = data
+                .get("msg")
+                .unwrap()
+                .as_str()
+                .unwrap_or("unknown reason of error")
+                .into();
+
+            return Err(AuthError::LogoutError(message).into());
+        }
+
+        let _: Result<()> = cx.read_global(|storage: &Storage, _cx| {
+            storage.delete(STORAGE_USER_ID_KEY)?;
+            storage.delete(STORAGE_ACCESS_TOKEN_KEY)?;
+            storage.delete(STORAGE_REFRESH_TOKEN_KEY)?;
+            storage.delete(STORAGE_ACCESS_TOKEN_EXPIRES_AT_KEY)?;
+
+            Ok(())
+        })?;
+
+        Ok(())
     }
 }
 

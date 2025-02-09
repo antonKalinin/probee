@@ -33,6 +33,10 @@ pub enum AuthError {
     RefreshTokenRequestError(reqwest::Error),
     #[error("Error while refreshing access token\n{0}")]
     InvalidRefreshTokenError(String),
+    #[error("Error while trying to logout\n{0}")]
+    LogoutRequestError(reqwest::Error),
+    #[error("Error while trying to logout\n{0}")]
+    LogoutError(String),
     #[error("Unknown error while trying to authenticate")]
     UnknownError,
 }

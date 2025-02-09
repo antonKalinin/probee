@@ -41,7 +41,11 @@ pub struct TextInput {
 }
 
 impl TextInput {
-    pub fn new(placeholder: String, cx: &mut Context<Self>) -> Self {
+    pub fn new(
+        content: Option<String>,
+        placeholder: Option<String>,
+        cx: &mut Context<Self>,
+    ) -> Self {
         cx.bind_keys([
             KeyBinding::new("backspace", Backspace, None),
             KeyBinding::new("delete", Delete, None),
@@ -59,8 +63,8 @@ impl TextInput {
 
         Self {
             focus_handle: cx.focus_handle(),
-            content: "".into(),
-            placeholder: placeholder.into(),
+            content: content.unwrap_or("".to_owned()).into(),
+            placeholder: placeholder.unwrap_or("Type here...".to_owned()).into(),
             selected_range: 0..0,
             selection_reversed: false,
             marked_range: None,
@@ -68,6 +72,20 @@ impl TextInput {
             last_bounds: None,
             is_selecting: false,
         }
+    }
+
+    pub fn get_content(&self) -> String {
+        self.content.clone().into()
+    }
+
+    pub fn reset(&mut self) {
+        self.content = "".into();
+        self.selected_range = 0..0;
+        self.selection_reversed = false;
+        self.marked_range = None;
+        self.last_layout = None;
+        self.last_bounds = None;
+        self.is_selecting = false;
     }
 
     fn left(&mut self, _: &Left, _: &mut Window, cx: &mut Context<Self>) {
