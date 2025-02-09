@@ -1,6 +1,5 @@
 use anyhow::Result;
-use futures::TryFutureExt;
-use gpui::{App, Global};
+use gpui::{App, AsyncApp, Global};
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client,
@@ -9,6 +8,7 @@ use serde::Deserialize;
 use std::env;
 
 use crate::errors::ApiError;
+use crate::services::Auth;
 
 /*
  * Api service that uses Supabase REST API as the backend.
@@ -72,12 +72,15 @@ impl Api {
         });
     }
 
-    pub async fn get_public_assistants(&self) -> Result<Vec<AssistantConfig>> {
+    pub async fn get_assistants(&self, cx: &mut AsyncApp) -> Result<Vec<AssistantConfig>> {
+        // Returns public assistants for authenticated users and personal assistants for their authors.
         let url = format!("{}{}", self.base_url, "/rest/v1/assistants");
 
+        let access_token = Auth::get_access_token_async(cx).unwrap_or("".into());
         let response = self
             .client
             .get(url)
+            .header("Authorization", format!("Bearer {}", access_token))
             .send()
             .await
             .map_err(|original_err| ApiError::RequestError(original_err))?;

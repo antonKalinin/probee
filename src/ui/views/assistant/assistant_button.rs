@@ -35,11 +35,11 @@ impl AssistantButton {
 
     fn render_icon(&self, cx: &Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
-        let icon = Icon::Globe;
+        let icon = Icon::TextCursorInput;
 
         let text_color = match self.active {
-            true => theme.muted_foreground,
-            false => theme.foreground,
+            true => theme.primary_foreground,
+            false => theme.secondary_foreground,
         };
 
         let svg = div()
@@ -53,8 +53,8 @@ impl AssistantButton {
         let theme = cx.global::<Theme>();
 
         let text_color = match self.active {
-            true => theme.muted_foreground,
-            false => theme.foreground,
+            true => theme.primary_foreground,
+            false => theme.secondary_foreground,
         };
 
         let label = div()
@@ -86,7 +86,7 @@ impl Render for AssistantButton {
         };
 
         let bg_hover_color = match self.active {
-            true => theme.accent_foreground,
+            true => theme.primary.opacity(0.9),
             false => theme.foreground,
         };
 
@@ -96,7 +96,7 @@ impl Render for AssistantButton {
             .px_2()
             .py_1()
             .border_1()
-            .rounded_full()
+            .rounded_lg()
             .flex()
             .flex_row()
             .items_center()

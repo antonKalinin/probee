@@ -98,25 +98,6 @@ impl Root {
                         })
                         .detach();
                     }
-                    AppEvent::EmailFormSubmitted(email) => {
-                        let auth = cx.global::<Auth>().clone();
-
-                        cx.spawn(|mut cx| async move {
-                            let login_result = auth.login_with_email(&mut cx, email.as_str()).await;
-
-                            match login_result {
-                                Ok(user) => {
-                                    set_user_async(&mut cx, Some(user));
-                                    set_authenticated_async(&mut cx, true);
-                                    set_active_view_async(&mut cx, ActiveView::ProfileView);
-                                }
-                                Err(err) => {
-                                    set_error_async(&mut cx, Some(err));
-                                }
-                            };
-                        })
-                        .detach();
-                    }
                 };
             })
             .detach();

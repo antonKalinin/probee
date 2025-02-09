@@ -48,7 +48,7 @@ impl AssistantSelector {
                 cx.notify();
             });
 
-            let assistants = api.get_public_assistants().await;
+            let assistants = api.get_assistants(&mut cx).await;
 
             GlobalState::update_async(
                 |this, cx| match assistants {

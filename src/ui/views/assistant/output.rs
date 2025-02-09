@@ -2,10 +2,10 @@ use gpui::*;
 
 use crate::clipboard::Clipboard;
 use crate::events::UiEvent;
-use crate::state::get_active_assistant;
-use crate::state::{ActiveView, State};
+use crate::state::*;
 use crate::theme::Theme;
 
+use super::clear_output_button::ClearOutputButton;
 use super::copy_output_button::CopyOutputButton;
 
 pub struct Output {
@@ -15,6 +15,7 @@ pub struct Output {
 
     scroll_handle: ScrollHandle,
     copy_button: Entity<CopyOutputButton>,
+    clear_button: Entity<ClearOutputButton>,
 }
 
 const MAX_HEIGHT: f32 = 320.0;
@@ -35,6 +36,7 @@ impl Output {
         .detach();
 
         let copy_button = cx.new(|cx| CopyOutputButton::new(cx, &state));
+        let clear_button = cx.new(|cx| ClearOutputButton::new(cx, &state));
 
         cx.subscribe(&copy_button, move |subscriber, _emitter, event, cx| {
             if UiEvent::CopyOutput == *event && !subscriber.text.is_empty() {
@@ -44,12 +46,23 @@ impl Output {
         })
         .detach();
 
+        cx.subscribe(&clear_button, move |subscriber, _emitter, event, cx| {
+            if UiEvent::ClearOutput == *event && !subscriber.text.is_empty() {
+                subscriber.text = "".to_owned();
+                set_output(cx, "".to_owned());
+                cx.notify();
+            }
+        })
+        .detach();
+
         Output {
             visible: false,
             text: "".to_owned(),
             description: "".to_owned(),
             scroll_handle: ScrollHandle::new(),
+
             copy_button,
+            clear_button,
         }
     }
 
@@ -89,12 +102,14 @@ impl Render for Output {
                 .flex()
                 .flex_col()
                 .mt_2()
-                .w_full()
-                .h_16()
+                .pl_2()
+                .mx_1()
+                .h_auto()
                 .items_center()
                 .justify_start()
                 .content_center()
-                .px_2()
+                .border_l_2()
+                .border_color(theme.border)
                 .text_color(theme.muted_foreground)
                 .text_size(theme.subtext_size)
                 .child(self.description.clone())
@@ -139,17 +154,16 @@ impl Render for Output {
             .track_scroll(&self.scroll_handle)
             .into_any_element();
 
-        let output_actions = div().flex().flex_row().mt_1().justify_end().children(
-            vec![self.copy_button.clone()]
-                .iter()
-                .map(|button| div().flex().ml_2().child(button.clone()))
-                .collect::<Vec<_>>(),
-        );
+        let output_actions = div().flex().flex_row().mt_1().justify_end().children(vec![
+            div().flex().ml_2().child(self.clear_button.clone()),
+            div().flex().child(self.copy_button.clone()),
+        ]);
 
         div()
+            .relative()
             .flex()
             .flex_col()
-            .relative()
+            .flex_shrink_0()
             .px_1()
             .mt_2()
             .mb_1()

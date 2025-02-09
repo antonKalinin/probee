@@ -75,7 +75,13 @@ impl Auth {
         cx.set_global(auth);
     }
 
-    fn get_access_token(cx: &mut AsyncApp) -> Option<String> {
+    pub fn get_access_token(cx: &mut App) -> Option<String> {
+        let storage = cx.global::<Storage>().clone();
+
+        storage.get(STORAGE_ACCESS_TOKEN_KEY)
+    }
+
+    pub fn get_access_token_async(cx: &mut AsyncApp) -> Option<String> {
         cx.read_global(|storage: &Storage, _cx| storage.get(STORAGE_ACCESS_TOKEN_KEY))
             .unwrap_or(None)
     }
@@ -322,7 +328,7 @@ impl Auth {
     }
 
     pub async fn get_user(&self, cx: &mut AsyncApp) -> Result<User> {
-        let access_token = Auth::get_access_token(cx);
+        let access_token = Auth::get_access_token_async(cx);
 
         if access_token.is_none() {
             return Err(AuthError::NoTokenError.into());
@@ -365,7 +371,7 @@ impl Auth {
     }
 
     pub async fn logout(&self, cx: &mut AsyncApp) -> Result<()> {
-        let access_token = Auth::get_access_token(cx);
+        let access_token = Auth::get_access_token_async(cx);
 
         if access_token.is_none() {
             return Ok(());

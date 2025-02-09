@@ -46,12 +46,15 @@ impl Render for AssistantView {
             return div().into_any_element();
         }
 
-        let assistant_selector = div().pb_2().child(self.assistant_selector_view.clone());
-        let content_col = div().flex().flex_col().flex_grow().pb_2();
+        let assistant_selector = div().pb_1().child(self.assistant_selector_view.clone());
+        let content_col = div().flex().flex_col().flex_shrink_0().flex_grow();
         let output = div().child(self.output_view.clone());
         let loading = div().child(self.loading_view.clone());
 
         div()
+            .flex()
+            .flex_col()
+            .flex_shrink_0()
             .child(assistant_selector)
             .child(content_col.children([loading, output]))
             .child(self.footer_view.clone())

@@ -135,6 +135,7 @@ impl Render for LoginView {
                 .then(|| theme.primary)
                 .unwrap_or(theme.muted_foreground))
             .text_color(theme.primary_foreground)
+            .hover(|style| style.bg(theme.primary.opacity(0.9)))
             .cursor(match self.enabled {
                 true => CursorStyle::PointingHand,
                 false => CursorStyle::OperationNotAllowed,

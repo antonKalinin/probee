@@ -72,9 +72,9 @@ impl GlobalState {
         self.state.update(cx, |state, cx| {
             state.active_assistant_id = id.clone();
 
-            // if let Some(id) = id {
-            //     cx.emit(AppEvent::AssistantChanged(id));
-            // }
+            if let Some(id) = id {
+                cx.emit(AppEvent::AssistantChanged(id));
+            }
 
             cx.notify();
         });
@@ -107,7 +107,7 @@ impl GlobalState {
         self.state.update(cx, |state, cx| {
             state.input = Some(input.clone());
             cx.notify();
-            // cx.emit(AppEvent::InputChanged(input));
+            cx.emit(AppEvent::InputChanged(input));
         });
     }
 

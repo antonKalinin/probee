@@ -73,8 +73,7 @@ impl Render for ProfileView {
         });
 
         let logout_button = div()
-            .w_auto()
-            .mt_2()
+            .mt_4()
             .px_4()
             .py_2()
             .rounded_lg()
@@ -103,9 +102,19 @@ impl Render for ProfileView {
             .flex()
             .text_size(theme.heading_size)
             .text_color(theme.foreground)
-            .font_family(theme.font_sans.clone())
             .font_weight(FontWeight::SEMIBOLD)
             .child(get_greeting(first_name));
+
+        let row = || div().w_full().flex_row();
+        let space = || div().flex().flex_grow().flex_shrink_0();
+        let section = || div().flex_col().mb_2();
+        let setting_title = || {
+            div()
+                .mb_1()
+                .text_size(theme.text_size)
+                .text_color(theme.primary)
+                .font_weight(FontWeight::SEMIBOLD)
+        };
 
         div()
             .line_height(theme.line_height)
@@ -116,7 +125,9 @@ impl Render for ProfileView {
             .line_height(theme.line_height)
             .font_family(theme.font_sans.clone())
             .child(greeting)
-            .child(logout_button)
+            .child(section().child(setting_title().child("Theme")))
+            .child(section().child(setting_title().child("Position")))
+            .child(row().children([space(), logout_button]))
             .into_any_element()
     }
 }
