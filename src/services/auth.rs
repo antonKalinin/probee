@@ -4,7 +4,7 @@ use gpui::{App, AsyncApp, Global};
 use rand::Rng;
 use reqwest::{
     header::{HeaderMap, HeaderValue},
-    Client,
+    Client, StatusCode,
 };
 use serde_json::Value;
 use sha2::{Digest, Sha256};
@@ -75,12 +75,6 @@ impl Auth {
         cx.set_global(auth);
     }
 
-    pub fn get_access_token(cx: &mut App) -> Option<String> {
-        let storage = cx.global::<Storage>().clone();
-
-        storage.get(STORAGE_ACCESS_TOKEN_KEY)
-    }
-
     pub fn get_access_token_async(cx: &mut AsyncApp) -> Option<String> {
         cx.read_global(|storage: &Storage, _cx| storage.get(STORAGE_ACCESS_TOKEN_KEY))
             .unwrap_or(None)
@@ -89,6 +83,17 @@ impl Auth {
     fn get_refresh_token(cx: &mut AsyncApp) -> Option<String> {
         cx.read_global(|storage: &Storage, _cx| storage.get(STORAGE_REFRESH_TOKEN_KEY))
             .unwrap_or(None)
+    }
+
+    fn reset_auth_data(cx: &mut AsyncApp) -> Result<()> {
+        cx.read_global(|storage: &Storage, _cx| {
+            let _ = storage.delete(STORAGE_USER_ID_KEY);
+            let _ = storage.delete(STORAGE_ACCESS_TOKEN_KEY);
+            let _ = storage.delete(STORAGE_REFRESH_TOKEN_KEY);
+            let _ = storage.delete(STORAGE_ACCESS_TOKEN_EXPIRES_AT_KEY);
+        })?;
+
+        Ok(())
     }
 
     // fn set_token_to_store(cx: &mut AsyncApp, token: AccessToken) -> Result<()> {
@@ -348,6 +353,10 @@ impl Auth {
         let data = response.json::<serde_json::Value>().await?;
 
         if !status.is_success() {
+            if status == StatusCode::FORBIDDEN {
+                let _ = Auth::reset_auth_data(cx);
+            }
+
             let message = data
                 .get("msg")
                 .unwrap()

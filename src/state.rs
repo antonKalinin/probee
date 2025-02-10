@@ -2,7 +2,7 @@ use anyhow::Error;
 use gpui::{App, AppContext, AsyncApp, BorrowAppContext, Entity, EventEmitter, Global};
 
 use crate::events::AppEvent;
-use crate::services::{AssistantConfig, User};
+use crate::services::{AssistantConfig, Auth, User};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ActiveView {
@@ -100,6 +100,7 @@ impl GlobalState {
         self.state.update(cx, |model, cx| {
             model.authenticated = authenticated;
             cx.notify();
+            cx.emit(AppEvent::Authenticated);
         });
     }
 
@@ -200,10 +201,6 @@ pub fn set_error(cx: &mut App, error: Option<Error>) {
 
 pub fn set_error_async(cx: &mut AsyncApp, error: Option<Error>) {
     GlobalState::update_async(|this, cx| this.set_error(cx, error), cx);
-}
-
-pub fn set_authenticated(cx: &mut App, authenticated: bool) {
-    GlobalState::update(|this, cx| this.set_authenticated(cx, authenticated), cx);
 }
 
 pub fn set_authenticated_async(cx: &mut AsyncApp, authenticated: bool) {

@@ -4,7 +4,7 @@ use gpui::{div, prelude::*, App, Div, Entity, EventEmitter, Render, Window};
 use crate::assistant::*;
 use crate::errors::*;
 use crate::events::*;
-use crate::services::Auth;
+use crate::services::{Api, Auth};
 use crate::state::*;
 use crate::theme::Theme;
 use crate::ui::*;
@@ -63,6 +63,32 @@ impl Root {
         let _app_events_subscribtion = cx
             .subscribe(&global_state.state, |_model, event, cx| {
                 let _ = match event.clone() {
+                    AppEvent::Authenticated => {
+                        let api = cx.global::<Api>().clone();
+                        cx.spawn(|mut cx| async move {
+                            let assistants = api.get_assistants(&mut cx).await;
+
+                            GlobalState::update_async(
+                                |this, cx| match assistants {
+                                    Ok(assistants) => {
+                                        this.set_assistants(cx, assistants.clone());
+
+                                        if let Some(first_assistant) = assistants.first() {
+                                            this.set_active_assistant_id(
+                                                cx,
+                                                Some(first_assistant.id.clone()),
+                                            );
+                                        }
+                                    }
+                                    Err(err) => {
+                                        this.set_error(cx, Some(err));
+                                    }
+                                },
+                                &mut cx,
+                            );
+                        })
+                        .detach();
+                    }
                     AppEvent::AssistantChanged(_id) => {
                         // TODO: As soon as assistant is changed, reset it in cx.global
                     }

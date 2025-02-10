@@ -7,6 +7,7 @@ pub enum UiEvent {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum AppEvent {
+    Authenticated,
     InputChanged(String),
     AssistantChanged(String),
 }
