@@ -23,9 +23,9 @@ jobs:
       - name: Rustup
         run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
       - name: Build x86_64
-        run: ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }} CMDI_API_URL=${{ vars.CMDI_API_URL }} cargo build --target=x86_64-apple-darwin --release
+        run: ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }} CMDI_API_URL=${{ vars.CMDI_API_URL }} STORAGE_SALT=${{ secrets.STORAGE_SALT }} SUPABASE_PUBLIC_URL=${{ vars.SUPABASE_PUBLIC_URL }} SUPABASE_PUBLIC_ANON_KEY=${{SUPABASE_PUBLIC_ANON_KEY}} cargo build --target=x86_64-apple-darwin --release
       - name: Build aarch64
-        run: ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }} CMDI_API_URL=${{ vars.CMDI_API_URL }} cargo build --target=aarch64-apple-darwin --release
+        run: ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }} CMDI_API_URL=${{ vars.CMDI_API_URL }} STORAGE_SALT=${{ secrets.STORAGE_SALT }} SUPABASE_PUBLIC_URL=${{ vars.SUPABASE_PUBLIC_URL }} SUPABASE_PUBLIC_ANON_KEY=${{SUPABASE_PUBLIC_ANON_KEY}} cargo build --target=aarch64-apple-darwin --release
       - name: Lipo
         run: mkdir -p target/release ; lipo -create -output target/release/cmdi target/x86_64-apple-darwin/release/cmdi target/aarch64-apple-darwin/release/cmdi
       - name: Install Packager
