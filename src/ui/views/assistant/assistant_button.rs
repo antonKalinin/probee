@@ -82,12 +82,17 @@ impl Render for AssistantButton {
 
         let bg_color = match self.active {
             true => theme.primary,
-            false => theme.secondary,
+            false => theme.background,
+        };
+
+        let border_color = match self.active {
+            true => theme.primary,
+            false => theme.border,
         };
 
         let bg_hover_color = match self.active {
             true => theme.primary.opacity(0.9),
-            false => theme.foreground,
+            false => theme.secondary,
         };
 
         let button = div()
@@ -101,6 +106,7 @@ impl Render for AssistantButton {
             .flex_row()
             .items_center()
             .bg(bg_color)
+            .border_color(border_color)
             .hover(|style| style.bg(bg_hover_color))
             .on_mouse_up(MouseButton::Left, on_click)
             .cursor(CursorStyle::PointingHand)

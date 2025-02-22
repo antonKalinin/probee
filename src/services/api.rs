@@ -26,9 +26,9 @@ pub struct Message {
 }
 
 #[derive(Clone, Deserialize, Debug)]
-pub struct Provider {
+pub struct Model {
     pub name: String,
-    pub model: String,
+    pub provider: String,
 }
 
 #[derive(Clone, Deserialize, Debug)]
@@ -36,7 +36,7 @@ pub struct AssistantConfig {
     pub id: String,
     pub name: String,
     pub description: String,
-    pub provider: Provider,
+    pub model: Model,
     pub messages: Vec<Message>,
     pub temperature: f32,
     pub updated_at: String,

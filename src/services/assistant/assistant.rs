@@ -61,7 +61,7 @@ impl Assistant {
     }
 
     pub fn set_config(&mut self, config: AssistantConfig) -> Result<()> {
-        let provider_name = config.provider.name.clone();
+        let provider_name = config.model.provider.clone();
 
         match provider_name.as_str() {
             "anthropic" => {

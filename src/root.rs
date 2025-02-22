@@ -54,6 +54,9 @@ impl Root {
                             }
                         }
                     }
+                    AuthError::NoTokenError => {
+                        // nothing to do, need to login first
+                    }
                     _ => set_error_async(&mut cx, Some(err)),
                 },
             };
