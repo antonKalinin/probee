@@ -110,10 +110,10 @@ impl Render for ProfileView {
         let section = || div().flex_col().mb_2();
         let setting_title = || {
             div()
-                .mb_1()
+                .mb_4()
                 .text_size(theme.text_size)
                 .text_color(theme.primary)
-                .font_weight(FontWeight::SEMIBOLD)
+                .font_weight(FontWeight::NORMAL)
         };
 
         div()

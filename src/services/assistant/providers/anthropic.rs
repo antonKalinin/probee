@@ -5,7 +5,6 @@ use reqwest::{
     Client,
 };
 use serde::{Deserialize, Serialize};
-use std::env;
 use tokio::sync::mpsc::channel;
 use tokio_stream::wrappers::ReceiverStream;
 
@@ -186,9 +185,10 @@ impl AssistantProvider for AnthropicProvider {
 
                         if let Ok(event) = serde_json::from_str::<StreamEvent>(event_data) {
                             match event {
-                                StreamEvent::ContentBlockDelta { delta, index } => {
-                                    // TODO: Use index to determine the order of the blocks
-                                    if tx.send(delta.text).await.is_err() {
+                                // TODO: utilize index to maintain order of content blocks
+                                // https://docs.anthropic.com/en/api/messages-streaming#event-types
+                                StreamEvent::ContentBlockDelta { delta, index: _ } => {
+                                    if tx.send(delta.text.clone()).await.is_err() {
                                         break;
                                     }
                                 }

@@ -13,33 +13,34 @@ icons = ["icons/*.png"]
 
 [package.metadata.packager.macos]
 entitlements = "macos/entitlements.plist"
+infoPlistPath = "macos/Info.plist"
 
 [dependencies]
 aes-gcm = "0.10.3"
-anyhow = "1.0.91"                                                                                        # error handling
-arboard = "3.4.1"                                                                                        # clipboard access
+anyhow = "1.0.91"                                                                                                           # error handling
+arboard = "3.4.1"                                                                                                           # clipboard access
 async-std = { version = "1.13.0", features = ["attributes", "tokio1"] }
-async-trait = "0.1.85"                                                                                   # async traits for assistant providers
-base64 = "0.22.1"                                                                                        # authentication
-dirs = "6.0.0"                                                                                           # app data directory
-dotenv = "0.15.0"                                                                                        # env vars
-futures = "0.3.31"                                                                                       # stream processing
-global-hotkey = "0.6.3"                                                                                  # global hotkeys
-gpui = { git = "https://github.com/antonKalinin/zed", rev = "113646bb7de0e1a2ef55783190012eb2c2f9b4bd" } # ui framework (forked and patched to support window size changes)
-image = "0.25.4"                                                                                         # image processing
-rand = "0.8.5"                                                                                           # authentication
+async-trait = "0.1.85"                                                                                                      # async traits for assistant providers
+base64 = "0.22.1"                                                                                                           # authentication
+dirs = "6.0.0"                                                                                                              # app data directory
+dotenv = "0.15.0"                                                                                                           # env vars
+futures = "0.3.31"                                                                                                          # stream processing
+global-hotkey = { git = "https://github.com/antonKalinin/global-hotkey", rev = "198fdfe1a1f49a6e1fce9ff240e41754008aceea" } # global hotkeys
+gpui = { git = "https://github.com/antonKalinin/zed", rev = "113646bb7de0e1a2ef55783190012eb2c2f9b4bd" }                    # ui framework (forked and patched to support window size changes)
+image = "0.25.4"                                                                                                            # image processing
+rand = "0.8.5"                                                                                                              # authentication
 regex = "1.11.1"
-reqwest = { version = "0.12.9", features = ["json", "stream"] }                                          # http client
-rust-embed = "8.5.0"                                                                                     # embedding assets
-serde = { version = "1.0.215", features = ["derive"] }                                                   # serialization core
-serde_json = "1.0.138"                                                                                   # json de/serialization
-sha2 = "0.10.8"                                                                                          # authentication
-smallvec = "1.13.2"                                                                                      # optimized vector struct used in gpui elements
-thiserror = "2.0.7"                                                                                      # custom errors
+reqwest = { version = "0.12.9", features = ["json", "stream"] }                                                             # http client
+rust-embed = "8.5.0"                                                                                                        # embedding assets
+serde = { version = "1.0.215", features = ["derive"] }                                                                      # serialization core
+serde_json = "1.0.138"                                                                                                      # json de/serialization
+sha2 = "0.10.8"                                                                                                             # authentication
+smallvec = "1.13.2"                                                                                                         # optimized vector struct used in gpui elements
+thiserror = "2.0.7"                                                                                                         # custom errors
 tiny_http = "0.12.0"
 tokio = { version = "1.43.0", features = ["sync"] }
 tokio-stream = "0.1.17"
-unicode-segmentation = "1.12.0"                                                                          # character segmentation for input handling
+unicode-segmentation = "1.12.0"                                                                                             # character segmentation for input handling
 url = "2.5.4"
 
 # platform specific dependencies

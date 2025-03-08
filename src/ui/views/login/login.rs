@@ -111,19 +111,27 @@ impl Render for LoginView {
             .detach();
         });
 
+        let handle_login_retry =
+            cx.listener(move |this, _event, _window, cx: &mut Context<Self>| {
+                this.email = None;
+                //this.email_input.update(cx, |input, _cx| input.reset());
+                cx.notify();
+            });
+
         let title = div()
             .mb_2()
             .text_size(theme.heading_size)
             .text_color(theme.foreground)
             .font_family(theme.font_sans.clone())
             .font_weight(FontWeight::SEMIBOLD)
-            .child("Login into Command I");
+            .child("Login");
 
         let instructions = div()
             .mb_4()
             .text_size(theme.subtext_size)
             .text_color(theme.muted_foreground)
-            .child("To use public or personal assistants you need to login. If you don't have an account we will create one for you.");
+            .child("To use public or personal assistants you need to login.")
+            .child("If you don't have an account we will create one for you.");
 
         let send_button = div()
             .w_auto()
@@ -154,8 +162,26 @@ impl Render for LoginView {
             .cursor(CursorStyle::PointingHand)
             .child("Login with Magic Link");
 
+        let try_again_button = div()
+            .w_auto()
+            .mt_2()
+            .px_4()
+            .py_2()
+            .rounded_lg()
+            .flex()
+            .flex_row()
+            .justify_center()
+            .items_center()
+            .bg(theme.secondary)
+            .text_color(theme.secondary_foreground)
+            .hover(|style| style.bg(theme.secondary.opacity(0.9)))
+            .cursor(CursorStyle::PointingHand)
+            .on_mouse_up(MouseButton::Left, handle_login_retry)
+            .child("Try with another email");
+
         let email_sent_notice = div()
             .mt_4()
+            .mb_2()
             .flex()
             .flex()
             .flex_row()
@@ -172,7 +198,7 @@ impl Render for LoginView {
         div()
             .line_height(theme.line_height)
             .w_full()
-            .my_4()
+            .my_2()
             .px_1()
             .text_color(theme.foreground)
             .text_size(theme.text_size)
@@ -181,11 +207,16 @@ impl Render for LoginView {
             .font_weight(FontWeight::NORMAL)
             .child(title)
             .child(instructions)
-            .child(self.email_input.clone())
             .child(
                 self.email
                     .is_some()
                     .then(|| email_sent_notice)
+                    .unwrap_or_else(|| div().child(self.email_input.clone())),
+            )
+            .child(
+                self.email
+                    .is_some()
+                    .then(|| try_again_button)
                     .unwrap_or_else(|| send_button),
             )
             .into_any_element()

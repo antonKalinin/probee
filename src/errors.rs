@@ -13,7 +13,7 @@ pub enum ApiError {
 pub enum AuthError {
     #[error("Error while logging in\n{0}")]
     EmailLoginRequestError(reqwest::Error),
-    #[error("Error while loggin in\nTime out while waiting for magic link to be used. Please try to log in again.")]
+    #[error("Error while logging in\nTime out while waiting for magic link to be used. Please try to log in again.")]
     EmailLoginTimeoutError,
     #[error("Error while logging in\nCan't get auth code from the request. Please try again.")]
     EmailLoginNoAuthCode,

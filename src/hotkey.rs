@@ -1,5 +1,5 @@
 use gpui::{App, Global};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use global_hotkey::{
     hotkey::{Code, HotKey, Modifiers},
@@ -29,18 +29,42 @@ impl HotkeyManager {
         let appearence_hotkey = HotKey::new(Some(mods), Code::KeyI); // CMD + SHIFT + I
         let assistant_hotkey = HotKey::new(Some(Modifiers::SUPER), Code::KeyI); // CMD + I
 
+        let assistant_hotkey_alt = HotKey::new(None, Code::ShiftLeft); // Alt+Alt on Windows / Option+Option on MacOS
+
         manager.register(appearence_hotkey).unwrap();
         manager.register(assistant_hotkey).unwrap();
+        manager.register(assistant_hotkey_alt).unwrap();
 
         cx.set_global::<HotkeyManager>(HotkeyManager { manager });
 
         cx.spawn(|cx| async move {
+            let mut alt_pressed_instant = Instant::now();
+
             loop {
                 if let Ok(event) = receiver.try_recv() {
+                    println!("{:?}", event);
+
                     if event.state == global_hotkey::HotKeyState::Released {
                         let _ = cx.update_global::<HotkeyManager, _>(|_manager, cx| {
                             if event.id() == appearence_hotkey.id() {
                                 cx.hide();
+                                return;
+                            }
+
+                            if event.id() == assistant_hotkey_alt.id() {
+                                let alt_pressed_at = alt_pressed_instant;
+                                let now = Instant::now();
+
+                                alt_pressed_instant = now;
+
+                                if now.duration_since(alt_pressed_at) < Duration::from_millis(300) {
+                                    println!("Double CMD pressed");
+                                }
+
+                                return;
+                            }
+
+                            if event.id() != assistant_hotkey.id() {
                                 return;
                             }
 
@@ -68,6 +92,7 @@ impl HotkeyManager {
                             if input_text.is_empty() {
                                 let err = InputError::EmptyTextInputError.into();
                                 set_error(cx, Some(err));
+
                                 return;
                             }
 
