@@ -2,7 +2,7 @@ use gpui::{App, Global};
 use std::time::{Duration, Instant};
 
 use global_hotkey::{
-    hotkey::{Code, HotKey, Modifiers},
+    hotkey::{Code, HotKey},
     GlobalHotKeyEvent, GlobalHotKeyManager,
 };
 
@@ -22,54 +22,35 @@ impl HotkeyManager {
         let manager = GlobalHotKeyManager::new().unwrap();
         let receiver = GlobalHotKeyEvent::receiver().clone();
 
-        let mut mods = Modifiers::empty();
-        mods.set(Modifiers::SUPER, true);
-        mods.set(Modifiers::SHIFT, true);
+        let assistant_hotkey = HotKey::new(None, Code::MetaLeft);
 
-        let appearence_hotkey = HotKey::new(Some(mods), Code::KeyI); // CMD + SHIFT + I
-        let assistant_hotkey = HotKey::new(Some(Modifiers::SUPER), Code::KeyI); // CMD + I
-
-        let assistant_hotkey_alt = HotKey::new(None, Code::ShiftLeft); // Alt+Alt on Windows / Option+Option on MacOS
-
-        manager.register(appearence_hotkey).unwrap();
         manager.register(assistant_hotkey).unwrap();
-        manager.register(assistant_hotkey_alt).unwrap();
 
         cx.set_global::<HotkeyManager>(HotkeyManager { manager });
 
         cx.spawn(|cx| async move {
-            let mut alt_pressed_instant = Instant::now();
+            let mut key_pressed_instant = Instant::now();
 
             loop {
                 if let Ok(event) = receiver.try_recv() {
-                    println!("{:?}", event);
-
                     if event.state == global_hotkey::HotKeyState::Released {
                         let _ = cx.update_global::<HotkeyManager, _>(|_manager, cx| {
-                            if event.id() == appearence_hotkey.id() {
-                                cx.hide();
-                                return;
-                            }
-
-                            if event.id() == assistant_hotkey_alt.id() {
-                                let alt_pressed_at = alt_pressed_instant;
-                                let now = Instant::now();
-
-                                alt_pressed_instant = now;
-
-                                if now.duration_since(alt_pressed_at) < Duration::from_millis(300) {
-                                    println!("Double CMD pressed");
-                                }
-
-                                return;
-                            }
-
                             if event.id() != assistant_hotkey.id() {
                                 return;
                             }
 
+                            let key_pressed_at = key_pressed_instant;
+                            let now = Instant::now();
+
+                            key_pressed_instant = now;
+
+                            if now.duration_since(key_pressed_at) > Duration::from_millis(300) {
+                                // the meta key was probably pressed independently
+                                return;
+                            }
+
                             cx.activate(true);
-                            // First try to get screen text by selection
+                            // first try to get screen text by selection
                             let input_text = selection::get_text();
 
                             if let Some(input_text) = input_text.ok() {
@@ -77,7 +58,7 @@ impl HotkeyManager {
                                 return;
                             }
 
-                            // If selection failed, try to get text from clipboard
+                            // selection failed, try to get text from clipboard
                             let clipboard = cx.global_mut::<Clipboard>();
                             let input_text = clipboard.get_text();
 

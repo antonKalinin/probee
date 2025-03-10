@@ -39,15 +39,6 @@ impl Render for Footer {
 
         let theme = cx.global::<Theme>();
 
-        let shift_icon = div().h_3().w_3().child(
-            svg()
-                .path(Icon::ArrowBigUp.path())
-                .text_color(theme.muted_foreground)
-                .size_full(),
-        );
-
-        let i_key = div().ml_1().child("I");
-
         let cmd_i_key = div()
             .flex()
             .items_center()
@@ -57,29 +48,16 @@ impl Render for Footer {
             .rounded_md()
             .border_1()
             .border_color(theme.border)
-            .children([cmd_icon(theme.clone()), div().ml_1().child("I")]);
-
-        let cmd_shift_i_key = div()
-            .flex()
-            .items_center()
-            .h_5()
-            .px_1()
-            .bg(theme.secondary)
-            .rounded_md()
-            .border_1()
-            .border_color(theme.border)
-            .children([cmd_icon(theme.clone()), shift_icon, i_key]);
+            .children([
+                cmd_icon(theme.clone()),
+                div().child(" + "),
+                cmd_icon(theme.clone()),
+            ]);
 
         let cmd_i_shortcut = div()
             .flex()
             .flex_row()
             .children([cmd_i_key, div().ml_1().child("Run Assistant")]);
-
-        let cmd_shift_i_shortcut = div()
-            .flex()
-            .flex_row()
-            .ml_4()
-            .children([cmd_shift_i_key, div().ml_1().child("Hide Assistant")]);
 
         div()
             .flex()
@@ -91,7 +69,7 @@ impl Render for Footer {
             .line_height(theme.line_height)
             .font_family(theme.font_sans.clone())
             .font_weight(FontWeight::LIGHT)
-            .children([cmd_i_shortcut, cmd_shift_i_shortcut])
+            .children([cmd_i_shortcut])
             .into_any_element()
     }
 }
