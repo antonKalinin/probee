@@ -26,14 +26,14 @@ if ! cargo install --list | grep -q "cargo-edit"; then
     echo "Error: cargo-edit is not installed. Installing now..."
     cargo install cargo-edit
     if [ $? -ne 0 ]; then
-        echo "Error: Failed to install cargo-edit"
+        echo "Error:  Failed to install cargo-edit"
         exit 1
     fi
 fi
 
 # Step 1: Bump version in Cargo.toml
 echo "Bumping $BUMP_TYPE version..."
-cargo bump $BUMP_TYPE
+cargo set-version --bump $BUMP_TYPE
 if [ $? -ne 0 ]; then
     echo "Error: Failed to bump version"
     exit 1

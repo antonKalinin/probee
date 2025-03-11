@@ -10,13 +10,11 @@ fn main() {
     }
 
     let api_key = env::var("ANTHROPIC_API_KEY").unwrap_or_default();
-    let cmdi_api_url = env::var("CMDI_API_URL").unwrap_or_default();
     let storage_salt = env::var("STORAGE_SALT").unwrap_or_default();
     let supabase_public_url = env::var("SUPABASE_PUBLIC_URL").unwrap_or_default();
     let supabase_public_anon_key = env::var("SUPABASE_PUBLIC_ANON_KEY").unwrap_or_default();
 
     println!("cargo:rustc-env=ANTHROPIC_API_KEY={}", api_key);
-    println!("cargo:rustc-env=CMDI_API_URL={}", cmdi_api_url);
     println!("cargo:rustc-env=STORAGE_SALT={}", storage_salt);
     println!(
         "cargo:rustc-env=SUPABASE_PUBLIC_URL={}",
