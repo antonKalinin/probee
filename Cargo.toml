@@ -13,6 +13,7 @@ icons = ["icons/*.png"]
 
 [package.metadata.packager.macos]
 entitlements = "macos/entitlements.plist"
+infoPlistPath = "macos/Info.plist"
 
 [dependencies]
 aes-gcm = "0.10.3"
