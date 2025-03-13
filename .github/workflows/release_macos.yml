@@ -20,18 +20,35 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Rustup
         run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
       - name: Build x86_64
         run: ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }} STORAGE_SALT=${{ secrets.STORAGE_SALT }} SUPABASE_PUBLIC_URL=${{ vars.SUPABASE_PUBLIC_URL }} SUPABASE_PUBLIC_ANON_KEY=${{ vars.SUPABASE_PUBLIC_ANON_KEY }} cargo build --target=x86_64-apple-darwin --release
+
       - name: Build aarch64
         run: ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }} STORAGE_SALT=${{ secrets.STORAGE_SALT }} SUPABASE_PUBLIC_URL=${{ vars.SUPABASE_PUBLIC_URL }} SUPABASE_PUBLIC_ANON_KEY=${{ vars.SUPABASE_PUBLIC_ANON_KEY }} cargo build --target=aarch64-apple-darwin --release
+
       - name: Lipo
         run: mkdir -p target/release ; lipo -create -output target/release/cmdi target/x86_64-apple-darwin/release/cmdi target/aarch64-apple-darwin/release/cmdi
+
       - name: Install Packager
         run: cargo install cargo-packager --locked
+
       - name: Package
         run: cargo packager --release
+
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
