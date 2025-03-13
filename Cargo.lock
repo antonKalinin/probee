@@ -844,7 +844,7 @@ dependencies = [
 
 [[package]]
 name = "cmdi"
-version = "0.2.8"
+version = "0.2.9"
 dependencies = [
  "accessibility",
  "accessibility-sys",
@@ -1916,7 +1916,7 @@ checksum = "a8d1add55171497b4705a648c6b583acafb01d58050a51727785f0b2c8e0a2b2"
 [[package]]
 name = "global-hotkey"
 version = "0.6.4"
-source = "git+https://github.com/antonKalinin/global-hotkey?rev=f54d89a34898e4e1f81d90686eef10a85fd33f9b#f54d89a34898e4e1f81d90686eef10a85fd33f9b"
+source = "git+https://github.com/antonKalinin/global-hotkey?rev=511e436383be354e66908b0254b98861ba23cb5e#511e436383be354e66908b0254b98861ba23cb5e"
 dependencies = [
  "crossbeam-channel",
  "keyboard-types",

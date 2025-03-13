@@ -1,4 +1,5 @@
 target/
+macos/certs
 
 *.local
 .env
