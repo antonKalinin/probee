@@ -7,7 +7,7 @@ description = "Command I is a shortcut to your own collection of AI prompts."
 [package.metadata.packager]
 product_name = "Command I"
 identifier = "io.github.antonkalinin.cmdi"
-copyright = "Copyright (c) Anton Kalinin 2024. All rights reserved."
+copyright = "Copyright (c) Anton Kalinin 2025. All rights reserved."
 category = "Productivity"
 icons = ["icons/*.png"]
 
