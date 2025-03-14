@@ -17,15 +17,15 @@ pub fn panic_gracefully(panic_info: &PanicHookInfo) {
         .map(PathBuf::from);
 
     if let Some(home) = home_dir {
-        log_path = home.join("Library/Logs/Command I");
+        log_path = home.join("Library/Logs/CommandI");
         std::fs::create_dir_all(&log_path).unwrap_or_else(|_| {
             // Fallback to temp directory if home directory isn't available
-            log_path = env::temp_dir().join("Command I/logs");
+            log_path = env::temp_dir().join("CommandI/Logs");
             std::fs::create_dir_all(&log_path).unwrap_or(());
         });
     } else {
         // Fallback to temp directory if home directory isn't available
-        log_path = env::temp_dir().join("Command I/logs");
+        log_path = env::temp_dir().join("CommandI/Logs");
         std::fs::create_dir_all(&log_path).unwrap_or(());
     }
 
@@ -99,6 +99,8 @@ pub fn panic_gracefully(panic_info: &PanicHookInfo) {
             let _ = writeln!(file, "{}: {}", key, value);
         }
     }
+
+    let _ = writeln!(file, "\n");
 
     // Print to stderr as well
     eprintln!("Application crashed. Log saved to: {:?}", log_file);

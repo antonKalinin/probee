@@ -1916,7 +1916,7 @@ checksum = "a8d1add55171497b4705a648c6b583acafb01d58050a51727785f0b2c8e0a2b2"
 [[package]]
 name = "global-hotkey"
 version = "0.6.4"
-source = "git+https://github.com/antonKalinin/global-hotkey?rev=630e7454962fa681e0ee844cffb026cadc313074#630e7454962fa681e0ee844cffb026cadc313074"
+source = "git+https://github.com/antonKalinin/global-hotkey?rev=eeff5eafaed48df92605da746d8cf3c62dc5122c#eeff5eafaed48df92605da746d8cf3c62dc5122c"
 dependencies = [
  "crossbeam-channel",
  "keyboard-types",
