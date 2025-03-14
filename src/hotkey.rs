@@ -22,7 +22,7 @@ impl HotkeyManager {
         let manager = GlobalHotKeyManager::new().unwrap();
         let receiver = GlobalHotKeyEvent::receiver().clone();
 
-        let assistant_hotkey = HotKey::new(None, Code::ShiftLeft);
+        let assistant_hotkey = HotKey::new(None, Code::MetaLeft);
 
         manager.register(assistant_hotkey).unwrap();
 

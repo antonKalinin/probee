@@ -1,5 +1,6 @@
 use dotenv::dotenv;
 use gpui::{App, Application};
+use std::panic;
 
 mod assets;
 mod errors;
@@ -18,9 +19,14 @@ use crate::root::Root;
 use crate::services::*;
 use crate::state::GlobalState;
 use crate::theme::Theme;
+use crate::utils::devtools;
 
 #[async_std::main]
 async fn main() {
+    panic::set_hook(Box::new(|panic_info| {
+        devtools::panic_gracefully(panic_info)
+    }));
+
     dotenv().ok();
 
     let app = Application::new().with_assets(Assets);
