@@ -2,7 +2,7 @@ use gpui::{App, Global};
 use std::time::{Duration, Instant};
 
 use global_hotkey::{
-    hotkey::{Code, HotKey},
+    hotkey::{Code, HotKey, Modifiers},
     GlobalHotKeyEvent, GlobalHotKeyManager,
 };
 
@@ -22,29 +22,41 @@ impl HotkeyManager {
         let manager = GlobalHotKeyManager::new().unwrap();
         let receiver = GlobalHotKeyEvent::receiver().clone();
 
-        let assistant_hotkey = HotKey::new(None, Code::MetaLeft);
+        let primary_hotkey = HotKey::new(None, Code::MetaLeft);
+        let fallback_hotkey = HotKey::new(Some(Modifiers::ALT), Code::Space);
 
-        manager.register(assistant_hotkey).unwrap();
+        // On MacOS modifier keys are registered using quartz event services
+        // which require additional permissions and if those are not provided
+        // registration fails. Fallback hotkey is used in this case.
+        manager.register(primary_hotkey).unwrap_or_else(|_err| {
+            println!("Failed to register primary hotkey");
+            // TODO: Send error report
+            manager.register(fallback_hotkey).unwrap();
+        });
 
         cx.set_global::<HotkeyManager>(HotkeyManager { manager });
 
         cx.spawn(|cx| async move {
-            let mut key_pressed_instant = Instant::now();
+            let mut hotkey_ts = Instant::now();
 
             loop {
                 if let Ok(event) = receiver.try_recv() {
                     if event.state == global_hotkey::HotKeyState::Released {
                         let _ = cx.update_global::<HotkeyManager, _>(|_manager, cx| {
-                            if event.id() != assistant_hotkey.id() {
+                            if !(event.id() == primary_hotkey.id()
+                                || event.id() == fallback_hotkey.id())
+                            {
                                 return;
                             }
 
-                            let key_pressed_at = key_pressed_instant;
+                            let key_pressed_at = hotkey_ts;
                             let now = Instant::now();
 
-                            key_pressed_instant = now;
+                            hotkey_ts = now;
 
-                            if now.duration_since(key_pressed_at) > Duration::from_millis(300) {
+                            if (event.id() == primary_hotkey.id())
+                                & (now.duration_since(key_pressed_at) > Duration::from_millis(300))
+                            {
                                 // the meta key was probably pressed independently
                                 return;
                             }
