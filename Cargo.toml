@@ -26,7 +26,7 @@ dirs = "6.0.0"                                                                  
 dotenv = "0.15.0"                                                                                                           # env vars
 futures = "0.3.31"                                                                                                          # stream processing
 global-hotkey = { git = "https://github.com/antonKalinin/global-hotkey", rev = "eeff5eafaed48df92605da746d8cf3c62dc5122c" } # global hotkeys
-gpui = { git = "https://github.com/antonKalinin/zed", rev = "113646bb7de0e1a2ef55783190012eb2c2f9b4bd" }                    # ui framework (forked and patched to support window size changes)
+gpui = { git = "https://github.com/antonKalinin/zed", rev = "01b54f5655c02f6150d45ff08898d9b76ed28b8a" }                    # ui framework (forked and patched to support window size changes)
 image = "0.25.4"                                                                                                            # image processing
 rand = "0.8.5"                                                                                                              # authentication
 regex = "1.11.1"

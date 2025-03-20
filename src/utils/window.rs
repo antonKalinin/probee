@@ -6,7 +6,7 @@ use gpui::{
 pub static WIDTH: f32 = 360.;
 pub static MIN_HEIGHT: f32 = 40.;
 pub static MAX_HEIGHT: f32 = 640.;
-pub static MARGIN_TOP: f32 = 56.;
+pub static MARGIN_TOP: f32 = 44.;
 pub static MARGIN_RIGHT: f32 = 16.;
 
 pub fn window_options(cx: &mut App) -> WindowOptions {
@@ -42,7 +42,7 @@ pub fn window_options(cx: &mut App) -> WindowOptions {
     options
 }
 
-pub fn window_bounds(cx: &mut App, height: f32) -> Bounds<Pixels> {
+pub fn window_bounds(cx: &mut App, height: f32, visible: bool) -> Bounds<Pixels> {
     let displays = cx.displays();
     let display = displays.first().unwrap();
 
@@ -54,14 +54,23 @@ pub fn window_bounds(cx: &mut App, height: f32) -> Bounds<Pixels> {
         height: px(height),
     };
 
-    let bounds = Bounds {
+    if !visible {
+        return Bounds {
+            origin: display.bounds().top_right()
+                - point(size.width + px(MARGIN_RIGHT), -(px(MARGIN_TOP))),
+            size: Size {
+                width: px(WIDTH),
+                height: px(0.),
+            },
+        };
+    }
+
+    Bounds {
         origin: display.bounds().top_right()
             - point(
                 size.width + px(MARGIN_RIGHT),
                 -(size.height + px(MARGIN_TOP)),
             ),
         size,
-    };
-
-    bounds
+    }
 }

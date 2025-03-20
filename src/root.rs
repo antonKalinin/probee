@@ -1,5 +1,5 @@
 use async_std::stream::StreamExt;
-use gpui::{div, prelude::*, App, Div, Entity, EventEmitter, Render, Window};
+use gpui::{div, prelude::*, App, AppContext, Entity, EventEmitter, Render, Window};
 
 use crate::assistant::*;
 use crate::errors::*;
@@ -18,7 +18,8 @@ pub struct Root {
 
     back_button: Entity<BackButton>,
     profile_button: Entity<ProfileButton>,
-    window_buttons: Vec<Entity<WindowButton>>,
+
+    visible: bool,
 }
 
 impl Root {
@@ -64,7 +65,7 @@ impl Root {
         .detach();
 
         let _app_events_subscribtion = cx
-            .subscribe(&global_state.state, |_model, event, cx| {
+            .subscribe(&global_state.state, |state, event, cx| {
                 let _ = match event.clone() {
                     AppEvent::Authenticated => {
                         let api = cx.global::<Api>().clone();
@@ -127,13 +128,23 @@ impl Root {
                         })
                         .detach();
                     }
+                    AppEvent::VisibilityChanged(visible) => {
+                        let stack = cx.windows();
+
+                        if let Some(window_handle) = stack.get(0) {
+                            let _ = window_handle.update(cx, |_view, window, cx| {
+                                let height = state.read(cx).content_height;
+                                window.set_frame(utils::window_bounds(cx, height, visible));
+                            });
+                        }
+                    }
                 };
             })
             .detach();
 
         let state = global_state.state.clone();
 
-        let view = cx.new(|cx| {
+        let view = cx.new(move |cx| {
             let assistant_view = cx.new(|cx| AssistantView::new(cx, &state));
             let error_view = cx.new(|cx| ErrorView::new(cx, &state));
             let login_view = cx.new(|cx| LoginView::new(cx, &state));
@@ -141,8 +152,13 @@ impl Root {
 
             let back_button = cx.new(|cx| BackButton::new(cx, &state));
             let profile_button = cx.new(|cx| ProfileButton::new(cx, &state));
-            let close_button = cx.new(|_cx| WindowButton::new(WindowAction::Close));
-            let hide_button = cx.new(|_cx| WindowButton::new(WindowAction::Hide));
+
+            let _ = cx
+                .observe(&state, |this: &mut Root, state, cx| {
+                    this.visible = state.read(cx).visible;
+                    cx.notify();
+                })
+                .detach();
 
             Root {
                 assistant_view,
@@ -152,16 +168,12 @@ impl Root {
 
                 back_button,
                 profile_button,
-                window_buttons: vec![close_button, hide_button],
+
+                visible: state.read(cx).visible,
             }
         });
 
         view
-    }
-
-    // TODO: Move to macros
-    fn render_space() -> Div {
-        div().flex().flex_grow()
     }
 }
 
@@ -169,32 +181,29 @@ impl Render for Root {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
-        let title_row = div().flex().flex_row().items_start().p_2();
-        let content = div().flex().flex_col().flex_grow().pb_2().px_2();
+        let _title_row = div().flex().flex_row().items_start().p_2();
+        let content = div().flex().flex_col().flex_grow().pt_4().pb_3().px_3();
 
         let back_button = div().flex().mr_2().child(self.back_button.clone());
         let profile_button = div().flex().mr_1().child(self.profile_button.clone());
-        let mut title_buttons = self
-            .window_buttons
-            .iter()
-            .map(|button| div().flex().mr_2().child(button.clone()))
-            .collect::<Vec<_>>();
 
-        title_buttons.push(Root::render_space());
+        let mut corner_buttons = vec![];
         // only one button is visible per time
-        title_buttons.push(back_button);
-        title_buttons.push(profile_button);
+        corner_buttons.push(back_button);
+        corner_buttons.push(profile_button);
 
         let assistant_view = div().child(self.assistant_view.clone());
         let login_view = div().child(self.login_view.clone());
         let profile_view = div().child(self.profile_view.clone());
+        let visible = self.visible.clone();
 
         let content = div()
             .on_children_prepainted(move |bounds, window, cx| {
                 let content_height: f32 = bounds.iter().map(|b| b.size.height.0).sum();
-                window.set_frame(utils::window_bounds(cx, content_height));
+                set_content_height(cx, content_height);
+                window.set_frame(utils::window_bounds(cx, content_height, visible));
             })
-            .child(title_row.children(title_buttons))
+            //.child(title_row.children(corner_buttons))
             .child(content.children([assistant_view, login_view, profile_view])) // only one view is visible per time
             .child(self.error_view.clone());
 

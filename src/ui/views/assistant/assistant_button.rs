@@ -33,7 +33,7 @@ impl AssistantButton {
         }
     }
 
-    fn render_icon(&self, cx: &Context<Self>) -> impl IntoElement {
+    fn _render_icon(&self, cx: &Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
         let icon = Icon::TextCursorInput;
 
@@ -96,7 +96,7 @@ impl Render for AssistantButton {
         };
 
         let button = div()
-            .h_6()
+            .h_7()
             .w_auto()
             .px_2()
             .py_1()
@@ -110,7 +110,7 @@ impl Render for AssistantButton {
             .hover(|style| style.bg(bg_hover_color))
             .on_mouse_up(MouseButton::Left, on_click)
             .cursor(CursorStyle::PointingHand)
-            .child(self.render_icon(cx))
+            //.child(self.render_icon(cx))
             .child(self.render_label(cx));
 
         button

@@ -24,6 +24,7 @@ impl HotkeyManager {
 
         let primary_hotkey = HotKey::new(None, Code::MetaLeft);
         let fallback_hotkey = HotKey::new(Some(Modifiers::ALT), Code::Space);
+        let visibility_hotkey = HotKey::new(Some(Modifiers::ALT), Code::Tab);
 
         // On MacOS modifier keys are registered using quartz event services
         // which require additional permissions and if those are not provided
@@ -33,6 +34,8 @@ impl HotkeyManager {
             // TODO: Send error report
             manager.register(fallback_hotkey).unwrap();
         });
+
+        manager.register(visibility_hotkey).unwrap();
 
         cx.set_global::<HotkeyManager>(HotkeyManager { manager });
 
@@ -44,8 +47,14 @@ impl HotkeyManager {
                     if event.state == global_hotkey::HotKeyState::Released {
                         let _ = cx.update_global::<HotkeyManager, _>(|_manager, cx| {
                             if !(event.id() == primary_hotkey.id()
-                                || event.id() == fallback_hotkey.id())
+                                || event.id() == fallback_hotkey.id()
+                                || event.id() == visibility_hotkey.id())
                             {
+                                return;
+                            }
+
+                            if event.id() == visibility_hotkey.id() {
+                                toggle_visible(cx);
                                 return;
                             }
 
@@ -61,7 +70,8 @@ impl HotkeyManager {
                                 return;
                             }
 
-                            cx.activate(true);
+                            set_visible(cx, true);
+
                             // first try to get screen text by selection
                             let input_text = selection::get_text();
 

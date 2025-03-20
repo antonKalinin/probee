@@ -5,7 +5,6 @@ use std::panic;
 mod assets;
 mod errors;
 mod events;
-mod hotkey;
 mod root;
 mod services;
 mod state;
@@ -14,7 +13,6 @@ mod ui;
 mod utils;
 
 use crate::assets::Assets;
-use crate::hotkey::HotkeyManager;
 use crate::root::Root;
 use crate::services::*;
 use crate::state::GlobalState;

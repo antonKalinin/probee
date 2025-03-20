@@ -2,7 +2,7 @@ use anyhow::Error;
 use gpui::{App, AppContext, AsyncApp, BorrowAppContext, Entity, EventEmitter, Global};
 
 use crate::events::AppEvent;
-use crate::services::{AssistantConfig, Auth, User};
+use crate::services::{AssistantConfig, User};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ActiveView {
@@ -17,10 +17,12 @@ pub struct State {
     pub active_view: ActiveView,
     pub assistants: Vec<AssistantConfig>,
     pub authenticated: bool,
+    pub content_height: f32,
     pub error: Option<Error>,
     pub input: Option<String>,
     pub loading: bool,
     pub output: String,
+    pub visible: bool,
     pub user: Option<User>,
 }
 
@@ -40,10 +42,12 @@ impl GlobalState {
             active_view: ActiveView::AssitantView,
             assistants: vec![],
             authenticated: false,
+            content_height: 40.,
             error: None,
             input: None,
             loading: false,
             output: "".to_owned(),
+            visible: true,
             user: None,
         });
 
@@ -104,6 +108,12 @@ impl GlobalState {
         });
     }
 
+    pub fn set_content_height(&self, cx: &mut App, height: f32) {
+        self.state.update(cx, |state, _cx| {
+            state.content_height = height;
+        });
+    }
+
     pub fn set_input(&self, cx: &mut App, input: String) {
         self.state.update(cx, |state, cx| {
             state.input = Some(input.clone());
@@ -144,6 +154,14 @@ impl GlobalState {
         self.state.update(cx, |model, cx| {
             model.user = user;
             cx.notify();
+        });
+    }
+
+    pub fn set_visible(&self, cx: &mut App, visible: bool) {
+        self.state.update(cx, |model, cx| {
+            model.visible = visible;
+            cx.notify();
+            cx.emit(AppEvent::VisibilityChanged(visible));
         });
     }
 }
@@ -209,4 +227,22 @@ pub fn set_authenticated_async(cx: &mut AsyncApp, authenticated: bool) {
 
 pub fn set_user_async(cx: &mut AsyncApp, user: Option<User>) {
     GlobalState::update_async(|this, cx| this.set_user(cx, user), cx);
+}
+
+pub fn set_content_height(cx: &mut App, height: f32) {
+    GlobalState::update(|this, cx| this.set_content_height(cx, height), cx);
+}
+
+pub fn set_visible(cx: &mut App, visible: bool) {
+    GlobalState::update(|this, cx| this.set_visible(cx, visible), cx);
+}
+
+pub fn toggle_visible(cx: &mut App) {
+    GlobalState::update(
+        |this, cx| {
+            let state = this.state.read(cx);
+            this.set_visible(cx, !state.visible);
+        },
+        cx,
+    );
 }

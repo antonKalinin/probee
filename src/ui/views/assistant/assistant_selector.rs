@@ -107,7 +107,7 @@ impl Render for AssistantSelector {
         let assistant_buttons = self
             .assistant_buttons
             .iter()
-            .map(|button| div().flex().mt_2().mr_2().child(button.clone()))
+            .map(|button| div().flex().mb_2().mr_2().child(button.clone()))
             .collect::<Vec<_>>();
 
         let assistant_placeholders = (0..2)
