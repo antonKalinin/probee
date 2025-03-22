@@ -54,6 +54,8 @@ pub fn window_bounds(cx: &mut App, height: f32, visible: bool) -> Bounds<Pixels>
         height: px(height),
     };
 
+    // On MacOS using AppKit its not possible to move the window outside of the screen:
+    // hence we collapse the window height to 0 to make it invisible
     if !visible {
         return Bounds {
             origin: display.bounds().top_right()
