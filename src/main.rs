@@ -2,18 +2,18 @@ use dotenv::dotenv;
 use gpui::{App, Application};
 use std::panic;
 
+mod app;
 mod assets;
 mod errors;
 mod events;
-mod root;
 mod services;
 mod state;
 mod theme;
 mod ui;
 mod utils;
 
+use crate::app::AppRoot;
 use crate::assets::Assets;
-use crate::root::Root;
 use crate::services::*;
 use crate::state::GlobalState;
 use crate::theme::Theme;
@@ -43,7 +43,7 @@ async fn main() {
 
         let _ = cx.open_window(window_options, |window, cx| {
             // builing root view and returning it to render
-            Root::build(cx, window)
+            AppRoot::build(cx, window)
         });
     });
 }

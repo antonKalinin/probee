@@ -4,13 +4,13 @@ use gpui::{div, prelude::*, App, AppContext, Entity, EventEmitter, Render, Windo
 use crate::assistant::*;
 use crate::errors::*;
 use crate::events::*;
-use crate::services::{Api, Auth};
+use crate::services::{Api, Auth, Storage};
 use crate::state::*;
 use crate::theme::Theme;
 use crate::ui::*;
 use crate::utils;
 
-pub struct Root {
+pub struct AppRoot {
     assistant_view: Entity<AssistantView>,
     error_view: Entity<ErrorView>,
     login_view: Entity<LoginView>,
@@ -22,7 +22,7 @@ pub struct Root {
     visible: bool,
 }
 
-impl Root {
+impl AppRoot {
     pub fn build(cx: &mut App, _window: &mut Window) -> Entity<Self> {
         let auth = cx.global::<Auth>().clone();
         let global_state = cx.global::<GlobalState>().clone();
@@ -69,19 +69,24 @@ impl Root {
                 let _ = match event.clone() {
                     AppEvent::Authenticated => {
                         let api = cx.global::<Api>().clone();
+                        let storage = cx.global::<Storage>().clone();
+
                         cx.spawn(|mut cx| async move {
                             let assistants = api.get_assistants(&mut cx).await;
+                            let saved_assistant_id = storage.get("assistant_id".into());
 
                             GlobalState::update_async(
                                 |this, cx| match assistants {
                                     Ok(assistants) => {
                                         this.set_assistants(cx, assistants.clone());
+                                        let first_assistant_id =
+                                            assistants.first().map(|a| a.id.clone());
 
-                                        if let Some(first_assistant) = assistants.first() {
-                                            this.set_active_assistant_id(
-                                                cx,
-                                                Some(first_assistant.id.clone()),
-                                            );
+                                        match (saved_assistant_id, first_assistant_id) {
+                                            (Some(id), _) | (None, Some(id)) => {
+                                                this.set_active_assistant_id(cx, Some(id))
+                                            }
+                                            _ => {}
                                         }
                                     }
                                     Err(err) => {
@@ -93,7 +98,11 @@ impl Root {
                         })
                         .detach();
                     }
-                    AppEvent::AssistantChanged(_id) => {
+                    AppEvent::AssistantChanged(id) => {
+                        let storage = cx.global_mut::<Storage>();
+                        let _ = storage.set("assistant_id".into(), id.clone());
+
+                        println!("Assistant changed to: {}", id);
                         // TODO: As soon as assistant is changed, reset it in cx.global
                     }
                     AppEvent::InputChanged(input) => {
@@ -154,13 +163,13 @@ impl Root {
             let profile_button = cx.new(|cx| ProfileButton::new(cx, &state));
 
             let _ = cx
-                .observe(&state, |this: &mut Root, state, cx| {
+                .observe(&state, |this: &mut AppRoot, state, cx| {
                     this.visible = state.read(cx).visible;
                     cx.notify();
                 })
                 .detach();
 
-            Root {
+            AppRoot {
                 assistant_view,
                 error_view,
                 login_view,
@@ -177,7 +186,7 @@ impl Root {
     }
 }
 
-impl Render for Root {
+impl Render for AppRoot {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
@@ -217,4 +226,4 @@ impl Render for Root {
     }
 }
 
-impl EventEmitter<AppEvent> for Root {}
+impl EventEmitter<AppEvent> for AppRoot {}

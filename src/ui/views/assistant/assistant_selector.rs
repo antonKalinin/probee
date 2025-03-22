@@ -1,8 +1,8 @@
 use gpui::*;
 use std::time::Duration;
 
-use crate::api::*;
 use crate::events::UiEvent;
+use crate::services::{Api, AssistantConfig, Storage};
 use crate::state::*;
 use crate::theme::Theme;
 
@@ -18,6 +18,7 @@ pub struct AssistantSelector {
 impl AssistantSelector {
     pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
         let api = cx.global::<Api>().clone();
+        let storage = cx.global::<Storage>().clone();
 
         let _ = cx
             .observe(state, |this, model, cx| {
@@ -49,14 +50,20 @@ impl AssistantSelector {
             });
 
             let assistants = api.get_assistants(&mut cx).await;
+            let saved_assistant_id = storage.get("assistant_id".into());
 
             GlobalState::update_async(
                 |this, cx| match assistants {
                     Ok(assistants) => {
                         this.set_assistants(cx, assistants.clone());
 
-                        if let Some(first_assistant) = assistants.first() {
-                            this.set_active_assistant_id(cx, Some(first_assistant.id.clone()));
+                        let first_assistant_id = assistants.first().map(|a| a.id.clone());
+
+                        match (saved_assistant_id, first_assistant_id) {
+                            (Some(id), _) | (None, Some(id)) => {
+                                this.set_active_assistant_id(cx, Some(id))
+                            }
+                            _ => {}
                         }
                     }
                     Err(err) => {
@@ -125,7 +132,7 @@ impl Render for AssistantSelector {
                             "pulsating",
                             Animation::new(Duration::from_secs(1))
                                 .repeat()
-                                .with_easing(pulsating_between(0.5, 1.0)),
+                                .with_easing(pulsating_between(0.7, 1.0)),
                             |label, delta| label.opacity(delta),
                         ),
                 )
