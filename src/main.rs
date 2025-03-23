@@ -1,4 +1,5 @@
 use dotenv::dotenv;
+use events::AppEvent;
 use gpui::{App, Application};
 use std::panic;
 
@@ -7,6 +8,7 @@ mod assets;
 mod errors;
 mod events;
 mod services;
+mod settings;
 mod state;
 mod theme;
 mod ui;
@@ -15,6 +17,7 @@ mod utils;
 use crate::app::AppRoot;
 use crate::assets::Assets;
 use crate::services::*;
+use crate::settings::SettingsRoot;
 use crate::state::GlobalState;
 use crate::theme::Theme;
 use crate::utils::devtools;
@@ -39,11 +42,19 @@ async fn main() {
         Storage::init(cx);
         Theme::init(cx);
 
-        let window_options = utils::window_options(cx);
+        let app_window_options = utils::app_window_options(cx);
+        let app_window = cx.open_window(app_window_options, AppRoot::build);
+        let app_entity = app_window.unwrap().entity(cx).unwrap();
 
-        let _ = cx.open_window(window_options, |window, cx| {
-            // builing root view and returning it to render
-            AppRoot::build(cx, window)
-        });
+        let _ = cx
+            .subscribe(&app_entity, |_app_root, event, cx| match event {
+                AppEvent::OpenSettings => {
+                    let settings_window_options = utils::settings_window_options(cx);
+                    let _ = cx.open_window(settings_window_options, SettingsRoot::build);
+                    cx.activate(true);
+                }
+                _ => {}
+            })
+            .detach();
     });
 }

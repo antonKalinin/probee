@@ -54,6 +54,7 @@ pub enum Icon {
     Plus,
     Scan,
     Send,
+    Settings,
     Sigma,
     SpellCheck,
     Table,

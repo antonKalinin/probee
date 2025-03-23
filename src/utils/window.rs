@@ -1,27 +1,30 @@
 use gpui::{
-    point, px, App, Bounds, Pixels, Size, WindowBackgroundAppearance, WindowBounds, WindowKind,
-    WindowOptions,
+    point, px, App, Bounds, Pixels, SharedString, Size, TitlebarOptions,
+    WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions,
 };
 
-pub static WIDTH: f32 = 360.;
-pub static MIN_HEIGHT: f32 = 40.;
-pub static MAX_HEIGHT: f32 = 640.;
-pub static MARGIN_TOP: f32 = 44.;
-pub static MARGIN_RIGHT: f32 = 16.;
+pub static APP_WIDTH: f32 = 360.;
+pub static APP_MIN_HEIGHT: f32 = 40.;
+pub static APP_MAX_HEIGHT: f32 = 640.;
+pub static APP_MARGIN_TOP: f32 = 44.;
+pub static APP_MARGIN_RIGHT: f32 = 16.;
 
-pub fn window_options(cx: &mut App) -> WindowOptions {
+pub static SETTINGS_WIDTH: f32 = 640.;
+pub static SETTINGS_HEIGHT: f32 = 480.;
+
+pub fn app_window_options(cx: &mut App) -> WindowOptions {
     let displays = cx.displays();
     let display = displays.first().unwrap(); // TODO: Support multiple displays
 
     let size = Size {
-        width: px(WIDTH),
-        height: px(MIN_HEIGHT),
+        width: px(APP_WIDTH),
+        height: px(APP_MIN_HEIGHT),
     };
 
     // Top right origin
     let bounds = Bounds {
         origin: display.bounds().top_right()
-            - point(size.width + px(MARGIN_RIGHT), -px(MARGIN_TOP)),
+            - point(size.width + px(APP_MARGIN_RIGHT), -px(APP_MARGIN_TOP)),
         size,
     };
 
@@ -42,15 +45,53 @@ pub fn window_options(cx: &mut App) -> WindowOptions {
     options
 }
 
-pub fn window_bounds(cx: &mut App, height: f32, visible: bool) -> Bounds<Pixels> {
+pub fn settings_window_options(cx: &mut App) -> WindowOptions {
+    let displays = cx.displays();
+    let display = displays.first().unwrap(); // TODO: Support multiple displays
+
+    let size = Size {
+        width: px(SETTINGS_WIDTH),
+        height: px(SETTINGS_HEIGHT),
+    };
+
+    // Center origin
+    let bounds = Bounds {
+        origin: point(
+            display.bounds().center().x - size.center().x,
+            display.bounds().center().y - size.center().y,
+        ),
+        size,
+    };
+
+    let options = WindowOptions {
+        window_bounds: Some(WindowBounds::Windowed(bounds)),
+        display_id: Some(display.id()),
+        titlebar: Some(TitlebarOptions {
+            appears_transparent: true,
+            ..Default::default()
+        }),
+        window_background: WindowBackgroundAppearance::Opaque,
+        focus: false,
+        show: true,
+        kind: WindowKind::Normal,
+        is_movable: true,
+        app_id: None,
+        window_min_size: Some(size),
+        window_decorations: None,
+    };
+
+    options
+}
+
+pub fn app_window_bounds(cx: &mut App, height: f32, visible: bool) -> Bounds<Pixels> {
     let displays = cx.displays();
     let display = displays.first().unwrap();
 
-    let height = height.max(MIN_HEIGHT);
-    let height = height.min(MAX_HEIGHT);
+    let height = height.max(APP_MIN_HEIGHT);
+    let height = height.min(APP_MAX_HEIGHT);
 
     let size = Size {
-        width: px(WIDTH),
+        width: px(APP_WIDTH),
         height: px(height),
     };
 
@@ -59,9 +100,9 @@ pub fn window_bounds(cx: &mut App, height: f32, visible: bool) -> Bounds<Pixels>
     if !visible {
         return Bounds {
             origin: display.bounds().top_right()
-                - point(size.width + px(MARGIN_RIGHT), -(px(MARGIN_TOP))),
+                - point(size.width + px(APP_MARGIN_RIGHT), -(px(APP_MARGIN_TOP))),
             size: Size {
-                width: px(WIDTH),
+                width: px(APP_WIDTH),
                 height: px(0.),
             },
         };
@@ -70,8 +111,8 @@ pub fn window_bounds(cx: &mut App, height: f32, visible: bool) -> Bounds<Pixels>
     Bounds {
         origin: display.bounds().top_right()
             - point(
-                size.width + px(MARGIN_RIGHT),
-                -(size.height + px(MARGIN_TOP)),
+                size.width + px(APP_MARGIN_RIGHT),
+                -(size.height + px(APP_MARGIN_TOP)),
             ),
         size,
     }

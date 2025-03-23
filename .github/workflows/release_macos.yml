@@ -30,8 +30,8 @@ jobs:
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: Build x86_64
-        run: ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }} STORAGE_SALT=${{ secrets.STORAGE_SALT }} SUPABASE_PUBLIC_URL=${{ vars.SUPABASE_PUBLIC_URL }} SUPABASE_PUBLIC_ANON_KEY=${{ vars.SUPABASE_PUBLIC_ANON_KEY }} cargo build --target=x86_64-apple-darwin --release
+      # - name: Build x86_64
+      #   run: ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }} STORAGE_SALT=${{ secrets.STORAGE_SALT }} SUPABASE_PUBLIC_URL=${{ vars.SUPABASE_PUBLIC_URL }} SUPABASE_PUBLIC_ANON_KEY=${{ vars.SUPABASE_PUBLIC_ANON_KEY }} cargo build --target=x86_64-apple-darwin --release
 
       - name: Build aarch64
         run: ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }} STORAGE_SALT=${{ secrets.STORAGE_SALT }} SUPABASE_PUBLIC_URL=${{ vars.SUPABASE_PUBLIC_URL }} SUPABASE_PUBLIC_ANON_KEY=${{ vars.SUPABASE_PUBLIC_ANON_KEY }} cargo build --target=aarch64-apple-darwin --release

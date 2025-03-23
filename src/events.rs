@@ -10,5 +10,6 @@ pub enum AppEvent {
     AssistantChanged(String),
     Authenticated,
     InputChanged(String),
+    OpenSettings,
     VisibilityChanged(bool),
 }

@@ -1,0 +1,88 @@
+use gpui::{div, prelude::*, px, App, AppContext, Entity, Window};
+use tab::SettingsTab;
+use tab::TabType;
+
+use crate::errors::*;
+use crate::events::*;
+use crate::services::{Api, Auth, Storage};
+use crate::state::*;
+use crate::theme::Theme;
+use crate::ui::*;
+use crate::utils;
+
+pub struct SettingsRoot {
+    active_tab: TabType,
+
+    login_view: Entity<LoginView>,
+    profile_view: Entity<ProfileView>,
+    error_view: Entity<ErrorView>,
+
+    general_tab: Entity<SettingsTab>,
+    profile_tab: Entity<SettingsTab>,
+}
+
+impl SettingsRoot {
+    pub fn build(_window: &mut Window, cx: &mut App) -> Entity<Self> {
+        let global_state = cx.global::<GlobalState>().clone();
+
+        let view = cx.new(move |cx| {
+            let state = global_state.state.clone();
+
+            let error_view = cx.new(|cx| ErrorView::new(cx, &state));
+            let login_view = cx.new(|cx| LoginView::new(cx, &state));
+            let profile_view = cx.new(|cx| ProfileView::new(cx, &state));
+
+            let general_tab = cx.new(|_cx| SettingsTab::new(TabType::General, true));
+            let profile_tab = cx.new(|_cx| SettingsTab::new(TabType::Profile, false));
+
+            SettingsRoot {
+                active_tab: TabType::General,
+
+                error_view,
+                login_view,
+                profile_view,
+
+                general_tab,
+                profile_tab,
+            }
+        });
+
+        view
+    }
+}
+
+impl Render for SettingsRoot {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let theme = cx.global::<Theme>();
+        let title = div()
+            .flex()
+            .flex_row()
+            .w_full()
+            .h_8()
+            .items_center()
+            .justify_center()
+            .text_sm()
+            .text_color(theme.muted_foreground)
+            .child("Settings");
+
+        let tabs = div()
+            .flex()
+            .flex_row()
+            .gap_1()
+            .w_full()
+            .h_16()
+            .items_center()
+            .justify_center()
+            .border_b_1()
+            .border_color(theme.border)
+            .children([self.general_tab.clone(), self.profile_tab.clone()]);
+
+        div()
+            .size_full()
+            .flex()
+            .flex_col()
+            .bg(theme.background)
+            .child(title)
+            .child(tabs)
+    }
+}
