@@ -4,6 +4,7 @@ use crate::events::UiEvent;
 use crate::theme::Theme;
 use crate::ui::Icon;
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum TabType {
     General,
     Profile,

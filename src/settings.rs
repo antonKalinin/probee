@@ -1,14 +1,22 @@
-use gpui::{div, prelude::*, px, App, AppContext, Entity, Window};
+use anyhow::Error;
+use gpui::{div, prelude::*, App, AppContext, Entity, Window};
 use tab::SettingsTab;
 use tab::TabType;
 
 use crate::errors::*;
 use crate::events::*;
 use crate::services::{Api, Auth, Storage};
+use crate::services::{AssistantConfig, User};
 use crate::state::*;
 use crate::theme::Theme;
 use crate::ui::*;
-use crate::utils;
+
+#[derive(Debug)]
+pub struct State {
+    pub active_tab: TabType,
+    pub error: Option<Error>,
+    pub loading: bool,
+}
 
 pub struct SettingsRoot {
     active_tab: TabType,
