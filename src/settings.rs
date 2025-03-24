@@ -1,12 +1,11 @@
 use anyhow::Error;
-use gpui::{div, prelude::*, App, AppContext, Entity, Window};
+use gpui::{div, prelude::*, App, AppContext, AsyncApp, Entity, Global, Window};
 use tab::SettingsTab;
 use tab::TabType;
 
-use crate::errors::*;
 use crate::events::*;
-use crate::services::{Api, Auth, Storage};
-use crate::services::{AssistantConfig, User};
+// use crate::services::{Api, Auth, Storage};
+// use crate::services::{AssistantConfig, User};
 use crate::state::*;
 use crate::theme::Theme;
 use crate::ui::*;
@@ -16,6 +15,50 @@ pub struct State {
     pub active_tab: TabType,
     pub error: Option<Error>,
     pub loading: bool,
+}
+
+#[derive(Clone)]
+pub struct SettingsState {
+    pub state: Entity<State>,
+}
+
+impl Global for SettingsState {}
+
+impl SettingsState {
+    pub fn init(cx: &mut App) {
+        let state: Entity<State> = cx.new(|_cx| State {
+            active_tab: TabType::General,
+            error: None,
+            loading: false,
+        });
+
+        let settings_state = SettingsState { state };
+
+        cx.set_global(settings_state);
+    }
+
+    pub fn update(f: impl FnOnce(&mut Self, &mut App), cx: &mut App) {
+        if !cx.has_global::<Self>() {
+            return;
+        }
+
+        cx.update_global::<Self, _>(|this, cx| {
+            f(this, cx);
+        })
+    }
+
+    pub fn update_async(f: impl FnOnce(&mut Self, &mut App), cx: &mut AsyncApp) {
+        let _ = cx.update_global::<Self, _>(|this, cx| {
+            f(this, cx);
+        });
+    }
+
+    pub fn set_active_tab(&self, cx: &mut App, tab: TabType) {
+        self.state.update(cx, |state, cx| {
+            state.active_tab = tab;
+            cx.notify();
+        });
+    }
 }
 
 pub struct SettingsRoot {
@@ -31,10 +74,10 @@ pub struct SettingsRoot {
 
 impl SettingsRoot {
     pub fn build(_window: &mut Window, cx: &mut App) -> Entity<Self> {
-        let global_state = cx.global::<GlobalState>().clone();
+        let settings_state = cx.global::<GlobalState>().clone();
 
         let view = cx.new(move |cx| {
-            let state = global_state.state.clone();
+            let state = settings_state.state.clone();
 
             let error_view = cx.new(|cx| ErrorView::new(cx, &state));
             let login_view = cx.new(|cx| LoginView::new(cx, &state));

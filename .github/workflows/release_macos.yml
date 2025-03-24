@@ -42,7 +42,8 @@ jobs:
         run: cargo build --target=aarch64-apple-darwin --release
 
       - name: Lipo
-        run: mkdir -p target/release ; lipo -create -output target/release/cmdi target/x86_64-apple-darwin/release/cmdi target/aarch64-apple-darwin/release/cmdi
+        # run: mkdir -p target/release ; lipo -create -output target/release/cmdi target/x86_64-apple-darwin/release/cmdi target/aarch64-apple-darwin/release/cmdi
+        run: mkdir -p target/release ; lipo -create -output target/release/cmdi target/aarch64-apple-darwin/release/cmdi
 
       - name: Cache Packager
         uses: actions/cache@v4
