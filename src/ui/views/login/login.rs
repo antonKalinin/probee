@@ -3,8 +3,7 @@ use std::time::Duration;
 
 use crate::services::{Auth, Storage};
 use crate::state::*;
-use crate::theme::Theme;
-use crate::ui::TextInput;
+use crate::ui::*;
 
 use super::utils;
 
@@ -21,7 +20,7 @@ impl LoginView {
     pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
         cx.observe(state, |this, model, cx| {
             let data = model.read(cx);
-            this.visible = data.active_view == ActiveView::LoginView && !data.authenticated;
+            this.visible = !data.authenticated;
 
             if !data.authenticated {
                 this.email = None;
@@ -101,7 +100,6 @@ impl Render for LoginView {
                     Ok(user) => {
                         set_user_async(&mut cx, Some(user));
                         set_authenticated_async(&mut cx, true);
-                        set_active_view_async(&mut cx, ActiveView::ProfileView);
                     }
                     Err(err) => {
                         set_error_async(&mut cx, Some(err));

@@ -9,7 +9,6 @@ use crate::errors::*;
 use crate::events::*;
 use crate::services::{Api, Auth, Storage};
 use crate::state::*;
-use crate::theme::Theme;
 use crate::ui::*;
 use crate::utils;
 
@@ -17,12 +16,8 @@ actions!(app, [OpenSettings]);
 
 pub struct AppRoot {
     assistant_view: Entity<AssistantView>,
+    library_view: Entity<LibraryView>,
     error_view: Entity<ErrorView>,
-    login_view: Entity<LoginView>,
-    profile_view: Entity<ProfileView>,
-
-    back_button: Entity<BackButton>,
-    profile_button: Entity<ProfileButton>,
 
     visible: bool,
     focus_handle: FocusHandle,
@@ -166,12 +161,8 @@ impl AppRoot {
         let view = cx.new(move |cx| {
             let state = global_state.state.clone();
             let assistant_view = cx.new(|cx| AssistantView::new(cx, &state));
+            let library_view = cx.new(|cx| LibraryView::new(cx, &state));
             let error_view = cx.new(|cx| ErrorView::new(cx, &state));
-            let login_view = cx.new(|cx| LoginView::new(cx, &state));
-            let profile_view = cx.new(|cx| ProfileView::new(cx, &state));
-
-            let back_button = cx.new(|cx| BackButton::new(cx, &state));
-            let profile_button = cx.new(|cx| ProfileButton::new(cx, &state));
 
             let _ = cx
                 .observe(&state, |this: &mut AppRoot, state, cx| {
@@ -182,12 +173,8 @@ impl AppRoot {
 
             AppRoot {
                 assistant_view,
+                library_view,
                 error_view,
-                login_view,
-                profile_view,
-
-                back_button,
-                profile_button,
 
                 visible: state.read(cx).visible,
                 focus_handle,
@@ -206,20 +193,10 @@ impl Render for AppRoot {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
-        let _title_row = div().flex().flex_row().items_start().p_2();
         let content = div().flex().flex_col().flex_grow().pt_4().pb_3().px_3();
 
-        let back_button = div().flex().mr_2().child(self.back_button.clone());
-        let profile_button = div().flex().mr_1().child(self.profile_button.clone());
-
-        let mut corner_buttons = vec![];
-        // only one button is visible per time
-        corner_buttons.push(back_button);
-        corner_buttons.push(profile_button);
-
         let assistant_view = div().child(self.assistant_view.clone());
-        let login_view = div().child(self.login_view.clone());
-        let profile_view = div().child(self.profile_view.clone());
+        let library_view = div().child(self.library_view.clone());
         let visible = self.visible.clone();
 
         let content = div()
@@ -228,8 +205,7 @@ impl Render for AppRoot {
                 set_content_height(cx, content_height);
                 window.set_frame(utils::app_window_bounds(cx, content_height, visible));
             })
-            //.child(title_row.children(corner_buttons))
-            .child(content.children([assistant_view, login_view, profile_view])) // only one view is visible per time
+            .child(content.children([assistant_view, library_view])) // only one view is visible per time
             .child(self.error_view.clone());
 
         div()

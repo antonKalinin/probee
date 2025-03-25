@@ -79,9 +79,6 @@ pub struct Theme {
     pub warning: Hsla,
     pub border: Hsla,
     pub input: Hsla,
-
-    pub red100: Hsla,
-    pub red500: Hsla,
 }
 
 /**
@@ -126,10 +123,6 @@ impl Theme {
             warning: Hsla::from(rgb(0xfbbf24)),
             border: hsla(0., 0., 0.898, 1.),
             input: hsla(0., 0., 0.898, 1.),
-
-            // overrides, TODO: remove
-            red100: Hsla::from(rgb(0xfee2e2)),
-            red500: Hsla::from(rgb(0xef4444)),
 
             // typography
             font_sans: "Inter".into(),

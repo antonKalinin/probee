@@ -1,13 +1,9 @@
-pub mod back_button;
-pub mod error;
-pub mod icon;
+pub mod components;
 pub mod input;
-pub mod profile_button;
+pub mod theme;
 pub mod views;
 
-pub use back_button::*;
-pub use error::*;
-pub use icon::*;
+pub use components::*;
 pub use input::*;
-pub use profile_button::*;
+pub use theme::*;
 pub use views::*;

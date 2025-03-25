@@ -10,7 +10,6 @@ mod events;
 mod services;
 mod settings;
 mod state;
-mod theme;
 mod ui;
 mod utils;
 
@@ -19,7 +18,7 @@ use crate::assets::Assets;
 use crate::services::*;
 use crate::settings::SettingsRoot;
 use crate::state::GlobalState;
-use crate::theme::Theme;
+use crate::ui::Theme;
 use crate::utils::devtools;
 
 #[async_std::main]

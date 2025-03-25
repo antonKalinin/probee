@@ -3,8 +3,7 @@ use std::time::Duration;
 
 use crate::events::UiEvent;
 use crate::state::State;
-use crate::theme::Theme;
-use crate::ui::Icon;
+use crate::ui::{Icon, Theme};
 
 pub struct ClearOutputButton {
     enabled: bool,

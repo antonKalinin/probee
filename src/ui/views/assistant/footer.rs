@@ -1,8 +1,7 @@
 use gpui::*;
 
 use crate::state::{ActiveView, State};
-use crate::theme::Theme;
-use crate::ui::Icon;
+use crate::ui::{Icon, Theme};
 
 pub struct Footer {
     visible: bool,

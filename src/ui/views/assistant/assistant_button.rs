@@ -3,8 +3,7 @@ use gpui::*;
 use crate::api::AssistantConfig;
 use crate::events::UiEvent;
 use crate::state::State;
-use crate::theme::Theme;
-use crate::ui::Icon;
+use crate::ui::{Icon, Theme};
 
 pub struct AssistantButton {
     active: bool,

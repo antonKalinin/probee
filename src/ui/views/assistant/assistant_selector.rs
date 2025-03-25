@@ -4,7 +4,7 @@ use std::time::Duration;
 use crate::events::UiEvent;
 use crate::services::{Api, AssistantConfig, Storage};
 use crate::state::*;
-use crate::theme::Theme;
+use crate::ui::Theme;
 
 use super::assistant_button::AssistantButton;
 

@@ -1,15 +1,17 @@
 use gpui::*;
+use std::time::Duration;
 
 use crate::clipboard::Clipboard;
 use crate::events::UiEvent;
 use crate::state::*;
-use crate::theme::Theme;
+use crate::ui::{Icon, Theme};
 
 use super::clear_output_button::ClearOutputButton;
 use super::copy_output_button::CopyOutputButton;
 
 pub struct Output {
     visible: bool,
+    loading: bool,
     text: String,
     description: String,
 
@@ -29,8 +31,8 @@ impl Output {
 
             this.text = state.read(cx).output.clone();
             this.description = assistant.map(|a| a.description.clone()).unwrap_or_default();
-            this.visible =
-                state.read(cx).active_view == ActiveView::AssitantView && !loading && !error;
+            this.loading = loading;
+            this.visible = state.read(cx).active_view == ActiveView::AssitantView && !error;
             cx.notify();
         })
         .detach();
@@ -57,6 +59,7 @@ impl Output {
 
         Output {
             visible: false,
+            loading: false,
             text: "".to_owned(),
             description: "".to_owned(),
             scroll_handle: ScrollHandle::new(),
@@ -86,6 +89,34 @@ impl Output {
 
         [false, false]
     }
+
+    fn render_loading(&self, cx: &mut Context<Self>) -> AnyElement {
+        let theme = cx.global::<Theme>();
+
+        let svg = div().flex().child(
+            svg()
+                .path(Icon::Loader.path())
+                .text_color(theme.muted_foreground)
+                .size_6()
+                .with_animation(
+                    "rotating-loader",
+                    Animation::new(Duration::from_secs(2)).repeat(),
+                    |icon, delta| {
+                        icon.with_transformation(Transformation::rotate(percentage(delta)))
+                    },
+                ),
+        );
+
+        div()
+            .flex()
+            .flex_row()
+            .items_center()
+            .justify_center()
+            .h_20()
+            .w_full()
+            .child(svg)
+            .into_any_element()
+    }
 }
 
 impl Render for Output {
@@ -96,6 +127,10 @@ impl Render for Output {
             return div().into_any_element();
         }
 
+        if self.loading {
+            return self.render_loading(cx);
+        }
+
         // Render assisntant description
         if self.text.is_empty() {
             return div()
@@ -103,7 +138,7 @@ impl Render for Output {
                 .flex_col()
                 .mt_2()
                 .mb_1()
-                .mx_1()
+                .px_1()
                 .h_auto()
                 .font_weight(FontWeight::LIGHT)
                 .text_color(theme.muted_foreground)

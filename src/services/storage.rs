@@ -29,6 +29,7 @@ pub struct Storage {
     cipher: Aes256Gcm,
 }
 
+// TODO: Refactor to store only known keys
 impl Storage {
     pub fn init(cx: &mut App) {
         let storage_salt = env!("STORAGE_SALT");

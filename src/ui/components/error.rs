@@ -1,8 +1,7 @@
 use gpui::*;
 
 use crate::state::State;
-use crate::theme::Theme;
-use crate::ui::Icon;
+use crate::ui::*;
 
 pub struct ErrorView {
     visible: bool,
@@ -36,6 +35,8 @@ impl ErrorView {
 impl Render for ErrorView {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
+        let red100 = Hsla::from(rgb(0xfee2e2));
+        let red500 = Hsla::from(rgb(0xef4444));
 
         if !self.visible {
             return div().into_any_element();
@@ -44,7 +45,7 @@ impl Render for ErrorView {
         let bg_color = linear_gradient(
             180.,
             linear_color_stop(theme.background.opacity(0.), 0.),
-            linear_color_stop(theme.red100, 1.),
+            linear_color_stop(red100, 1.),
         );
 
         let (error_title, error_body) = self
@@ -69,7 +70,7 @@ impl Render for ErrorView {
             .child(
                 svg()
                     .path(Icon::TriangleAlert.path())
-                    .text_color(theme.red500)
+                    .text_color(red500)
                     .w_4()
                     .h_4(),
             );

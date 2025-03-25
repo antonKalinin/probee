@@ -3,7 +3,7 @@ use gpui::*;
 use super::utils::*;
 use crate::services::{Auth, User};
 use crate::state::*;
-use crate::theme::Theme;
+use crate::ui::Theme;
 
 pub struct ProfileView {
     user: Option<User>,
@@ -29,12 +29,12 @@ pub fn get_greeting(name: Option<String>) -> String {
 
 impl ProfileView {
     pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
-        let visible = state.read(cx).active_view == ActiveView::ProfileView;
+        let visible = state.read(cx).authenticated;
         let user = state.read(cx).user.clone();
 
         cx.observe(state, |this, state, cx| {
             let data = state.read(cx);
-            this.visible = data.active_view == ActiveView::ProfileView && data.authenticated;
+            this.visible = data.authenticated;
             this.user = data.user.clone();
             cx.notify();
         })
@@ -62,7 +62,6 @@ impl Render for ProfileView {
                     Ok(_) => {
                         set_user_async(&mut cx, None);
                         set_authenticated_async(&mut cx, false);
-                        set_active_view_async(&mut cx, ActiveView::LoginView);
                     }
                     Err(err) => {
                         set_error_async(&mut cx, Some(err));

@@ -8,7 +8,7 @@ use gpui::{
 use std::ops::Range;
 use unicode_segmentation::*;
 
-use crate::theme::Theme;
+use crate::ui::Theme;
 
 actions!(
     text_input,

@@ -7,8 +7,7 @@ use crate::services::{AssistantConfig, User};
 #[derive(Debug, Clone, PartialEq)]
 pub enum ActiveView {
     AssitantView,
-    LoginView,
-    ProfileView,
+    LibraryView,
 }
 
 #[derive(Debug)]

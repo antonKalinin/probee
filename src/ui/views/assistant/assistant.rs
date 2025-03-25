@@ -2,36 +2,85 @@ use gpui::*;
 
 use crate::state::{ActiveView, State};
 
-use super::assistant_selector::AssistantSelector;
-use super::loading::Loading;
+use super::assistant_header::AssistantHeader;
 use super::output::Output;
+use crate::services::{Api, Storage};
+use crate::state::*;
+use crate::ui::*;
 
 pub struct AssistantView {
-    assistant_selector_view: Entity<AssistantSelector>,
-    loading_view: Entity<Loading>,
+    assistant_header_view: Entity<AssistantHeader>,
     output_view: Entity<Output>,
 
     visible: bool,
+    loading: bool,
 }
 
 impl AssistantView {
     pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
+        let api = cx.global::<Api>().clone();
+        let storage = cx.global::<Storage>().clone();
+
         cx.observe(state, |this, model, cx| {
             this.visible = model.read(cx).active_view == ActiveView::AssitantView;
             cx.notify();
         })
         .detach();
 
-        let assistant_selector_view = cx.new(|cx| AssistantSelector::new(cx, &state));
-        let loading_view = cx.new(|cx| Loading::new(cx, &state));
+        // load assistants in the background
+        cx.spawn(|weak_view, mut cx| async move {
+            let _ = weak_view.update(&mut cx, |this: &mut AssistantView, cx| {
+                this.loading = true;
+                cx.notify();
+            });
+
+            let assistants = api.get_assistants(&mut cx).await;
+            let saved_assistant_id = storage.get("assistant_id".into());
+
+            GlobalState::update_async(
+                |this, cx| match assistants {
+                    Ok(assistants) => {
+                        this.set_assistants(cx, assistants.clone());
+                        let assistant_ids =
+                            assistants.iter().map(|a| a.id.clone()).collect::<Vec<_>>();
+                        let first_assistant_id = assistant_ids.first().cloned();
+
+                        // ensure if the saved assistant id is still valid
+                        let saved_assistant_id = saved_assistant_id
+                            .as_ref()
+                            .filter(|id| assistant_ids.contains(id))
+                            .cloned();
+
+                        match (saved_assistant_id, first_assistant_id) {
+                            (Some(id), _) | (None, Some(id)) => {
+                                this.set_active_assistant_id(cx, Some(id))
+                            }
+                            _ => {}
+                        }
+                    }
+                    Err(err) => {
+                        this.set_error(cx, Some(err));
+                    }
+                },
+                &mut cx,
+            );
+
+            let _ = weak_view.update(&mut cx, |this: &mut AssistantView, cx| {
+                this.loading = false;
+                cx.notify();
+            });
+        })
+        .detach();
+
+        let assistant_header_view = cx.new(|cx| AssistantHeader::new(cx, &state));
         let output_view = cx.new(|cx| Output::new(cx, &state));
 
         AssistantView {
-            assistant_selector_view,
-            loading_view,
+            assistant_header_view,
             output_view,
 
             visible: true,
+            loading: false,
         }
     }
 }
@@ -42,17 +91,27 @@ impl Render for AssistantView {
             return div().into_any_element();
         }
 
-        let assistant_selector = div().child(self.assistant_selector_view.clone());
-        let content_col = div().flex().flex_col().flex_shrink_0().flex_grow();
+        if self.loading {
+            // 3 lines of skeleton: header + 2 lines of output
+            return div()
+                .flex()
+                .flex_col()
+                .flex_shrink_0()
+                .child(div().w_2_3().mb_2().child(Skeleton::new()))
+                .child(div().w_full().mb_2().child(Skeleton::new()))
+                .child(div().w_4_5().child(Skeleton::new()))
+                .into_any_element();
+        }
+
+        let assistant_header = div().child(self.assistant_header_view.clone());
         let output = div().child(self.output_view.clone());
-        let loading = div().child(self.loading_view.clone());
 
         div()
             .flex()
             .flex_col()
             .flex_shrink_0()
-            .child(assistant_selector)
-            .child(content_col.children([loading, output]))
+            .child(assistant_header)
+            .child(output)
             .into_any_element()
     }
 }

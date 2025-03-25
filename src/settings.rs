@@ -1,13 +1,11 @@
 use anyhow::Error;
 use gpui::{div, prelude::*, App, AppContext, AsyncApp, Entity, Global, Window};
-use tab::SettingsTab;
-use tab::TabType;
+use tab::*;
 
 use crate::events::*;
 // use crate::services::{Api, Auth, Storage};
 // use crate::services::{AssistantConfig, User};
 use crate::state::*;
-use crate::theme::Theme;
 use crate::ui::*;
 
 #[derive(Debug)]

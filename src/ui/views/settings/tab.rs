@@ -1,8 +1,7 @@
 use gpui::*;
 
 use crate::events::UiEvent;
-use crate::theme::Theme;
-use crate::ui::Icon;
+use crate::ui::{Icon, Theme};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TabType {
