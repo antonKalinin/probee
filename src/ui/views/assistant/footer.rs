@@ -10,7 +10,7 @@ pub struct Footer {
 impl Footer {
     pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
         cx.observe(state, |this, model, cx| {
-            this.visible = model.read(cx).active_view == ActiveView::AssitantView
+            this.visible = model.read(cx).active_view == ActiveView::AssistantView
                 && model.read(cx).output.is_empty();
 
             cx.notify();

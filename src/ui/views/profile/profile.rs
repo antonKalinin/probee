@@ -84,10 +84,9 @@ impl Render for ProfileView {
             .border_1()
             .border_color(theme.border)
             .text_color(theme.secondary_foreground)
-            .cursor(CursorStyle::PointingHand)
             .hover(|style| style.bg(theme.secondary))
             .on_mouse_up(MouseButton::Left, handle_logout)
-            .cursor(CursorStyle::PointingHand)
+            .cursor_pointer()
             .child("Logout");
 
         let first_name = self

@@ -1,6 +1,7 @@
 #[derive(Debug, Clone, PartialEq)]
 pub enum UiEvent {
-    ChangeAssistant(String),
+    SelectAssistant(String),
+    ToggleAssistantLibrary,
     CopyOutput,
     ClearOutput,
 }

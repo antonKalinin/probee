@@ -6,7 +6,7 @@ use crate::services::{AssistantConfig, User};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ActiveView {
-    AssitantView,
+    AssistantView,
     LibraryView,
 }
 
@@ -38,7 +38,7 @@ impl GlobalState {
     pub fn init(cx: &mut App) {
         let state: Entity<State> = cx.new(|_cx| State {
             active_assistant_id: None,
-            active_view: ActiveView::AssitantView,
+            active_view: ActiveView::AssistantView,
             assistants: vec![],
             authenticated: false,
             content_height: 40.,

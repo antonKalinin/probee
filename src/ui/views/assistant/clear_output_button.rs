@@ -70,7 +70,7 @@ impl Render for ClearOutputButton {
             .border_1()
             .on_mouse_down(MouseButton::Left, on_click)
             .hover(|style| style.bg(theme.muted))
-            .cursor(CursorStyle::PointingHand)
+            .cursor_pointer()
             .child(icon);
 
         button

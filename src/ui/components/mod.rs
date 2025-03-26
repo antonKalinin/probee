@@ -1,7 +1,9 @@
 pub mod error;
+pub mod header;
 pub mod icon;
-mod skeleton;
+pub mod skeleton;
 
 pub use error::*;
+pub use header::*;
 pub use icon::*;
 pub use skeleton::*;

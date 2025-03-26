@@ -3,13 +3,13 @@ use gpui::*;
 use crate::events::UiEvent;
 use crate::services::AssistantConfig;
 use crate::state::*;
-use crate::ui::Theme;
+use crate::ui::*;
 
-pub struct AssistantHeader {
+pub struct Header {
     assistant: Option<AssistantConfig>,
 }
 
-impl AssistantHeader {
+impl Header {
     pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
         let _ = cx
             .observe(state, |this, model, cx| {
@@ -25,11 +25,11 @@ impl AssistantHeader {
             })
             .detach();
 
-        AssistantHeader { assistant: None }
+        Header { assistant: None }
     }
 }
 
-impl Render for AssistantHeader {
+impl Render for Header {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
@@ -40,6 +40,21 @@ impl Render for AssistantHeader {
 
         let assistant = self.assistant.as_ref().unwrap();
 
+        let on_click = cx.listener({
+            move |_this, _event, _window, cx: &mut Context<Self>| {
+                cx.emit(UiEvent::ToggleAssistantLibrary);
+            }
+        });
+
+        let row = || div().flex().flex_row().flex_wrap().items_center();
+
+        let dropdown_icon = div().h_4().w_4().ml_3().child(
+            svg()
+                .path(Icon::ChevronDown.path())
+                .text_color(theme.foreground)
+                .size_full(),
+        );
+
         div()
             .flex()
             .flex_row()
@@ -47,9 +62,11 @@ impl Render for AssistantHeader {
             .px_1()
             .text_size(theme.text_size)
             .font_weight(FontWeight::MEDIUM)
-            .child(assistant.name.clone())
+            .child(row().children(vec![div().child(assistant.name.clone()), dropdown_icon]))
+            .cursor_pointer()
+            .on_mouse_down(MouseButton::Left, on_click)
             .into_any_element()
     }
 }
 
-impl EventEmitter<UiEvent> for AssistantHeader {}
+impl EventEmitter<UiEvent> for Header {}

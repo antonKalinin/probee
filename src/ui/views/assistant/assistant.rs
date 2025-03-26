@@ -1,15 +1,14 @@
 use gpui::*;
 
-use crate::state::{ActiveView, State};
-
-use super::assistant_header::AssistantHeader;
-use super::output::Output;
+use crate::events::*;
 use crate::services::{Api, Storage};
 use crate::state::*;
 use crate::ui::*;
 
+use super::output::Output;
+
 pub struct AssistantView {
-    assistant_header_view: Entity<AssistantHeader>,
+    header_view: Entity<Header>,
     output_view: Entity<Output>,
 
     visible: bool,
@@ -21,9 +20,19 @@ impl AssistantView {
         let api = cx.global::<Api>().clone();
         let storage = cx.global::<Storage>().clone();
 
+        let header_view = cx.new(|cx| Header::new(cx, &state));
+        let output_view = cx.new(|cx| Output::new(cx, &state));
+
         cx.observe(state, |this, model, cx| {
-            this.visible = model.read(cx).active_view == ActiveView::AssitantView;
+            this.visible = model.read(cx).active_view == ActiveView::AssistantView;
             cx.notify();
+        })
+        .detach();
+
+        cx.subscribe(&header_view, move |_subscriber, _emitter, event, cx| {
+            if UiEvent::ToggleAssistantLibrary == *event {
+                set_active_view(cx, ActiveView::LibraryView);
+            }
         })
         .detach();
 
@@ -72,11 +81,8 @@ impl AssistantView {
         })
         .detach();
 
-        let assistant_header_view = cx.new(|cx| AssistantHeader::new(cx, &state));
-        let output_view = cx.new(|cx| Output::new(cx, &state));
-
         AssistantView {
-            assistant_header_view,
+            header_view,
             output_view,
 
             visible: true,
@@ -103,7 +109,7 @@ impl Render for AssistantView {
                 .into_any_element();
         }
 
-        let assistant_header = div().child(self.assistant_header_view.clone());
+        let assistant_header = div().child(self.header_view.clone());
         let output = div().child(self.output_view.clone());
 
         div()
