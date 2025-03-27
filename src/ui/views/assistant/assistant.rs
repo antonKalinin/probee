@@ -24,14 +24,14 @@ impl AssistantView {
         let output_view = cx.new(|cx| Output::new(cx, &state));
 
         cx.observe(state, |this, model, cx| {
-            this.visible = model.read(cx).active_view == ActiveView::AssistantView;
+            this.visible = model.read(cx).active_view == AppView::AssistantView;
             cx.notify();
         })
         .detach();
 
         cx.subscribe(&header_view, move |_subscriber, _emitter, event, cx| {
             if UiEvent::ToggleAssistantLibrary == *event {
-                set_active_view(cx, ActiveView::LibraryView);
+                set_active_view(cx, AppView::LibraryView);
             }
         })
         .detach();

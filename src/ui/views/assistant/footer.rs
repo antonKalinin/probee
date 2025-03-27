@@ -1,6 +1,6 @@
 use gpui::*;
 
-use crate::state::{ActiveView, State};
+use crate::state::{AppView, State};
 use crate::ui::{Icon, Theme};
 
 pub struct Footer {
@@ -10,7 +10,7 @@ pub struct Footer {
 impl Footer {
     pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
         cx.observe(state, |this, model, cx| {
-            this.visible = model.read(cx).active_view == ActiveView::AssistantView
+            this.visible = model.read(cx).active_view == AppView::AssistantView
                 && model.read(cx).output.is_empty();
 
             cx.notify();

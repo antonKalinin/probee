@@ -1,20 +1,17 @@
 use gpui::*;
 
-use crate::state::{ActiveView, State};
+use crate::state::{AppView, State};
 
 use crate::events::*;
 use crate::services::AssistantConfig;
 use crate::state::*;
 use crate::ui::*;
 
-use super::item::Item;
-
 pub struct LibraryView {
     header_view: Entity<Header>,
 
     assistants: Vec<AssistantConfig>,
     visible: bool,
-    loading: bool,
 }
 
 impl LibraryView {
@@ -22,7 +19,7 @@ impl LibraryView {
         let header_view = cx.new(|cx| Header::new(cx, &state));
 
         cx.observe(state, |this, model, cx| {
-            this.visible = model.read(cx).active_view == ActiveView::LibraryView;
+            this.visible = model.read(cx).active_view == AppView::LibraryView;
             this.assistants = model.read(cx).assistants.clone();
 
             cx.notify();
@@ -31,7 +28,7 @@ impl LibraryView {
 
         cx.subscribe(&header_view, move |_subscriber, _emitter, event, cx| {
             if UiEvent::ToggleAssistantLibrary == *event {
-                set_active_view(cx, ActiveView::AssistantView);
+                set_active_view(cx, AppView::AssistantView);
             }
         })
         .detach();
@@ -41,23 +38,50 @@ impl LibraryView {
 
             assistants: state.read(cx).assistants.clone(),
             visible: false,
-            loading: false,
         }
     }
 }
 
 impl Render for LibraryView {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let theme = cx.global::<Theme>();
+
         if !self.visible {
             return div().into_any_element();
         }
 
         let header = div().child(self.header_view.clone());
-        let assistant_list = || div().px_1().my_2();
-        let assistant_items = self.assistants.iter().map(|assistant| {
-            let item = cx.new(|cx| Item::new(cx, assistant.clone()));
+        let assistant_list = || div().my_2();
 
-            div().py_2().child(item)
+        let assistant_items = self.assistants.iter().map(|assistant| {
+            let assistant_id = assistant.id.clone();
+
+            let on_click = cx.listener(move |_this, _event, _window, cx: &mut Context<Self>| {
+                set_active_assistant_id(cx, Some(assistant_id.clone()));
+                set_active_view(cx, AppView::AssistantView);
+            });
+
+            div()
+                .flex()
+                .flex_col()
+                .p_3()
+                .rounded_sm()
+                .hover(|style| style.bg(theme.muted))
+                .child(
+                    div()
+                        .text_size(theme.text_size)
+                        .font_weight(FontWeight::MEDIUM)
+                        .child(assistant.name.clone()),
+                )
+                .child(
+                    div()
+                        .text_size(theme.subtext_size)
+                        .text_color(theme.muted_foreground)
+                        .child(assistant.description.clone()),
+                )
+                .cursor_pointer()
+                .on_mouse_down(MouseButton::Left, on_click)
+                .into_any_element()
         });
 
         div()

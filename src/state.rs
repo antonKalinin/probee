@@ -5,7 +5,7 @@ use crate::events::AppEvent;
 use crate::services::{AssistantConfig, User};
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum ActiveView {
+pub enum AppView {
     AssistantView,
     LibraryView,
 }
@@ -13,7 +13,7 @@ pub enum ActiveView {
 #[derive(Debug)]
 pub struct State {
     pub active_assistant_id: Option<String>,
-    pub active_view: ActiveView,
+    pub active_view: AppView,
     pub assistants: Vec<AssistantConfig>,
     pub authenticated: bool,
     pub content_height: f32,
@@ -38,7 +38,7 @@ impl GlobalState {
     pub fn init(cx: &mut App) {
         let state: Entity<State> = cx.new(|_cx| State {
             active_assistant_id: None,
-            active_view: ActiveView::AssistantView,
+            active_view: AppView::AssistantView,
             assistants: vec![],
             authenticated: false,
             content_height: 40.,
@@ -90,7 +90,7 @@ impl GlobalState {
         });
     }
 
-    pub fn set_active_view(&self, cx: &mut App, view: ActiveView) {
+    pub fn set_active_view(&self, cx: &mut App, view: AppView) {
         self.state.update(cx, |state, cx| {
             state.active_view = view.clone();
             state.error = None;
@@ -161,6 +161,10 @@ impl GlobalState {
             model.visible = visible;
             cx.notify();
             cx.emit(AppEvent::VisibilityChanged(visible));
+
+            if visible {
+                cx.activate(true);
+            }
         });
     }
 }
@@ -184,11 +188,11 @@ pub fn set_active_assistant_id(cx: &mut App, id: Option<String>) {
     GlobalState::update(|this, cx| this.set_active_assistant_id(cx, id), cx);
 }
 
-pub fn set_active_view(cx: &mut App, view: ActiveView) {
+pub fn set_active_view(cx: &mut App, view: AppView) {
     GlobalState::update(|this, cx| this.set_active_view(cx, view), cx);
 }
 
-pub fn set_active_view_async(cx: &mut AsyncApp, view: ActiveView) {
+pub fn set_active_view_async(cx: &mut AsyncApp, view: AppView) {
     GlobalState::update_async(|this, cx| this.set_active_view(cx, view), cx);
 }
 

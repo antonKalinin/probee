@@ -36,8 +36,8 @@ impl HotkeyManager {
             let long_press_duration = Duration::from_millis(300);
 
             // Dependsing on press duration, either run the action or toggle visibility
-            // Long press: show and run currently selected assistant
             // Short press: toggle visibility
+            // Long press: show and run currently selected assistant
             loop {
                 // Hotkey is pressed and not released yet, check if it's long press
                 // If it's long press, show and run currently selected assistant

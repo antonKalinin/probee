@@ -32,7 +32,7 @@ impl Output {
             this.text = state.read(cx).output.clone();
             this.description = assistant.map(|a| a.description.clone()).unwrap_or_default();
             this.loading = loading;
-            this.visible = state.read(cx).active_view == ActiveView::AssistantView && !error;
+            this.visible = state.read(cx).active_view == AppView::AssistantView && !error;
             cx.notify();
         })
         .detach();
