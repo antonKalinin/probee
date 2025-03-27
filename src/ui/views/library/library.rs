@@ -11,6 +11,7 @@ pub struct LibraryView {
     header_view: Entity<Header>,
 
     assistants: Vec<AssistantConfig>,
+    active_assistant_id: Option<String>,
     visible: bool,
 }
 
@@ -21,6 +22,7 @@ impl LibraryView {
         cx.observe(state, |this, model, cx| {
             this.visible = model.read(cx).active_view == AppView::LibraryView;
             this.assistants = model.read(cx).assistants.clone();
+            this.active_assistant_id = model.read(cx).active_assistant_id.clone();
 
             cx.notify();
         })
@@ -37,6 +39,7 @@ impl LibraryView {
             header_view,
 
             assistants: state.read(cx).assistants.clone(),
+            active_assistant_id: state.read(cx).active_assistant_id.clone(),
             visible: false,
         }
     }
@@ -56,6 +59,11 @@ impl Render for LibraryView {
         let assistant_items = self.assistants.iter().map(|assistant| {
             let assistant_id = assistant.id.clone();
 
+            let bg_color = match &self.active_assistant_id {
+                Some(active_assistant_id) if active_assistant_id == &assistant_id => theme.accent,
+                _ => theme.background,
+            };
+
             let on_click = cx.listener(move |_this, _event, _window, cx: &mut Context<Self>| {
                 set_active_assistant_id(cx, Some(assistant_id.clone()));
                 set_active_view(cx, AppView::AssistantView);
@@ -66,6 +74,7 @@ impl Render for LibraryView {
                 .flex_col()
                 .p_3()
                 .rounded_sm()
+                .bg(bg_color)
                 .hover(|style| style.bg(theme.muted))
                 .child(
                     div()

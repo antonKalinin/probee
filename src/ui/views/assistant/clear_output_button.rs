@@ -39,7 +39,7 @@ impl Render for ClearOutputButton {
             .path(if self.succeeded {
                 Icon::Check.path()
             } else {
-                Icon::Eraser.path()
+                Icon::CircleX.path()
             })
             .text_color(icon_color)
             .hover(|style| style.text_color(theme.foreground))
