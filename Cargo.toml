@@ -10,10 +10,18 @@ identifier = "io.github.antonkalinin.cmdi"
 copyright = "Copyright (c) Anton Kalinin 2025. All rights reserved."
 category = "Productivity"
 icons = ["icons/*.png"]
+targetTriple = "aarch64-apple-darwin"
 
 [package.metadata.packager.macos]
 entitlements = "macos/entitlements.plist"
 infoPlistPath = "macos/Info.plist"
+
+[package.metadata.packager.dmg]
+appFolderPosition = { x = 432, y = 180 }
+appPosition = { x = 180, y = 180 }
+background = "macos/dmg_background.png"
+windowSize = { width = 640, height = 426 }
+windowPosition = { x = 640, y = 480 }
 
 [dependencies]
 aes-gcm = "0.10.3"
