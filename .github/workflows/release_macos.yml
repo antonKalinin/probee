@@ -11,32 +11,87 @@ on:
         required: true
 
 env:
+  APP_NAME: cmdi
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   CARGO_TERM_COLOR: always
+  STORAGE_SALT: ${{ secrets.STORAGE_SALT }}
+  SUPABASE_PUBLIC_URL: ${{ vars.SUPABASE_PUBLIC_URL }}
+  SUPABASE_PUBLIC_ANON_KEY: ${{ vars.SUPABASE_PUBLIC_ANON_KEY }}
 
 jobs:
-  build:
-    name: Build MacOS
+  build-x86:
+    name: Build for x86
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rustup
+        run: rustup target add x86_64-apple-darwin
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build x86_64 binary
+        run: cargo build --release --target x86_64-apple-darwin
+
+      - name: Upload x86_64 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cmdi-x86_64
+          path: target/x86_64-apple-darwin/release/${{ env.APP_NAME }}
+          retention-days: 1
+
+  build-arm:
+    name: Build for ARM
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rustup
+        run: rustup target add aarch64-apple-darwin
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build x86_64 binary
+        run: cargo build --release --target aarch64-apple-darwin
+
+      - name: Upload x86_64 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cmdi-arm64
+          path: target/aarch64-apple-darwin/release/${{ env.APP_NAME }}
+          retention-days: 1
+
+  create-universal-binary:
+    name: Create Universal Binary
+    needs: [build-x86, build-arm]
     runs-on: macos-latest
     env:
       CARGO_PROFILE_RELEASE_LTO: true
       CARGO_PROFILE_RELEASE_CODEGEN_UNITS: 1
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Download x86_64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cmdi-x86_64
+          path: binaries/x86_64
 
-      - name: Rustup
-        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+      - name: Download ARM64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cmdi-arm64
+          path: binaries/arm64
 
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
+      - name: Make binaries executable
+        run: |
+          chmod +x binaries/x86_64/${{ env.APP_NAME }}
+          chmod +x binaries/arm64/${{ env.APP_NAME }}
 
-      - name: Build aarch64
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          STORAGE_SALT: ${{ secrets.STORAGE_SALT }}
-          SUPABASE_PUBLIC_URL: ${{ vars.SUPABASE_PUBLIC_URL }}
-          SUPABASE_PUBLIC_ANON_KEY: ${{ vars.SUPABASE_PUBLIC_ANON_KEY }}
-        run: cargo build --target=aarch64-apple-darwin --release
+      - name: Create universal binary with lipo
+        run: |
+          mkdir -p target/release
+          lipo -create -output target/release/${{ env.APP_NAME }} binaries/x86_64/${{ env.APP_NAME }} binaries/arm64/${{ env.APP_NAME }}
 
       - name: Install Packager
         run: cargo install cargo-packager --locked
@@ -49,4 +104,4 @@ jobs:
         with:
           token: ${{ secrets.RELEASE_TOKEN }}
           files: |
-            target/aarch64-apple-darwin/release/*.dmg
+            target/release/*.dmg
