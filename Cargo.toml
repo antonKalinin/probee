@@ -24,7 +24,7 @@ windowSize = { width = 640, height = 426 }
 windowPosition = { x = 640, y = 480 }
 
 [dependencies]
-aes-gcm = "0.10.3"
+aes-gcm = "0.10.3"                                                                                                          # storage encryption
 anyhow = "1.0.91"                                                                                                           # error handling
 arboard = "3.4.1"                                                                                                           # clipboard access
 async-std = { version = "1.13.0", features = ["attributes", "tokio1"] }
