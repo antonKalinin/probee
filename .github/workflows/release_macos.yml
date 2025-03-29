@@ -49,4 +49,4 @@ jobs:
         with:
           token: ${{ secrets.RELEASE_TOKEN }}
           files: |
-            target/aarch64-apple-darwin/*.dmg
+            target/aarch64-apple-darwin/release/*.dmg
