@@ -2,7 +2,7 @@
 name = "cmdi"
 authors = ["Anton Kalinin <hurricanebox@gmail.com>"]
 homepage = "https://cmdi.app/"
-version = "0.3.16"
+version = "0.3.17"
 edition = "2021"
 description = "Command I is a shortcut to your own collection of AI prompts."
 
