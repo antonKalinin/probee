@@ -71,6 +71,8 @@ jobs:
       CARGO_PROFILE_RELEASE_LTO: true
       CARGO_PROFILE_RELEASE_CODEGEN_UNITS: 1
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download x86_64 artifact
         uses: actions/download-artifact@v4
         with:
