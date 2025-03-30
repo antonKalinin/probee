@@ -21,16 +21,9 @@ env:
 jobs:
   build-x86:
     name: Build for x86
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-
-      # MacOS runner is 10x more expensive than Linux runner on GitHub Actions
-      # So we use Linux runner with osxcross to build for MacOS
-      - name: Setup MacOS X cross toolchain for Linux
-        uses: mbround18/setup-osxcross@v1
-        with:
-          osx-version: "12.3"
 
       - name: Rustup
         run: rustup target add x86_64-apple-darwin
@@ -50,16 +43,9 @@ jobs:
 
   build-arm:
     name: Build for ARM
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-
-      # MacOS runner is 10x more expensive than Linux runner on GitHub Actions
-      # So we use Linux runner with osxcross to build for MacOS
-      - name: Setup MacOS X cross toolchain for Linux
-        uses: mbround18/setup-osxcross@v1
-        with:
-          osx-version: "12.3"
 
       - name: Rustup
         run: rustup target add aarch64-apple-darwin

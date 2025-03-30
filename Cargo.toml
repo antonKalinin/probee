@@ -1,26 +1,32 @@
 [package]
 name = "cmdi"
+authors = ["Anton Kalinin <hurricanebox@gmail.com>"]
+homepage = "https://cmdi.app/"
 version = "0.3.16"
 edition = "2021"
 description = "Command I is a shortcut to your own collection of AI prompts."
 
 [package.metadata.packager]
 product_name = "Command I"
+authors = ["Anton Kalinin <hurricanebox@gmail.com>"]
 identifier = "io.github.antonkalinin.cmdi"
 copyright = "Copyright (c) Anton Kalinin 2025. All rights reserved."
 category = "Productivity"
 icons = ["icons/*.png"]
 
 [package.metadata.packager.macos]
+minimum_system_version = "11.0"
+frameworks = [ ]
 entitlements = "macos/entitlements.plist"
 infoPlistPath = "macos/Info.plist"
+signing_identity = "Developer ID Application: Anton Kalinin (4B82KM45QA)"
 
 [package.metadata.packager.dmg]
-appFolderPosition = { x = 432, y = 180 }
-appPosition = { x = 180, y = 180 }
+application_folder_position = { x = 432, y = 180 }
+app_position = { x = 180, y = 180 }
 background = "macos/dmg_background.png"
-windowSize = { width = 640, height = 426 }
-windowPosition = { x = 640, y = 480 }
+window_position = { x = 640, y = 480 }
+window_size = { width = 640, height = 426 }
 
 [dependencies]
 aes-gcm = "0.10.3"                                                                                                          # storage encryption

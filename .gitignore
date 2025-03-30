@@ -1,5 +1,7 @@
 target/
 macos/certs
+scripts/codesign.sh
+dist/
 
 *.local
 .env
