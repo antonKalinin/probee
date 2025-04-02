@@ -51,9 +51,9 @@ impl Render for ClearOutputButton {
                 cx.notify();
                 cx.emit(UiEvent::ClearOutput);
 
-                cx.spawn(|this, mut cx| async move {
+                cx.spawn(async move |this, cx| {
                     cx.background_executor().timer(Duration::from_secs(1)).await;
-                    let _ = this.update(&mut cx, |this, cx| {
+                    let _ = this.update(cx, |this, cx| {
                         this.succeeded = false;
                         cx.notify();
                     });

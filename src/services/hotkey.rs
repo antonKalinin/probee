@@ -31,7 +31,7 @@ impl HotkeyManager {
         manager.register(hotkey).unwrap();
         cx.set_global::<HotkeyManager>(HotkeyManager { manager });
 
-        cx.spawn(|cx| async move {
+        cx.spawn(async move |cx| {
             let mut hotkey_pressed_at: Option<Instant> = None;
             let long_press_duration = Duration::from_millis(300);
 

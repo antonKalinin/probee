@@ -1,4 +1,5 @@
 use async_std::stream::StreamExt;
+use gpui::AsyncApp;
 use gpui::{
     actions, div, prelude::*, App, AppContext, Entity, EventEmitter, FocusHandle, KeyBinding,
     Window,
@@ -12,7 +13,15 @@ use crate::state::*;
 use crate::ui::*;
 use crate::utils;
 
-actions!(app, [OpenSettings]);
+actions!(
+    app,
+    [
+        OpenSettings,
+        SelectFirstAssistant,
+        SelectSecondAssistant,
+        SelectThirdAssistant
+    ]
+);
 
 pub struct AppRoot {
     assistant_view: Entity<AssistantView>,
@@ -31,6 +40,9 @@ impl AppRoot {
         focus_handle.focus(window);
 
         cx.bind_keys([KeyBinding::new("cmd-,", OpenSettings, None)]);
+        cx.bind_keys([KeyBinding::new("alt-1", SelectFirstAssistant, None)]);
+        cx.bind_keys([KeyBinding::new("alt-2", SelectSecondAssistant, None)]);
+        cx.bind_keys([KeyBinding::new("alt-3", SelectThirdAssistant, None)]);
 
         let auth = cx.global::<Auth>().clone();
         let global_state = cx.global::<GlobalState>().clone();
@@ -38,25 +50,25 @@ impl AppRoot {
         // Try to authenticate user if token is present
         // If token is absent, nothing to do, need to login first
         // If token is expired, try to refresh it and retry to authenticate
-        cx.spawn(|mut cx| async move {
-            let user = auth.get_user(&mut cx).await;
+        cx.spawn(async move |cx| {
+            let user = auth.get_user(cx).await;
 
             match user {
                 Ok(user) => {
-                    set_user_async(&mut cx, Some(user));
-                    set_authenticated_async(&mut cx, true);
+                    set_user_async(cx, Some(user));
+                    set_authenticated_async(cx, true);
                 }
                 Err(err) => match err
                     .downcast_ref::<AuthError>()
                     .unwrap_or(&AuthError::UnknownError)
                 {
                     AuthError::InvalidTokenError(_) => {
-                        let user = auth.refresh_access_token(&mut cx).await;
+                        let user = auth.refresh_access_token(cx).await;
 
                         match user {
                             Ok(user) => {
-                                set_user_async(&mut cx, Some(user));
-                                set_authenticated_async(&mut cx, true);
+                                set_user_async(cx, Some(user));
+                                set_authenticated_async(cx, true);
                             }
                             Err(_err) => {
                                 // refresh token is probably expired, need to login again
@@ -66,7 +78,7 @@ impl AppRoot {
                     AuthError::NoTokenError => {
                         // nothing to do, need to login first
                     }
-                    _ => set_error_async(&mut cx, Some(err)),
+                    _ => set_error_async(cx, Some(err)),
                 },
             };
         })
@@ -79,8 +91,8 @@ impl AppRoot {
                         let api = cx.global::<Api>().clone();
                         let storage = cx.global::<Storage>().clone();
 
-                        cx.spawn(|mut cx| async move {
-                            let assistants = api.get_assistants(&mut cx).await;
+                        cx.spawn(async move |cx| {
+                            let assistants = api.get_assistants(cx).await;
                             let saved_assistant_id = storage.get("assistant_id".into());
 
                             GlobalState::update_async(
@@ -101,7 +113,7 @@ impl AppRoot {
                                         this.set_error(cx, Some(err));
                                     }
                                 },
-                                &mut cx,
+                                cx,
                             );
                         })
                         .detach();
@@ -127,31 +139,21 @@ impl AppRoot {
                         set_output(cx, "".to_owned());
                         set_loading(cx, true);
 
-                        cx.spawn(|mut cx| async move {
+                        cx.spawn(async move |cx| {
                             let output = assistant.generate_response(input).await;
 
-                            set_loading_async(&mut cx, false);
+                            set_loading_async(cx, false);
 
                             let _ = match output {
                                 Ok(mut stream) => {
                                     while let Some(item) = stream.next().await {
-                                        append_output_async(&mut cx, item);
+                                        append_output_async(cx, item);
                                     }
                                 }
-                                Err(err) => set_error_async(&mut cx, Some(err)),
+                                Err(err) => set_error_async(cx, Some(err)),
                             };
                         })
                         .detach();
-                    }
-                    AppEvent::VisibilityChanged(visible) => {
-                        let stack = cx.windows();
-
-                        if let Some(window_handle) = stack.get(0) {
-                            let _ = window_handle.update(cx, |_view, window, cx| {
-                                let height = state.read(cx).content_height;
-                                window.set_frame(utils::app_window_bounds(cx, height, visible));
-                            });
-                        }
                     }
                     _ => {}
                 };
@@ -197,13 +199,12 @@ impl Render for AppRoot {
 
         let assistant_view = div().child(self.assistant_view.clone());
         let library_view = div().child(self.library_view.clone());
-        let visible = self.visible.clone();
 
         let content = div()
             .on_children_prepainted(move |bounds, window, cx| {
                 let content_height: f32 = bounds.iter().map(|b| b.size.height.0).sum();
                 set_content_height(cx, content_height);
-                window.set_frame(utils::app_window_bounds(cx, content_height, visible));
+                window.set_frame(utils::app_window_bounds(cx, content_height));
             })
             .child(content.children([assistant_view, library_view])) // only one view is visible per time
             .child(self.error_view.clone());

@@ -1,6 +1,7 @@
 target/
 macos/certs
 scripts/codesign.sh
+scripts/bundle.sh
 dist/
 
 *.local

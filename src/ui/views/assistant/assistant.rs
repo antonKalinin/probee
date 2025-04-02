@@ -37,13 +37,13 @@ impl AssistantView {
         .detach();
 
         // load assistants in the background
-        cx.spawn(|weak_view, mut cx| async move {
-            let _ = weak_view.update(&mut cx, |this: &mut AssistantView, cx| {
+        cx.spawn(async move |weak_view, cx| {
+            let _ = weak_view.update(cx, |this: &mut AssistantView, cx| {
                 this.loading = true;
                 cx.notify();
             });
 
-            let assistants = api.get_assistants(&mut cx).await;
+            let assistants = api.get_assistants(cx).await;
             let saved_assistant_id = storage.get("assistant_id".into());
 
             GlobalState::update_async(
@@ -71,10 +71,10 @@ impl AssistantView {
                         this.set_error(cx, Some(err));
                     }
                 },
-                &mut cx,
+                cx,
             );
 
-            let _ = weak_view.update(&mut cx, |this: &mut AssistantView, cx| {
+            let _ = weak_view.update(cx, |this: &mut AssistantView, cx| {
                 this.loading = false;
                 cx.notify();
             });

@@ -12,5 +12,4 @@ pub enum AppEvent {
     Authenticated,
     InputChanged(String),
     OpenSettings,
-    VisibilityChanged(bool),
 }

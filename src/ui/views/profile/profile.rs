@@ -55,16 +55,16 @@ impl Render for ProfileView {
         let handle_logout = cx.listener(move |_this, _event, _window, cx: &mut Context<Self>| {
             let auth = cx.global::<Auth>().clone();
 
-            cx.spawn(|_this, mut cx| async move {
-                let logout_result = auth.logout(&mut cx).await;
+            cx.spawn(async move |_this, cx| {
+                let logout_result = auth.logout(cx).await;
 
                 match logout_result {
                     Ok(_) => {
-                        set_user_async(&mut cx, None);
-                        set_authenticated_async(&mut cx, false);
+                        set_user_async(cx, None);
+                        set_authenticated_async(cx, false);
                     }
                     Err(err) => {
-                        set_error_async(&mut cx, Some(err));
+                        set_error_async(cx, Some(err));
                     }
                 };
             })

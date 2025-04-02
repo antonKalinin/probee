@@ -50,7 +50,7 @@ async fn main() {
                 AppEvent::OpenSettings => {
                     let settings_window_options = utils::settings_window_options(cx);
                     let _ = cx.open_window(settings_window_options, SettingsRoot::build);
-                    cx.activate(true);
+                    cx.activate(false);
                 }
                 _ => {}
             })

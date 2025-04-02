@@ -160,10 +160,11 @@ impl GlobalState {
         self.state.update(cx, |model, cx| {
             model.visible = visible;
             cx.notify();
-            cx.emit(AppEvent::VisibilityChanged(visible));
 
             if visible {
-                cx.activate(true);
+                cx.activate(false);
+            } else {
+                cx.hide();
             }
         });
     }

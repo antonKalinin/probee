@@ -36,18 +36,16 @@ impl LoginView {
         let email_input =
             cx.new(|cx| TextInput::new(recent_email, Some("Enter your email".into()), cx));
 
-        cx.spawn(|this, mut cx| async move {
-            loop {
-                this.update(&mut cx, |this, cx| {
-                    let input_value = this.email_input.read(cx).get_content();
-                    this.enabled = utils::is_valid_email(&input_value);
-                })
-                .ok();
+        cx.spawn(async move |this, cx| loop {
+            this.update(cx, |this, cx| {
+                let input_value = this.email_input.read(cx).get_content();
+                this.enabled = utils::is_valid_email(&input_value);
+            })
+            .ok();
 
-                cx.background_executor()
-                    .timer(Duration::from_millis(100))
-                    .await;
-            }
+            cx.background_executor()
+                .timer(Duration::from_millis(100))
+                .await;
         })
         .detach();
 
@@ -93,16 +91,16 @@ impl Render for LoginView {
             // Save recently used email to storage to prefill the input on next login
             let _ = storage.set(EMAIL_STORAGE_KEY.into(), email.clone());
 
-            cx.spawn(|_this, mut cx| async move {
-                let login_result = auth.login_with_email(&mut cx, email.as_str()).await;
+            cx.spawn(async move |_this, cx| {
+                let login_result = auth.login_with_email(cx, email.as_str()).await;
 
                 match login_result {
                     Ok(user) => {
-                        set_user_async(&mut cx, Some(user));
-                        set_authenticated_async(&mut cx, true);
+                        set_user_async(cx, Some(user));
+                        set_authenticated_async(cx, true);
                     }
                     Err(err) => {
-                        set_error_async(&mut cx, Some(err));
+                        set_error_async(cx, Some(err));
                     }
                 };
             })
