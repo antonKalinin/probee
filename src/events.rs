@@ -1,6 +1,5 @@
 #[derive(Debug, Clone, PartialEq)]
 pub enum UiEvent {
-    SelectAssistant(String),
     ToggleAssistantLibrary,
     CopyOutput,
     ClearOutput,
@@ -12,4 +11,9 @@ pub enum AppEvent {
     Authenticated,
     InputChanged(String),
     OpenSettings,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum SettingsEvent {
+    SettingsTabSelected,
 }

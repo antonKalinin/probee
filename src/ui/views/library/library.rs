@@ -1,10 +1,8 @@
 use gpui::*;
 
-use crate::state::{AppView, State};
-
 use crate::events::*;
 use crate::services::AssistantConfig;
-use crate::state::*;
+use crate::state::app::*;
 use crate::ui::*;
 
 pub struct LibraryView {
@@ -16,7 +14,7 @@ pub struct LibraryView {
 }
 
 impl LibraryView {
-    pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
+    pub fn new(cx: &mut Context<Self>, state: &Entity<AppState>) -> Self {
         let header_view = cx.new(|cx| Header::new(cx, &state));
 
         cx.observe(state, |this, model, cx| {

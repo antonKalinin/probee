@@ -1,6 +1,6 @@
 use gpui::{
-    point, px, App, Bounds, Pixels, SharedString, Size, TitlebarOptions,
-    WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions,
+    point, px, App, Bounds, Pixels, Size, TitlebarOptions, WindowBackgroundAppearance,
+    WindowBounds, WindowKind, WindowOptions,
 };
 
 pub static APP_WIDTH: f32 = 360.;

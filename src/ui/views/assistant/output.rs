@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use crate::clipboard::Clipboard;
 use crate::events::UiEvent;
-use crate::state::*;
+use crate::state::app::*;
 use crate::ui::{Icon, Theme};
 
 use super::clear_output_button::ClearOutputButton;
@@ -23,7 +23,7 @@ pub struct Output {
 const MAX_HEIGHT: f32 = 320.0;
 
 impl Output {
-    pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
+    pub fn new(cx: &mut Context<Self>, state: &Entity<AppState>) -> Self {
         cx.observe(state, |this, state, cx| {
             let error = state.read(cx).error.is_some();
             let loading = state.read(cx).loading;

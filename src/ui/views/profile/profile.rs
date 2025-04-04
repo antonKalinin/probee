@@ -2,7 +2,7 @@ use gpui::*;
 
 use super::utils::*;
 use crate::services::{Auth, User};
-use crate::state::*;
+use crate::state::settings::*;
 use crate::ui::Theme;
 
 pub struct ProfileView {
@@ -28,7 +28,7 @@ pub fn get_greeting(name: Option<String>) -> String {
 }
 
 impl ProfileView {
-    pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
+    pub fn new(cx: &mut Context<Self>, state: &Entity<SettingsState>) -> Self {
         let visible = state.read(cx).authenticated;
         let user = state.read(cx).user.clone();
 

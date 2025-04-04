@@ -8,7 +8,7 @@ use global_hotkey::{
 
 use crate::errors::*;
 use crate::services::{selection, Clipboard};
-use crate::state::*;
+use crate::state::app::*;
 
 #[allow(dead_code)]
 pub struct HotkeyManager {

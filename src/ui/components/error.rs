@@ -1,6 +1,6 @@
 use gpui::*;
 
-use crate::state::State;
+use crate::state::ErrorState;
 use crate::ui::*;
 
 pub struct ErrorView {
@@ -9,9 +9,9 @@ pub struct ErrorView {
 }
 
 impl ErrorView {
-    pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
+    pub fn new(cx: &mut Context<Self>, state: &Entity<impl ErrorState + 'static>) -> Self {
         cx.observe(state, |this, state, cx| {
-            let error_occured = state.read(cx).error.is_some();
+            let error_occured = state.read(cx).get_error().is_some();
 
             if this.visible != error_occured {
                 this.visible = error_occured;
@@ -19,7 +19,7 @@ impl ErrorView {
             }
 
             if error_occured {
-                this.message = state.read(cx).error.as_ref().unwrap().to_string();
+                this.message = state.read(cx).get_error().unwrap().to_string();
                 cx.notify();
             }
         })

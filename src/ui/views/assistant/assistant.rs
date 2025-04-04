@@ -2,7 +2,7 @@ use gpui::*;
 
 use crate::events::*;
 use crate::services::{Api, Storage};
-use crate::state::*;
+use crate::state::app::*;
 use crate::ui::*;
 
 use super::output::Output;
@@ -16,7 +16,7 @@ pub struct AssistantView {
 }
 
 impl AssistantView {
-    pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
+    pub fn new(cx: &mut Context<Self>, state: &Entity<AppState>) -> Self {
         let api = cx.global::<Api>().clone();
         let storage = cx.global::<Storage>().clone();
 
@@ -46,7 +46,7 @@ impl AssistantView {
             let assistants = api.get_assistants(cx).await;
             let saved_assistant_id = storage.get("assistant_id".into());
 
-            GlobalState::update_async(
+            AppStateController::update_async(
                 |this, cx| match assistants {
                     Ok(assistants) => {
                         this.set_assistants(cx, assistants.clone());
@@ -68,7 +68,7 @@ impl AssistantView {
                         }
                     }
                     Err(err) => {
-                        this.set_error(cx, Some(err));
+                        set_error(cx, Some(err));
                     }
                 },
                 cx,

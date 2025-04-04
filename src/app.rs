@@ -1,5 +1,4 @@
 use async_std::stream::StreamExt;
-use gpui::AsyncApp;
 use gpui::{
     actions, div, prelude::*, App, AppContext, Entity, EventEmitter, FocusHandle, KeyBinding,
     Window,
@@ -9,7 +8,7 @@ use crate::assistant::*;
 use crate::errors::*;
 use crate::events::*;
 use crate::services::{Api, Auth, Storage};
-use crate::state::*;
+use crate::state::app::*;
 use crate::ui::*;
 use crate::utils;
 
@@ -17,9 +16,9 @@ actions!(
     app,
     [
         OpenSettings,
-        SelectFirstAssistant,
-        SelectSecondAssistant,
-        SelectThirdAssistant
+        SelectRecentAssistant1,
+        SelectRecentAssistant2,
+        SelectRecentAssistant3
     ]
 );
 
@@ -40,12 +39,12 @@ impl AppRoot {
         focus_handle.focus(window);
 
         cx.bind_keys([KeyBinding::new("cmd-,", OpenSettings, None)]);
-        cx.bind_keys([KeyBinding::new("alt-1", SelectFirstAssistant, None)]);
-        cx.bind_keys([KeyBinding::new("alt-2", SelectSecondAssistant, None)]);
-        cx.bind_keys([KeyBinding::new("alt-3", SelectThirdAssistant, None)]);
+        cx.bind_keys([KeyBinding::new("alt-1", SelectRecentAssistant1, None)]);
+        cx.bind_keys([KeyBinding::new("alt-2", SelectRecentAssistant2, None)]);
+        cx.bind_keys([KeyBinding::new("alt-3", SelectRecentAssistant3, None)]);
 
         let auth = cx.global::<Auth>().clone();
-        let global_state = cx.global::<GlobalState>().clone();
+        let global_state = cx.global::<AppStateController>().clone();
 
         // Try to authenticate user if token is present
         // If token is absent, nothing to do, need to login first
@@ -53,39 +52,39 @@ impl AppRoot {
         cx.spawn(async move |cx| {
             let user = auth.get_user(cx).await;
 
-            match user {
-                Ok(user) => {
-                    set_user_async(cx, Some(user));
-                    set_authenticated_async(cx, true);
-                }
-                Err(err) => match err
-                    .downcast_ref::<AuthError>()
-                    .unwrap_or(&AuthError::UnknownError)
-                {
-                    AuthError::InvalidTokenError(_) => {
-                        let user = auth.refresh_access_token(cx).await;
+            // match user {
+            //     Ok(user) => {
+            //         set_user_async(cx, Some(user));
+            //         set_authenticated_async(cx, true);
+            //     }
+            //     Err(err) => match err
+            //         .downcast_ref::<AuthError>()
+            //         .unwrap_or(&AuthError::UnknownError)
+            //     {
+            //         AuthError::InvalidTokenError(_) => {
+            //             let user = auth.refresh_access_token(cx).await;
 
-                        match user {
-                            Ok(user) => {
-                                set_user_async(cx, Some(user));
-                                set_authenticated_async(cx, true);
-                            }
-                            Err(_err) => {
-                                // refresh token is probably expired, need to login again
-                            }
-                        }
-                    }
-                    AuthError::NoTokenError => {
-                        // nothing to do, need to login first
-                    }
-                    _ => set_error_async(cx, Some(err)),
-                },
-            };
+            //             match user {
+            //                 Ok(user) => {
+            //                     set_user_async(cx, Some(user));
+            //                     set_authenticated_async(cx, true);
+            //                 }
+            //                 Err(_err) => {
+            //                     // refresh token is probably expired, need to login again
+            //                 }
+            //             }
+            //         }
+            //         AuthError::NoTokenError => {
+            //             // nothing to do, need to login first
+            //         }
+            //         _ => set_error_async(cx, Some(err)),
+            //     },
+            // };
         })
         .detach();
 
         let _app_events_subscribtion = cx
-            .subscribe(&global_state.state, |state, event, cx| {
+            .subscribe(&global_state.state, |_state, event, cx| {
                 let _ = match event.clone() {
                     AppEvent::Authenticated => {
                         let api = cx.global::<Api>().clone();
@@ -95,7 +94,7 @@ impl AppRoot {
                             let assistants = api.get_assistants(cx).await;
                             let saved_assistant_id = storage.get("assistant_id".into());
 
-                            GlobalState::update_async(
+                            AppStateController::update_async(
                                 |this, cx| match assistants {
                                     Ok(assistants) => {
                                         this.set_assistants(cx, assistants.clone());
@@ -110,7 +109,7 @@ impl AppRoot {
                                         }
                                     }
                                     Err(err) => {
-                                        this.set_error(cx, Some(err));
+                                        set_error(cx, Some(err));
                                     }
                                 },
                                 cx,
@@ -189,6 +188,42 @@ impl AppRoot {
     fn open_settings(&mut self, _: &OpenSettings, _window: &mut Window, cx: &mut Context<Self>) {
         cx.emit(AppEvent::OpenSettings);
     }
+
+    fn select_first_recent_assistant(
+        &mut self,
+        _: &SelectRecentAssistant1,
+        _: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        self.select_recent_assistant(0, cx);
+    }
+
+    fn select_second_recent_assistant(
+        &mut self,
+        _: &SelectRecentAssistant2,
+        _: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        self.select_recent_assistant(1, cx);
+    }
+
+    fn select_third_recent_assistant(
+        &mut self,
+        _: &SelectRecentAssistant3,
+        _: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        self.select_recent_assistant(2, cx);
+    }
+
+    fn select_recent_assistant(&mut self, index: usize, cx: &mut Context<Self>) {
+        let global_state = cx.global::<AppStateController>().clone();
+        let assistants = global_state.state.read(cx).assistants.clone();
+
+        if let Some(assistant) = assistants.get(index) {
+            set_active_assistant_id(cx, Some(assistant.id.clone()));
+        }
+    }
 }
 
 impl Render for AppRoot {
@@ -211,6 +246,9 @@ impl Render for AppRoot {
 
         div()
             .on_action(cx.listener(Self::open_settings))
+            .on_action(cx.listener(Self::select_first_recent_assistant))
+            .on_action(cx.listener(Self::select_second_recent_assistant))
+            .on_action(cx.listener(Self::select_third_recent_assistant))
             .track_focus(&self.focus_handle)
             .size_full()
             .flex()

@@ -17,7 +17,7 @@ use crate::app::AppRoot;
 use crate::assets::Assets;
 use crate::services::*;
 use crate::settings::SettingsRoot;
-use crate::state::GlobalState;
+use crate::state::*;
 use crate::ui::Theme;
 use crate::utils::devtools;
 
@@ -32,14 +32,17 @@ async fn main() {
     let app = Application::new().with_assets(Assets);
 
     app.run(|cx: &mut App| {
+        // services
         Api::init(cx);
         Assistant::init(cx);
         Auth::init(cx);
         Clipboard::init(cx);
-        GlobalState::init(cx);
         HotkeyManager::init(cx);
         Storage::init(cx);
         Theme::init(cx);
+        // state
+        AppStateController::init(cx);
+        SettingsStateController::init(cx);
 
         let app_window_options = utils::app_window_options(cx);
         let app_window = cx.open_window(app_window_options, AppRoot::build);
@@ -50,6 +53,7 @@ async fn main() {
                 AppEvent::OpenSettings => {
                     let settings_window_options = utils::settings_window_options(cx);
                     let _ = cx.open_window(settings_window_options, SettingsRoot::build);
+
                     cx.activate(false);
                 }
                 _ => {}

@@ -1,21 +1,16 @@
 use gpui::*;
 
-use crate::events::UiEvent;
+use crate::events::SettingsEvent;
+use crate::state::settings::*;
 use crate::ui::{Icon, Theme};
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum TabType {
-    General,
-    Profile,
-}
 
 pub struct SettingsTab {
     active: bool,
-    tab_type: TabType,
+    tab_type: SettingsTabType,
 }
 
 impl SettingsTab {
-    pub fn new(tab_type: TabType, active: bool) -> Self {
+    pub fn new(tab_type: SettingsTabType, active: bool) -> Self {
         SettingsTab { active, tab_type }
     }
 
@@ -23,8 +18,8 @@ impl SettingsTab {
         let theme = cx.global::<Theme>();
 
         let icon = match self.tab_type {
-            TabType::General => Icon::Settings,
-            TabType::Profile => Icon::CircleUserRound,
+            SettingsTabType::General => Icon::Settings,
+            SettingsTabType::Profile => Icon::CircleUserRound,
         };
 
         let text_color = match self.active {
@@ -49,8 +44,8 @@ impl SettingsTab {
         let theme = cx.global::<Theme>();
 
         let text = match self.tab_type {
-            TabType::General => "General",
-            TabType::Profile => "Profile",
+            SettingsTabType::General => "General",
+            SettingsTabType::Profile => "Profile",
         };
 
         let text_color = match self.active {
@@ -77,8 +72,8 @@ impl Render for SettingsTab {
         let theme = cx.global::<Theme>();
 
         let on_click = cx.listener({
-            move |this, _event, _window, cx: &mut Context<Self>| {
-                // cx.emit(UiEvent::ChangeAssistant(assistant_id));
+            move |_this, _event, _window, cx: &mut Context<Self>| {
+                cx.emit(SettingsEvent::SettingsTabSelected);
             }
         });
 
@@ -106,4 +101,4 @@ impl Render for SettingsTab {
     }
 }
 
-impl EventEmitter<UiEvent> for SettingsTab {}
+impl EventEmitter<SettingsEvent> for SettingsTab {}

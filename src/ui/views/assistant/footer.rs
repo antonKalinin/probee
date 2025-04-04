@@ -8,7 +8,7 @@ pub struct Footer {
 }
 
 impl Footer {
-    pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
+    pub fn new(cx: &mut Context<Self>, state: &Entity<AppState>) -> Self {
         cx.observe(state, |this, model, cx| {
             this.visible = model.read(cx).active_view == AppView::AssistantView
                 && model.read(cx).output.is_empty();

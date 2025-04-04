@@ -2,7 +2,7 @@ use gpui::*;
 use std::time::Duration;
 
 use crate::events::UiEvent;
-use crate::state::State;
+use crate::state::app::*;
 use crate::ui::{Icon, Theme};
 
 pub struct CopyOutputButton {
@@ -11,7 +11,7 @@ pub struct CopyOutputButton {
 }
 
 impl CopyOutputButton {
-    pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
+    pub fn new(cx: &mut Context<Self>, state: &Entity<AppState>) -> Self {
         let _ = cx
             .observe(state, move |this, state, cx| {
                 this.enabled = !state.read(cx).output.is_empty();

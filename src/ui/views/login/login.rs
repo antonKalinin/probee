@@ -2,7 +2,7 @@ use gpui::*;
 use std::time::Duration;
 
 use crate::services::{Auth, Storage};
-use crate::state::*;
+use crate::state::settings::*;
 use crate::ui::*;
 
 use super::utils;
@@ -17,7 +17,7 @@ pub struct LoginView {
 const EMAIL_STORAGE_KEY: &str = "recent_email";
 
 impl LoginView {
-    pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
+    pub fn new(cx: &mut Context<Self>, state: &Entity<SettingsState>) -> Self {
         cx.observe(state, |this, model, cx| {
             let data = model.read(cx);
             this.visible = !data.authenticated;

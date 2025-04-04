@@ -2,7 +2,7 @@ use gpui::*;
 
 use crate::events::UiEvent;
 use crate::services::AssistantConfig;
-use crate::state::*;
+use crate::state::app::*;
 use crate::ui::*;
 
 pub struct Header {
@@ -10,7 +10,7 @@ pub struct Header {
 }
 
 impl Header {
-    pub fn new(cx: &mut Context<Self>, state: &Entity<State>) -> Self {
+    pub fn new(cx: &mut Context<Self>, state: &Entity<AppState>) -> Self {
         let _ = cx
             .observe(state, |this, model, cx| {
                 if let Some(assistant_id) = model.read(cx).active_assistant_id.clone() {
