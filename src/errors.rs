@@ -56,7 +56,7 @@ pub enum AssistantError {
 #[allow(dead_code)]
 #[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum InputError {
-    #[error("Error while getting screen selection\nPlease provide Command I accessibility permissions:\n Settings -> Security & Privacy -> Accessibility")]
+    #[error("Error while getting screen selection\nPlease provide Probee accessibility permissions:\n Settings -> Security & Privacy -> Accessibility")]
     AccessibilityPermissionsMissing,
     #[error("Error while getting screen selection\n{0}")]
     AppleScriptFailed(String),

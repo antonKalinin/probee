@@ -1,6 +1,5 @@
 use gpui::*;
 
-use crate::events::SettingsEvent;
 use crate::state::settings::*;
 use crate::ui::{Icon, Theme};
 
@@ -10,7 +9,19 @@ pub struct SettingsTab {
 }
 
 impl SettingsTab {
-    pub fn new(tab_type: SettingsTabType, active: bool) -> Self {
+    pub fn new(
+        tab_type: SettingsTabType,
+        state: &Entity<SettingsState>,
+        cx: &mut Context<Self>,
+    ) -> Self {
+        let active = state.read(cx).active_tab == tab_type;
+
+        cx.observe(state, |this, state, cx| {
+            this.active = state.read(cx).active_tab == this.tab_type;
+            cx.notify();
+        })
+        .detach();
+
         SettingsTab { active, tab_type }
     }
 
@@ -72,8 +83,8 @@ impl Render for SettingsTab {
         let theme = cx.global::<Theme>();
 
         let on_click = cx.listener({
-            move |_this, _event, _window, cx: &mut Context<Self>| {
-                cx.emit(SettingsEvent::SettingsTabSelected);
+            move |this, _event, _window, cx: &mut Context<Self>| {
+                set_active_tab(cx, this.tab_type.clone());
             }
         });
 
@@ -84,7 +95,7 @@ impl Render for SettingsTab {
 
         let button = div()
             .group("settings-tab")
-            .w_auto()
+            .w_16()
             .px_2()
             .py_1()
             .flex()
@@ -100,5 +111,3 @@ impl Render for SettingsTab {
         button
     }
 }
-
-impl EventEmitter<SettingsEvent> for SettingsTab {}

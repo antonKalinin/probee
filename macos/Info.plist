@@ -4,9 +4,9 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleIdentifier</key>
-    <string>app.cmdi</string>
+    <string>ai.probee</string>
     <key>CFBundleName</key>
-    <string>Command I</string>
+    <string>Probee</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>

@@ -11,7 +11,7 @@ on:
         required: true
 
 env:
-  APP_NAME: cmdi
+  APP_NAME: probee
   ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   CARGO_TERM_COLOR: always
   STORAGE_SALT: ${{ secrets.STORAGE_SALT }}
@@ -37,7 +37,7 @@ jobs:
       - name: Upload x86_64 artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cmdi-x86_64
+          name: probee-x86_64
           path: target/x86_64-apple-darwin/release/${{ env.APP_NAME }}
           retention-days: 1
 
@@ -59,7 +59,7 @@ jobs:
       - name: Upload x86_64 artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cmdi-arm64
+          name: probee-arm64
           path: target/aarch64-apple-darwin/release/${{ env.APP_NAME }}
           retention-days: 1
 
@@ -76,13 +76,13 @@ jobs:
       - name: Download x86_64 artifact
         uses: actions/download-artifact@v4
         with:
-          name: cmdi-x86_64
+          name: probee-x86_64
           path: binaries/x86_64
 
       - name: Download ARM64 artifact
         uses: actions/download-artifact@v4
         with:
-          name: cmdi-arm64
+          name: probee-arm64
           path: binaries/arm64
 
       - name: Make binaries executable

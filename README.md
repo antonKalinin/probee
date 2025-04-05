@@ -1,11 +1,11 @@
-## CMD + I
+## Probee
 
 Desktop App
 
 ### Project structure
 
 ```
-cmdi/
+probee/
 ├── build.rs // maps environment variables to rust runtime
 ├── src/
 │   ├── assets.rs // static assets

@@ -62,7 +62,7 @@ impl Api {
 
         headers.insert("content-type", HeaderValue::from_static("application/json"));
         headers.insert("apikey", api_key_header);
-        headers.insert("X-Client-Info", HeaderValue::from_static("cmdi-rs/0.1.0"));
+        headers.insert("X-Client-Info", HeaderValue::from_static("probee-rs/0.1.0"));
 
         let client = Client::builder().default_headers(headers).build().unwrap();
 

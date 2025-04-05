@@ -852,42 +852,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cmdi"
-version = "0.3.17"
-dependencies = [
- "accessibility",
- "accessibility-sys",
- "aes-gcm",
- "anyhow",
- "arboard",
- "async-std",
- "async-trait",
- "base64",
- "core-foundation 0.9.4",
- "dirs 6.0.0",
- "dotenv",
- "futures",
- "global-hotkey",
- "gpui",
- "image",
- "rand 0.8.5",
- "regex",
- "reqwest",
- "rust-embed",
- "serde",
- "serde_json",
- "sha2",
- "smallvec",
- "tempfile",
- "thiserror 2.0.12",
- "tiny_http",
- "tokio",
- "tokio-stream",
- "unicode-segmentation",
- "url",
-]
-
-[[package]]
 name = "cocoa"
 version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3860,6 +3824,42 @@ checksum = "f1ccf34da56fc294e7d4ccf69a85992b7dfb826b7cf57bac6a70bba3494cc08a"
 dependencies = [
  "proc-macro2",
  "syn 2.0.99",
+]
+
+[[package]]
+name = "probee"
+version = "0.3.17"
+dependencies = [
+ "accessibility",
+ "accessibility-sys",
+ "aes-gcm",
+ "anyhow",
+ "arboard",
+ "async-std",
+ "async-trait",
+ "base64",
+ "core-foundation 0.9.4",
+ "dirs 6.0.0",
+ "dotenv",
+ "futures",
+ "global-hotkey",
+ "gpui",
+ "image",
+ "rand 0.8.5",
+ "regex",
+ "reqwest",
+ "rust-embed",
+ "serde",
+ "serde_json",
+ "sha2",
+ "smallvec",
+ "tempfile",
+ "thiserror 2.0.12",
+ "tiny_http",
+ "tokio",
+ "tokio-stream",
+ "unicode-segmentation",
+ "url",
 ]
 
 [[package]]

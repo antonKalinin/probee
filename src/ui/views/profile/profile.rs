@@ -29,12 +29,13 @@ pub fn get_greeting(name: Option<String>) -> String {
 
 impl ProfileView {
     pub fn new(cx: &mut Context<Self>, state: &Entity<SettingsState>) -> Self {
-        let visible = state.read(cx).authenticated;
+        let data = state.read(cx);
+        let visible = data.active_tab == SettingsTabType::Profile && data.authenticated;
         let user = state.read(cx).user.clone();
 
         cx.observe(state, |this, state, cx| {
             let data = state.read(cx);
-            this.visible = data.authenticated;
+            this.visible = data.active_tab == SettingsTabType::Profile && data.authenticated;
             this.user = data.user.clone();
             cx.notify();
         })

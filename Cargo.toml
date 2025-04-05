@@ -1,15 +1,15 @@
 [package]
-name = "cmdi"
+name = "probee"
 authors = ["Anton Kalinin <hurricanebox@gmail.com>"]
-homepage = "https://cmdi.app/"
+homepage = "https://probee.ai/"
 version = "0.3.17"
 edition = "2021"
-description = "Command I is a shortcut to your own collection of AI prompts."
+description = "Probee is a shortcut to your own collection of AI prompts."
 
 [package.metadata.packager]
-product_name = "Command I"
+product_name = "Probee"
 authors = ["Anton Kalinin <hurricanebox@gmail.com>"]
-identifier = "io.github.antonkalinin.cmdi"
+identifier = "io.github.antonkalinin.probee"
 copyright = "Copyright (c) Anton Kalinin 2025. All rights reserved."
 category = "Productivity"
 icons = ["icons/*.png"]

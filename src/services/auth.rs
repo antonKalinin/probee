@@ -62,7 +62,7 @@ impl Auth {
             "apikey",
             HeaderValue::from_str(supabase_public_key).unwrap(),
         );
-        headers.insert("X-Client-Info", HeaderValue::from_static("cmdi-rs/0.1.0"));
+        headers.insert("X-Client-Info", HeaderValue::from_static("probee-rs/0.1.0"));
 
         let client = Client::builder().default_headers(headers).build().unwrap();
 
@@ -169,7 +169,7 @@ impl Auth {
                                     tiny_http::Response::empty(302).with_header(
                                         tiny_http::Header::from_bytes(
                                             &b"Location"[..],
-                                            "https://www.cmdi.app/auth/success".as_bytes(),
+                                            "https://www.probee.ai/auth/success".as_bytes(),
                                         )
                                         .unwrap(),
                                     ),

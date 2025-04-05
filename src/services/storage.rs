@@ -41,7 +41,7 @@ impl Storage {
         }
 
         let mut app_dir = dirs::home_dir().expect("Could not find home directory");
-        app_dir.push(".cmdi/storage.db");
+        app_dir.push(".probee/storage.db");
 
         let storage = Storage::new(app_dir, storage_salt.as_bytes()).unwrap();
 

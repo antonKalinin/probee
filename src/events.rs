@@ -12,8 +12,3 @@ pub enum AppEvent {
     InputChanged(String),
     OpenSettings,
 }
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum SettingsEvent {
-    SettingsTabSelected,
-}

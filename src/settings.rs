@@ -1,18 +1,17 @@
 use gpui::{div, prelude::*, App, AppContext, Entity, Window};
+use settings::settings::SettingsView;
 use tab::*;
 
-use crate::events::*;
 use crate::state::settings::*;
 // use crate::services::{Api, Auth, Storage};
 // use crate::services::{AssistantConfig, User};
 use crate::ui::*;
 
 pub struct SettingsRoot {
-    active_tab: SettingsTabType,
-
+    error_view: Entity<ErrorView>,
+    general_view: Entity<SettingsView>,
     login_view: Entity<LoginView>,
     profile_view: Entity<ProfileView>,
-    error_view: Entity<ErrorView>,
 
     general_tab: Entity<SettingsTab>,
     profile_tab: Entity<SettingsTab>,
@@ -28,28 +27,14 @@ impl SettingsRoot {
             let error_view = cx.new(|cx| ErrorView::new(cx, &state));
             let login_view = cx.new(|cx| LoginView::new(cx, &state));
             let profile_view = cx.new(|cx| ProfileView::new(cx, &state));
+            let general_view = cx.new(|cx| SettingsView::new(cx, &state));
 
-            let general_tab = cx.new(|_cx| SettingsTab::new(SettingsTabType::General, true));
-            let profile_tab = cx.new(|_cx| SettingsTab::new(SettingsTabType::Profile, false));
-
-            cx.subscribe(&general_tab, |_root, _this, event, cx| match event {
-                SettingsEvent::SettingsTabSelected => {
-                    set_active_tab(cx, SettingsTabType::General);
-                }
-                _ => {}
-            });
-
-            cx.subscribe(&profile_tab, |_root, _this, event, cx| match event {
-                SettingsEvent::SettingsTabSelected => {
-                    set_active_tab(cx, SettingsTabType::Profile);
-                }
-                _ => {}
-            });
+            let general_tab = cx.new(|cx| SettingsTab::new(SettingsTabType::General, &state, cx));
+            let profile_tab = cx.new(|cx| SettingsTab::new(SettingsTabType::Profile, &state, cx));
 
             SettingsRoot {
-                active_tab: SettingsTabType::General,
-
                 error_view,
+                general_view,
                 login_view,
                 profile_view,
 
@@ -88,6 +73,15 @@ impl Render for SettingsRoot {
             .border_color(theme.border)
             .children([self.general_tab.clone(), self.profile_tab.clone()]);
 
+        // only one of the children should be visible per time
+        let content = div().flex().w_full().p_2().children([
+            div().child(self.general_view.clone()),
+            div().child(self.login_view.clone()),
+            div().child(self.profile_view.clone()),
+        ]);
+
+        let error = div().child(self.error_view.clone());
+
         div()
             .size_full()
             .flex()
@@ -95,5 +89,7 @@ impl Render for SettingsRoot {
             .bg(theme.background)
             .child(title)
             .child(tabs)
+            .child(content)
+            .child(error)
     }
 }

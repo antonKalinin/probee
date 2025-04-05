@@ -18,9 +18,12 @@ const EMAIL_STORAGE_KEY: &str = "recent_email";
 
 impl LoginView {
     pub fn new(cx: &mut Context<Self>, state: &Entity<SettingsState>) -> Self {
+        let data = state.read(cx);
+        let visible = data.active_tab == SettingsTabType::Profile && !data.authenticated;
+
         cx.observe(state, |this, model, cx| {
             let data = model.read(cx);
-            this.visible = !data.authenticated;
+            this.visible = data.active_tab == SettingsTabType::Profile && !data.authenticated;
 
             if !data.authenticated {
                 this.email = None;
@@ -51,7 +54,7 @@ impl LoginView {
 
         LoginView {
             enabled: false,
-            visible: false,
+            visible,
             email: None,
 
             email_input,
