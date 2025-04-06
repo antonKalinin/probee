@@ -1,6 +1,6 @@
 ## Probee
 
-Desktop App
+Desktop App that allows you to quickly run your AI prompts against selected text.
 
 ### Project structure
 
@@ -10,12 +10,12 @@ probee/
 ├── src/
 │   ├── assets.rs // static assets
 │   ├── services/ // modules with side effects (e.g. API calls, file system operations, OS interactions)
+│   ├── state // global state
 │   ├── ui/ // entities that can be rendered
 │   ├── utils/ // side-effect free utility functions
 │   ├── events.rs // App & UI events
 │   ├── errors.rs // custom error types
-│   ├── main.rs // entry point, initializes the services and returs the root UI view
-│   ├── root.rs // root view
-│   ├── state.rs // global state
-│   ├── theme.rs // theme
+│   ├── main.rs // entry point, initializes the services, creates windows and starts the app
+│   ├── app.rs // root app view
+│   ├── settings.rs // root settings view
 ```

@@ -1,9 +1,11 @@
+pub mod colors;
 pub mod components;
-pub mod input;
+pub mod styled;
 pub mod theme;
 pub mod views;
 
+pub use colors::*;
 pub use components::*;
-pub use input::*;
+pub use styled::*;
 pub use theme::*;
 pub use views::*;

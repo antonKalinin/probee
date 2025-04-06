@@ -66,7 +66,7 @@ impl Render for Footer {
             .text_color(theme.muted_foreground)
             .text_size(theme.subtext_size)
             .line_height(theme.line_height)
-            .font_family(theme.font_sans.clone())
+            .font_family(theme.font_family.clone())
             .font_weight(FontWeight::LIGHT)
             .children([cmd_i_shortcut])
             .into_any_element()

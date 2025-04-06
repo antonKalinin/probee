@@ -3,7 +3,7 @@ use gpui::{
 };
 use std::time::Duration;
 
-use crate::ui::Theme;
+use crate::ui::ActiveTheme;
 
 #[derive(IntoElement)]
 pub struct Skeleton {
@@ -26,9 +26,9 @@ impl Styled for Skeleton {
 
 impl RenderOnce for Skeleton {
     fn render(self, _: &mut gpui::Window, cx: &mut gpui::App) -> impl IntoElement {
-        let theme = cx.global::<Theme>();
+        let theme = cx.theme();
 
-        self.base.bg(theme.border).with_animation(
+        self.base.bg(theme.skeleton).with_animation(
             "skeleton",
             Animation::new(Duration::from_secs(2))
                 .repeat()

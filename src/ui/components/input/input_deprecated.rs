@@ -28,7 +28,7 @@ actions!(
     ]
 );
 
-pub struct TextInput {
+pub struct LegacyTextInput {
     focus_handle: FocusHandle,
     content: SharedString,
     placeholder: SharedString,
@@ -40,7 +40,7 @@ pub struct TextInput {
     is_selecting: bool,
 }
 
-impl TextInput {
+impl LegacyTextInput {
     pub fn new(
         content: Option<String>,
         placeholder: Option<String>,
@@ -284,7 +284,7 @@ impl TextInput {
     }
 }
 
-impl EntityInputHandler for TextInput {
+impl EntityInputHandler for LegacyTextInput {
     fn text_for_range(
         &mut self,
         range_utf16: Range<usize>,
@@ -408,7 +408,7 @@ impl EntityInputHandler for TextInput {
 }
 
 struct TextElement {
-    input: Entity<TextInput>,
+    input: Entity<LegacyTextInput>,
 }
 
 struct PrepaintState {
@@ -581,7 +581,7 @@ impl Element for TextElement {
     }
 }
 
-impl Render for TextInput {
+impl Render for LegacyTextInput {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
@@ -625,7 +625,7 @@ impl Render for TextInput {
     }
 }
 
-impl Focusable for TextInput {
+impl Focusable for LegacyTextInput {
     fn focus_handle(&self, _: &App) -> FocusHandle {
         self.focus_handle.clone()
     }

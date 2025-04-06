@@ -1,7 +1,7 @@
 use gpui::*;
 
 use crate::state::settings::*;
-use crate::ui::{Icon, Theme};
+use crate::ui::{Icon, IconName, Theme};
 
 pub struct SettingsTab {
     active: bool,
@@ -29,8 +29,8 @@ impl SettingsTab {
         let theme = cx.global::<Theme>();
 
         let icon = match self.tab_type {
-            SettingsTabType::General => Icon::Settings,
-            SettingsTabType::Profile => Icon::CircleUserRound,
+            SettingsTabType::General => Icon::new(IconName::Settings),
+            SettingsTabType::Profile => Icon::new(IconName::CircleUserRound),
         };
 
         let text_color = match self.active {
@@ -38,17 +38,12 @@ impl SettingsTab {
             false => theme.muted_foreground,
         };
 
-        let svg = div().flex().child(
-            svg()
-                .group_hover("settings-tab", |style| {
-                    style.text_color(theme.secondary_foreground)
-                })
-                .path(icon.path())
-                .text_color(text_color)
-                .size_4(),
-        );
-
-        svg.into_any_element()
+        div().flex().size_4().child(
+            icon.group_hover("settings-tab", |style| {
+                style.text_color(theme.secondary_foreground)
+            })
+            .text_color(text_color),
+        )
     }
 
     fn render_label(&self, cx: &Context<Self>) -> impl IntoElement {

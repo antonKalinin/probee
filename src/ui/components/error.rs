@@ -68,11 +68,9 @@ impl Render for ErrorView {
             .shadow_md()
             .bg(theme.background)
             .child(
-                svg()
-                    .path(Icon::TriangleAlert.path())
+                Icon::new(IconName::TriangleAlert)
                     .text_color(red500)
-                    .w_4()
-                    .h_4(),
+                    .size_4(),
             );
 
         let title = div()

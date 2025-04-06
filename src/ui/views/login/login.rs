@@ -11,7 +11,7 @@ pub struct LoginView {
     visible: bool,
     enabled: bool,
     email: Option<String>,
-    email_input: Entity<TextInput>,
+    email_input: Entity<LegacyTextInput>,
 }
 
 const EMAIL_STORAGE_KEY: &str = "recent_email";
@@ -37,7 +37,7 @@ impl LoginView {
         let recent_email = storage.get(EMAIL_STORAGE_KEY.into());
 
         let email_input =
-            cx.new(|cx| TextInput::new(recent_email, Some("Enter your email".into()), cx));
+            cx.new(|cx| LegacyTextInput::new(recent_email, Some("Enter your email".into()), cx));
 
         cx.spawn(async move |this, cx| loop {
             this.update(cx, |this, cx| {
@@ -117,19 +117,11 @@ impl Render for LoginView {
                 cx.notify();
             });
 
-        let title = div()
-            .mb_2()
-            .text_size(theme.heading_size)
-            .text_color(theme.foreground)
-            .font_family(theme.font_sans.clone())
-            .font_weight(FontWeight::SEMIBOLD)
-            .child("Login");
-
         let instructions = div()
             .mb_4()
             .text_size(theme.subtext_size)
             .text_color(theme.muted_foreground)
-            .child("To use public or personal assistants you need to login.")
+            .child("To use personal assistants you need to login.")
             .child("If you don't have an account we will create one for you.");
 
         let send_button = div()
@@ -195,16 +187,13 @@ impl Render for LoginView {
             )));
 
         div()
+            .w(px(320.))
             .line_height(theme.line_height)
-            .w_full()
-            .my_2()
-            .px_1()
             .text_color(theme.foreground)
             .text_size(theme.text_size)
             .line_height(theme.line_height)
-            .font_family(theme.font_sans.clone())
+            .font_family(theme.font_family.clone())
             .font_weight(FontWeight::NORMAL)
-            .child(title)
             .child(instructions)
             .child(
                 self.email

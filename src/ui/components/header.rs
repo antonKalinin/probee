@@ -48,9 +48,8 @@ impl Render for Header {
 
         let row = || div().flex().flex_row().flex_wrap().items_center();
 
-        let dropdown_icon = div().h_4().w_4().ml_3().child(
-            svg()
-                .path(Icon::ChevronDown.path())
+        let dropdown_icon = div().size_4().ml_3().child(
+            Icon::new(IconName::ChevronDown)
                 .text_color(theme.foreground)
                 .size_full(),
         );

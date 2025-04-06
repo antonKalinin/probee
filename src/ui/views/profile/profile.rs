@@ -122,7 +122,7 @@ impl Render for ProfileView {
             .text_color(theme.foreground)
             .text_size(theme.text_size)
             .line_height(theme.line_height)
-            .font_family(theme.font_sans.clone())
+            .font_family(theme.font_family.clone())
             .child(greeting)
             .child(section().child(setting_title().child("Theme")))
             .child(section().child(setting_title().child("Position")))

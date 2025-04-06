@@ -49,7 +49,7 @@ impl Render for SettingsView {
             .text_color(theme.foreground)
             .text_size(theme.text_size)
             .line_height(theme.line_height)
-            .font_family(theme.font_sans.clone())
+            .font_family(theme.font_family.clone())
             .child(section().child(setting_title().child("Theme")))
             .child(section().child(setting_title().child("Position")))
             .into_any_element()

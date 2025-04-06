@@ -74,11 +74,19 @@ impl Render for SettingsRoot {
             .children([self.general_tab.clone(), self.profile_tab.clone()]);
 
         // only one of the children should be visible per time
-        let content = div().flex().w_full().p_2().children([
-            div().child(self.general_view.clone()),
-            div().child(self.login_view.clone()),
-            div().child(self.profile_view.clone()),
-        ]);
+        let content = div()
+            .flex()
+            .flex_row()
+            .w_full()
+            .h_full()
+            .p_2()
+            .items_center()
+            .justify_center()
+            .children([
+                div().child(self.general_view.clone()),
+                div().child(self.login_view.clone()),
+                div().child(self.profile_view.clone()),
+            ]);
 
         let error = div().child(self.error_view.clone());
 

@@ -4,7 +4,7 @@ use std::time::Duration;
 use crate::clipboard::Clipboard;
 use crate::events::UiEvent;
 use crate::state::app::*;
-use crate::ui::{Icon, Theme};
+use crate::ui::{Icon, IconName, Theme};
 
 use super::clear_output_button::ClearOutputButton;
 use super::copy_output_button::CopyOutputButton;
@@ -93,11 +93,10 @@ impl Output {
     fn render_loading(&self, cx: &mut Context<Self>) -> AnyElement {
         let theme = cx.global::<Theme>();
 
-        let svg = div().flex().child(
-            svg()
-                .path(Icon::Loader.path())
+        // replace with Spinner component
+        let spinner = div().flex().size_6().child(
+            Icon::new(IconName::LoaderCircle)
                 .text_color(theme.muted_foreground)
-                .size_6()
                 .with_animation(
                     "rotating-loader",
                     Animation::new(Duration::from_secs(2)).repeat(),
@@ -114,7 +113,7 @@ impl Output {
             .justify_center()
             .h_20()
             .w_full()
-            .child(svg)
+            .child(spinner)
             .into_any_element()
     }
 }
@@ -179,7 +178,7 @@ impl Render for Output {
             .line_height(theme.line_height)
             .text_size(theme.text_size)
             .line_height(theme.line_height)
-            .font_family(theme.font_sans.clone())
+            .font_family(theme.font_family.clone())
             .font_weight(FontWeight::LIGHT)
             .child(self.text.clone())
             .track_scroll(&self.scroll_handle)

@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use crate::events::UiEvent;
 use crate::state::app::*;
-use crate::ui::{Icon, Theme};
+use crate::ui::{ActiveTheme, Icon, IconName};
 
 pub struct ClearOutputButton {
     enabled: bool,
@@ -28,22 +28,21 @@ impl ClearOutputButton {
 
 impl Render for ClearOutputButton {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let theme = cx.global::<Theme>();
+        let theme = cx.theme();
 
         let icon_color = match self.enabled {
             true => theme.foreground,
             false => theme.muted_foreground,
         };
 
-        let icon = svg()
-            .path(if self.succeeded {
-                Icon::Check.path()
-            } else {
-                Icon::CircleX.path()
-            })
-            .text_color(icon_color)
-            .hover(|style| style.text_color(theme.foreground))
-            .size_full();
+        let icon = (if self.succeeded {
+            Icon::new(IconName::Check)
+        } else {
+            Icon::new(IconName::CircleX)
+        })
+        .text_color(icon_color)
+        .hover(|style| style.text_color(theme.foreground))
+        .size_full();
 
         let on_click = cx.listener({
             move |this, _event, _window, cx: &mut Context<Self>| {
