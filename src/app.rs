@@ -16,9 +16,9 @@ actions!(
     app,
     [
         OpenSettings,
-        SelectRecentAssistant1,
-        SelectRecentAssistant2,
-        SelectRecentAssistant3
+        SelectNextAssistant,
+        SelectPrevAssistant,
+        ToggleLibraryView
     ]
 );
 
@@ -39,9 +39,9 @@ impl AppRoot {
         focus_handle.focus(window);
 
         cx.bind_keys([KeyBinding::new("cmd-,", OpenSettings, None)]);
-        cx.bind_keys([KeyBinding::new("alt-1", SelectRecentAssistant1, None)]);
-        cx.bind_keys([KeyBinding::new("alt-2", SelectRecentAssistant2, None)]);
-        cx.bind_keys([KeyBinding::new("alt-3", SelectRecentAssistant3, None)]);
+        cx.bind_keys([KeyBinding::new("alt-1", SelectPrevAssistant, None)]);
+        cx.bind_keys([KeyBinding::new("alt-2", SelectNextAssistant, None)]);
+        cx.bind_keys([KeyBinding::new("alt-`", ToggleLibraryView, None)]);
 
         let auth = cx.global::<Auth>().clone();
         let global_state = cx.global::<AppStateController>().clone();
@@ -189,40 +189,72 @@ impl AppRoot {
         cx.emit(AppEvent::OpenSettings);
     }
 
-    fn select_first_recent_assistant(
+    fn select_next_assistant(
         &mut self,
-        _: &SelectRecentAssistant1,
+        _: &SelectNextAssistant,
         _: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        self.select_recent_assistant(0, cx);
-    }
+        let app_state = cx.global::<AppStateController>().clone().state.read(cx);
+        let assistants = app_state.assistants.clone();
+        let curr_assistant_id = app_state.active_assistant_id.clone();
 
-    fn select_second_recent_assistant(
-        &mut self,
-        _: &SelectRecentAssistant2,
-        _: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        self.select_recent_assistant(1, cx);
-    }
+        if curr_assistant_id.is_none() {
+            return;
+        }
 
-    fn select_third_recent_assistant(
-        &mut self,
-        _: &SelectRecentAssistant3,
-        _: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        self.select_recent_assistant(2, cx);
-    }
+        let curr_assistant_index = (assistants
+            .iter()
+            .position(|assistant| &assistant.id == curr_assistant_id.as_ref().unwrap()))
+        .unwrap_or(0);
 
-    fn select_recent_assistant(&mut self, index: usize, cx: &mut Context<Self>) {
-        let global_state = cx.global::<AppStateController>().clone();
-        let assistants = global_state.state.read(cx).assistants.clone();
+        let next_assistant_index = if curr_assistant_index == assistants.len() - 1 {
+            0
+        } else {
+            curr_assistant_index + 1
+        };
 
-        if let Some(assistant) = assistants.get(index) {
+        if let Some(assistant) = assistants.get(next_assistant_index) {
             set_active_assistant_id(cx, Some(assistant.id.clone()));
         }
+    }
+
+    fn select_prev_assistant(
+        &mut self,
+        _: &SelectPrevAssistant,
+        _: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let app_state = cx.global::<AppStateController>().clone().state.read(cx);
+        let assistants = app_state.assistants.clone();
+        let curr_assistant_id = app_state.active_assistant_id.clone();
+
+        if curr_assistant_id.is_none() {
+            return;
+        }
+
+        let curr_assistant_index = (assistants
+            .iter()
+            .position(|assistant| &assistant.id == curr_assistant_id.as_ref().unwrap()))
+        .unwrap_or(0);
+
+        let next_assistant_index = if curr_assistant_index == 0 {
+            assistants.len() - 1
+        } else {
+            curr_assistant_index - 1
+        };
+
+        if let Some(assistant) = assistants.get(next_assistant_index) {
+            set_active_assistant_id(cx, Some(assistant.id.clone()));
+        }
+    }
+
+    fn toggle_library_view(
+        &mut self,
+        _: &ToggleLibraryView,
+        _: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
     }
 }
 
@@ -246,9 +278,9 @@ impl Render for AppRoot {
 
         div()
             .on_action(cx.listener(Self::open_settings))
-            .on_action(cx.listener(Self::select_first_recent_assistant))
-            .on_action(cx.listener(Self::select_second_recent_assistant))
-            .on_action(cx.listener(Self::select_third_recent_assistant))
+            .on_action(cx.listener(Self::select_next_assistant))
+            .on_action(cx.listener(Self::select_prev_assistant))
+            .on_action(cx.listener(Self::toggle_library_view))
             .track_focus(&self.focus_handle)
             .size_full()
             .flex()
