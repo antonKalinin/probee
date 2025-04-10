@@ -3487,6 +3487,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "objc_id"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c92d4ddb4bd7b50d730c215ff871754d0da6b2178849f8a2a2ab69712d0c073b"
+dependencies = [
+ "objc",
+]
+
+[[package]]
 name = "object"
 version = "0.36.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3838,6 +3847,7 @@ dependencies = [
  "async-std",
  "async-trait",
  "base64",
+ "cocoa 0.26.0",
  "core-foundation 0.9.4",
  "dirs 6.0.0",
  "dotenv",
@@ -3845,6 +3855,8 @@ dependencies = [
  "global-hotkey",
  "gpui",
  "image",
+ "objc",
+ "objc_id",
  "rand 0.8.5",
  "regex",
  "reqwest",

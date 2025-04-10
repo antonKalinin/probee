@@ -7,6 +7,7 @@ mod app;
 mod assets;
 mod errors;
 mod events;
+mod platform;
 mod services;
 mod settings;
 mod state;
@@ -59,5 +60,7 @@ async fn main() {
                 _ => {}
             })
             .detach();
+
+        let _ = platform::create_status_bar_item();
     });
 }
