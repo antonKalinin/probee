@@ -35,17 +35,12 @@ impl Spinner {
 
 impl RenderOnce for Spinner {
     fn render(self, _window: &mut Window, _cx: &mut App) -> impl IntoElement {
-        div()
-            .child(
-                self.icon
-                    .when_some(self.color, |this, color| this.text_color(color))
-                    .with_animation(
-                        "circle",
-                        Animation::new(self.speed).repeat().with_easing(ease_in_out),
-                        |this, delta| {
-                            this.with_transformation(Transformation::rotate(percentage(delta)))
-                        },
-                    ),
+        self.icon
+            .when_some(self.color, |this, color| this.text_color(color))
+            .with_animation(
+                "circle",
+                Animation::new(self.speed).repeat().with_easing(ease_in_out),
+                |this, delta| this.with_transformation(Transformation::rotate(percentage(delta))),
             )
             .into_element()
     }

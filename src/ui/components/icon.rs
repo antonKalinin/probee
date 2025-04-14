@@ -38,6 +38,7 @@ pub enum IconName {
     FilePlus,
     Globe,
     GraduationCap,
+    HeartCrack,
     Languages,
     Loader,
     LoaderCircle,

@@ -4,7 +4,7 @@ use std::time::Duration;
 use crate::clipboard::Clipboard;
 use crate::events::UiEvent;
 use crate::state::app::*;
-use crate::ui::{Icon, IconName, Theme};
+use crate::ui::{Icon, IconName, Spinner, Theme};
 
 use super::clear_output_button::ClearOutputButton;
 use super::copy_output_button::CopyOutputButton;
@@ -93,18 +93,10 @@ impl Output {
     fn render_loading(&self, cx: &mut Context<Self>) -> AnyElement {
         let theme = cx.global::<Theme>();
 
-        // replace with Spinner component
-        let spinner = div().flex().size_6().child(
-            Icon::new(IconName::LoaderCircle)
-                .text_color(theme.muted_foreground)
-                .with_animation(
-                    "rotating-loader",
-                    Animation::new(Duration::from_secs(2)).repeat(),
-                    |icon, delta| {
-                        icon.with_transformation(Transformation::rotate(percentage(delta)))
-                    },
-                ),
-        );
+        let spinner = div()
+            .flex()
+            .size_6()
+            .child(Spinner::new().color(theme.muted_foreground));
 
         div()
             .flex()
