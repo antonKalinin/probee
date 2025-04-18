@@ -1,6 +1,6 @@
 use crate::ui::{
-    h_flex, indicator::Indicator, tooltip::Tooltip, ActiveTheme, Colorize as _, Disableable, Icon,
-    Selectable, Sizable, Size, StyleSized,
+    h_flex, ActiveTheme, Colorize as _, Disableable, Icon, Selectable, Sizable, Size, Spinner,
+    StyleSized,
 };
 use gpui::{
     div, prelude::FluentBuilder as _, relative, AnyElement, App, ClickEvent, Corners, Div, Edges,
@@ -360,9 +360,7 @@ impl RenderOnce for Button {
             .justify_center()
             .when(self.variant.is_link(), |this| this.cursor_pointer())
             .overflow_hidden()
-            .when(cx.theme().shadow && normal_style.shadow, |this| {
-                this.shadow_sm()
-            })
+            .when(normal_style.shadow, |this| this.shadow_sm())
             .when(!style.no_padding(), |this| {
                 if self.label.is_none() && self.children.is_empty() {
                     // Icon Button
@@ -385,9 +383,9 @@ impl RenderOnce for Button {
             .when(
                 self.border_corners.top_left && self.border_corners.bottom_left,
                 |this| match self.rounded {
-                    ButtonRounded::Small => this.rounded_l(cx.theme().radius * 0.5),
-                    ButtonRounded::Medium => this.rounded_l(cx.theme().radius),
-                    ButtonRounded::Large => this.rounded_l(cx.theme().radius * 2.0),
+                    ButtonRounded::Small => this.rounded_l_sm(),
+                    ButtonRounded::Medium => this.rounded_l_md(),
+                    ButtonRounded::Large => this.rounded_l_lg(),
                     ButtonRounded::Size(px) => this.rounded_l(px),
                     ButtonRounded::None => this.rounded_none(),
                 },
@@ -395,9 +393,9 @@ impl RenderOnce for Button {
             .when(
                 self.border_corners.top_right && self.border_corners.bottom_right,
                 |this| match self.rounded {
-                    ButtonRounded::Small => this.rounded_r(cx.theme().radius * 0.5),
-                    ButtonRounded::Medium => this.rounded_r(cx.theme().radius),
-                    ButtonRounded::Large => this.rounded_r(cx.theme().radius * 2.0),
+                    ButtonRounded::Small => this.rounded_r_sm(),
+                    ButtonRounded::Medium => this.rounded_r_md(),
+                    ButtonRounded::Large => this.rounded_r_lg(),
                     ButtonRounded::Size(px) => this.rounded_r(px),
                     ButtonRounded::None => this.rounded_none(),
                 },
@@ -421,7 +419,7 @@ impl RenderOnce for Button {
                         let hover_style = style.hovered(self.outline, cx);
                         this.bg(hover_style.bg)
                             .border_color(hover_style.border)
-                            .text_color(crate::red_400())
+                            .text_color(cx.theme().danger)
                     })
                     .active(|this| {
                         let active_style = style.active(self.outline, cx);
@@ -464,27 +462,27 @@ impl RenderOnce for Button {
                         Size::Small => this.gap_1(),
                         _ => this.gap_2(),
                     })
-                    .when(!self.loading, |this| {
-                        this.when_some(self.icon, |this, icon| {
-                            this.child(icon.with_size(icon_size))
-                        })
-                    })
-                    .when(self.loading, |this| {
-                        this.child(
-                            Indicator::new()
-                                .with_size(self.size)
-                                .when_some(self.loading_icon, |this, icon| this.icon(icon)),
-                        )
-                    })
+                    // .when(!self.loading, |this| {
+                    //     this.when_some(self.icon, |this, icon| {
+                    //         this.child(icon.with_size(icon_size))
+                    //     })
+                    // })
+                    // .when(self.loading, |this| {
+                    //     this.child(
+                    //         Spinner::new()
+                    //             .with_size(self.size)
+                    //             .when_some(self.loading_icon, |this, icon| this.icon(icon)),
+                    //     )
+                    // })
                     .when_some(self.label, |this, label| {
                         this.child(div().flex_none().line_height(relative(1.)).child(label))
                     })
                     .children(self.children)
             })
             .when(self.loading, |this| this.bg(normal_style.bg.opacity(0.8)))
-            .when_some(self.tooltip.clone(), |this, tooltip| {
-                this.tooltip(move |window, cx| Tooltip::new(tooltip.clone(), window, cx))
-            })
+        // .when_some(self.tooltip.clone(), |this, tooltip| {
+        //     this.tooltip(move |window, cx| Tooltip::new(tooltip.clone(), window, cx))
+        // })
     }
 }
 

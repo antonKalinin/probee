@@ -129,6 +129,8 @@ pub struct ThemeColor {
     pub success_hover: Hsla,
     /// Success active background color.
     pub success_active: Hsla,
+    /// Transparent
+    pub transparent: Hsla,
     /// Warning background color.
     pub warning: Hsla,
     /// Warning active background color.
@@ -179,6 +181,7 @@ impl ThemeColor {
             success_active: Hsla::from(rgb(0x16a34a)), // Green 600
             success_hover: Hsla::from(rgb(0x22c55e)).opacity(0.9), // Green 500
             success_foreground: Hsla::from(rgb(0xf0fdf4)), // Green 50
+            transparent: Hsla::transparent_black(),
             warning: Hsla::from(rgb(0xf59e0b)),        // Amber 500
             warning_active: Hsla::from(rgb(0xd97706)), // Amber 600
             warning_hover: Hsla::from(rgb(0xf59e0b)).opacity(0.9), // Amber 500
@@ -225,6 +228,7 @@ impl ThemeColor {
             success_active: Hsla::from(rgb(0x166534)).darken(0.2), // Green 800
             success_foreground: Hsla::from(rgb(0xf0fdf4)), // Green 50
             success_hover: Hsla::from(rgb(0x166534)).opacity(0.8), // Green 800
+            transparent: Hsla::transparent_black(),
             warning: Hsla::from(rgb(0x854d0e)), // Amber 800
             warning_active: Hsla::from(rgb(0x854d0e)).darken(0.2), // Amber 800
             warning_foreground: Hsla::from(rgb(0xfffbeb)), // Amber 50
@@ -265,7 +269,7 @@ impl Global for Theme {}
 
 impl Theme {
     pub fn init(cx: &mut App) {
-        load_fonts(cx);
+        let _ = load_fonts(cx);
 
         let mode = match cx.window_appearance() {
             WindowAppearance::Dark | WindowAppearance::VibrantDark => ThemeMode::Dark,

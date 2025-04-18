@@ -121,12 +121,11 @@ impl RenderOnce for Toggle {
                 Size::Large => this.min_w_9().h_9().px_3().text_lg(),
                 _ => this.min_w_8().h_8().px_2(),
             })
-            .rounded(cx.theme().radius)
+            .rounded_md()
             .when(self.variant == ToggleVariant::Outline, |this| {
                 this.border_1()
                     .border_color(cx.theme().border)
                     .bg(cx.theme().background)
-                    .when(cx.theme().shadow, |this| this.shadow_sm())
             })
             .when(hoverable, |this| {
                 this.hover(|this| {

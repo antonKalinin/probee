@@ -1,5 +1,5 @@
 use gpui::{div, prelude::*, App, AppContext, Entity, Window};
-use settings::settings::SettingsView;
+use settings::general::GeneralSettingsView;
 use tab::*;
 
 use crate::state::settings::*;
@@ -9,7 +9,7 @@ use crate::ui::*;
 
 pub struct SettingsRoot {
     error_view: Entity<ErrorView>,
-    general_view: Entity<SettingsView>,
+    general_view: Entity<GeneralSettingsView>,
     login_view: Entity<LoginView>,
     profile_view: Entity<ProfileView>,
 
@@ -27,7 +27,7 @@ impl SettingsRoot {
             let error_view = cx.new(|cx| ErrorView::new(cx, &state));
             let login_view = cx.new(|cx| LoginView::new(cx, &state));
             let profile_view = cx.new(|cx| ProfileView::new(cx, &state));
-            let general_view = cx.new(|cx| SettingsView::new(cx, &state));
+            let general_view = cx.new(|cx| GeneralSettingsView::new(cx, &state));
 
             let general_tab = cx.new(|cx| SettingsTab::new(SettingsTabType::General, &state, cx));
             let profile_tab = cx.new(|cx| SettingsTab::new(SettingsTabType::Profile, &state, cx));

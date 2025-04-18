@@ -13,6 +13,7 @@ fn main() {
     let storage_salt = env::var("STORAGE_SALT").unwrap_or_default();
     let supabase_public_url = env::var("SUPABASE_PUBLIC_URL").unwrap_or_default();
     let supabase_public_anon_key = env::var("SUPABASE_PUBLIC_ANON_KEY").unwrap_or_default();
+    let cargo_updater_public_key = env::var("CARGO_PACKAGER_SIGN_PUBLIC_KEY").unwrap_or_default();
 
     println!("cargo:rustc-env=ANTHROPIC_API_KEY={}", api_key);
     println!("cargo:rustc-env=STORAGE_SALT={}", storage_salt);
@@ -23,5 +24,9 @@ fn main() {
     println!(
         "cargo:rustc-env=SUPABASE_PUBLIC_ANON_KEY={}",
         supabase_public_anon_key
+    );
+    println!(
+        "cargo:rustc-env=CARGO_PACKAGER_SIGN_PUBLIC_KEY={}",
+        cargo_updater_public_key
     );
 }

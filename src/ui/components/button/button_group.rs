@@ -4,10 +4,7 @@ use gpui::{
 };
 use std::{cell::Cell, rc::Rc};
 
-use crate::{
-    button::{Button, ButtonVariant, ButtonVariants},
-    Disableable, Sizable, Size,
-};
+use crate::ui::{Button, ButtonVariant, ButtonVariants, Disableable, Sizable, Size};
 
 /// A ButtonGroup element, to wrap multiple buttons in a group.
 #[derive(IntoElement)]

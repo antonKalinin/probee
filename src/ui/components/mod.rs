@@ -1,4 +1,4 @@
-// pub mod button;
+pub mod button;
 pub mod error;
 pub mod header;
 pub mod icon;
@@ -7,7 +7,7 @@ pub mod input;
 pub mod skeleton;
 pub mod spinner;
 
-// pub use button::*;
+pub use button::*;
 pub use error::*;
 pub use header::*;
 pub use icon::*;
