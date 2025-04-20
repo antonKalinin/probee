@@ -1,2 +1,5 @@
+pub mod components;
 pub mod general;
-pub mod tab;
+
+pub use components::tab::*;
+pub use general::GeneralSettingsView;

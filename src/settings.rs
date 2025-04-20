@@ -1,6 +1,4 @@
 use gpui::{div, prelude::*, App, AppContext, Entity, Window};
-use settings::general::GeneralSettingsView;
-use tab::*;
 
 use crate::state::settings::*;
 // use crate::services::{Api, Auth, Storage};
@@ -59,7 +57,7 @@ impl Render for SettingsRoot {
             .justify_center()
             .text_sm()
             .text_color(theme.muted_foreground)
-            .child("Settings");
+            .child("Probee");
 
         let tabs = div()
             .flex()
@@ -73,20 +71,11 @@ impl Render for SettingsRoot {
             .border_color(theme.border)
             .children([self.general_tab.clone(), self.profile_tab.clone()]);
 
-        // only one of the children should be visible per time
-        let content = div()
-            .flex()
-            .flex_row()
-            .w_full()
-            .h_full()
-            .p_2()
-            .items_center()
-            .justify_center()
-            .children([
-                div().child(self.general_view.clone()),
-                div().child(self.login_view.clone()),
-                div().child(self.profile_view.clone()),
-            ]);
+        let content = div().w_full().h_full().px_4().py_2().children([
+            div().child(self.general_view.clone()),
+            div().child(self.login_view.clone()),
+            div().child(self.profile_view.clone()),
+        ]);
 
         let error = div().child(self.error_view.clone());
 

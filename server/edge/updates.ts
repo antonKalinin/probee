@@ -48,7 +48,7 @@ Deno.serve(async (req: Request) => {
 
   return new Response(
     JSON.stringify({
-      version: update.verion,
+      version: update.version,
       pub_date: update.created_at,
       url: `${SUPABASE_URL}/storage/v1/object/public/${update.os}/${update.arch}/${update.version}/Probee.tar.gz`,
       signature: "Content of the relevant .sig file",

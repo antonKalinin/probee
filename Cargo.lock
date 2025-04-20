@@ -3930,7 +3930,7 @@ dependencies = [
 
 [[package]]
 name = "probee"
-version = "0.0.2"
+version = "0.0.1"
 dependencies = [
  "accessibility",
  "accessibility-sys",
@@ -3943,6 +3943,7 @@ dependencies = [
  "cargo-packager-updater",
  "cocoa 0.26.0",
  "core-foundation 0.9.4",
+ "core-graphics 0.24.0",
  "dirs 6.0.0",
  "dotenv",
  "futures",

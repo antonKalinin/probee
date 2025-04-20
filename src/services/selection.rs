@@ -1,46 +1,15 @@
+use std::thread::sleep;
+use std::time::Duration;
+
 use accessibility::{AXAttribute, AXUIElement};
 use accessibility_sys::{kAXFocusedUIElementAttribute, kAXSelectedTextAttribute};
 use anyhow::{bail, Result};
+use arboard::Clipboard;
 use core_foundation::string::CFString;
+use core_graphics::event::{CGEvent, CGEventFlags, CGEventTapLocation, CGKeyCode};
+use core_graphics::event_source::{CGEventSource, CGEventSourceStateID};
 
 use crate::errors::InputError;
-
-const APPLE_SCRIPT: &str = r#"
-use AppleScript version "2.4"
-use scripting additions
-use framework "Foundation"
-use framework "AppKit"
-
-set savedAlertVolume to alert volume of (get volume settings)
-
--- Back up clipboard contents:
-set savedClipboard to the clipboard
-
-set thePasteboard to current application's NSPasteboard's generalPasteboard()
-set theCount to thePasteboard's changeCount()
-
-tell application "System Events"
-    set volume alert volume 0
-end tell
-
--- Copy selected text to clipboard:
-tell application "System Events" to keystroke "c" using {command down}
-delay 0.1 -- Without this, the clipboard may have stale data.
-
-tell application "System Events"
-    set volume alert volume savedAlertVolume
-end tell
-
-if thePasteboard's changeCount() is theCount then
-    return ""
-end if
-
-set theSelectedText to the clipboard
-
-set the clipboard to savedClipboard
-
-theSelectedText
-"#;
 
 pub fn get_text() -> Result<String> {
     return match get_selected_text_by_ax() {
@@ -83,37 +52,45 @@ fn get_selected_text_by_ax() -> Result<String> {
 }
 
 /**
- * Get the selected text using the clipboard and AppleScript
+ * Get the selected text using the clipboard and simulating Cmd+C
  */
 fn get_selected_text_fallback() -> Result<String> {
-    let output = std::process::Command::new("osascript")
-        .arg("-e")
-        .arg(APPLE_SCRIPT)
-        .output();
+    let mut clipboard = Clipboard::new()?;
 
-    if let Err(err) = output {
-        bail!(InputError::AppleScriptFailed(err.to_string()));
-    }
+    // Save the original clipboard contents (if any)
+    // let original_clipboard_text = clipboard.get_text().ok();
 
-    let output = output.unwrap();
+    let keycode: CGKeyCode = 8; // C key
+    let event_source = CGEventSource::new(CGEventSourceStateID::CombinedSessionState)
+        .expect("Could not create CGEventSource.");
 
-    if output.status.success() {
-        let content = String::from_utf8(output.stdout)?;
-        let content = content.trim();
+    // simulate Cmd+C
+    let key_down = CGEvent::new_keyboard_event(event_source.clone(), keycode, true)
+        .expect("Could not create CGEvent for Cmd+C key press.");
+    key_down.set_flags(CGEventFlags::CGEventFlagCommand);
+    key_down.post(CGEventTapLocation::HID);
 
-        if content.is_empty() {
-            bail!(InputError::TextSelectionMissing);
-        }
+    sleep(Duration::from_millis(50));
 
-        Ok(content.to_owned())
+    let key_up = CGEvent::new_keyboard_event(event_source.clone(), keycode, false)
+        .expect("Could not create CGEvent for Cmd+C key press.");
+    key_up.set_flags(CGEventFlags::CGEventFlagCommand);
+    key_up.post(CGEventTapLocation::HID);
+
+    // Wait for clipboard update
+    sleep(Duration::from_millis(100));
+
+    // Read copied text
+    let selected_text = clipboard.get_text()?.trim().to_string();
+
+    // // Restore clipboard content
+    // if let Some(original_text) = original_clipboard_text {
+    //     clipboard.set_text(original_text)?;
+    // }
+
+    if selected_text.is_empty() {
+        bail!(InputError::TextSelectionMissing)
     } else {
-        let err: String = output
-            .stderr
-            .into_iter()
-            .map(|c| c as char)
-            .collect::<String>()
-            .into();
-
-        bail!(InputError::UnknownError(err))
+        Ok(selected_text)
     }
 }
