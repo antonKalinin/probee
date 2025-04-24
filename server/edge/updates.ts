@@ -50,8 +50,8 @@ Deno.serve(async (req: Request) => {
     JSON.stringify({
       version: update.version,
       pub_date: update.created_at,
-      url: `${SUPABASE_URL}/storage/v1/object/public/${update.os}/${update.arch}/${update.version}/Probee.tar.gz`,
-      signature: "Content of the relevant .sig file",
+      url: `${SUPABASE_URL}/storage/v1/object/public/${update.os}/${update.arch}/${update.version}/Probee.app.tar.gz`,
+      signature: update.signature,
       format: "app",
       notes: "These are release notes",
     }),
