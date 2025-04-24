@@ -7,7 +7,7 @@ use global_hotkey::{
 };
 
 use crate::errors::*;
-use crate::services::{selection, Clipboard};
+use crate::services::selection;
 use crate::state::app::*;
 
 #[allow(dead_code)]
@@ -81,33 +81,19 @@ impl HotkeyManager {
     }
 
     fn set_assistant_input(cx: &mut App) {
-        // first try to get screen text by selection
         let input_text = selection::get_text();
 
-        if let Some(input_text) = input_text.ok() {
-            set_input(cx, input_text);
-            return;
+        match input_text {
+            Ok(text) => {
+                if text.is_empty() {
+                    set_error(cx, Some(InputError::EmptyTextInputError.into()));
+                } else {
+                    set_input(cx, text);
+                }
+            }
+            Err(err) => {
+                set_error(cx, Some(err));
+            }
         }
-
-        // selection failed, try to get text from clipboard
-        let clipboard = cx.global_mut::<Clipboard>();
-        let input_text = clipboard.get_text();
-
-        if input_text.is_err() {
-            let err = input_text.unwrap_err();
-            set_error(cx, Some(err));
-            return;
-        }
-
-        let input_text = input_text.unwrap();
-
-        if input_text.is_empty() {
-            let err = InputError::EmptyTextInputError.into();
-            set_error(cx, Some(err));
-
-            return;
-        }
-
-        set_input(cx, input_text);
     }
 }

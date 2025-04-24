@@ -59,9 +59,19 @@ impl GeneralSettingsView {
             match updater.check() {
                 Ok(update) => {
                     if let Some(update) = update {
-                        update
-                            .download_and_install()
-                            .expect("Failed to download and install update");
+                        let on_chunk = |chunk_size, _chunk| {
+                            println!("Downloaded {} bytes", chunk_size);
+                        };
+
+                        let on_download_finished = || println!("Download finished");
+
+                        let update_result =
+                            update.download_and_install_extended(on_chunk, on_download_finished);
+
+                        match update_result {
+                            Ok(_) => println!("Update installed successfully"),
+                            Err(err) => println!("Failed to install update: {}", err),
+                        }
                     } else {
                         println!("No update available")
                     }

@@ -1,3 +1,4 @@
+use std::process::Command;
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -55,11 +56,23 @@ fn get_selected_text_by_ax() -> Result<String> {
  * Get the selected text using the clipboard and simulating Cmd+C
  */
 fn get_selected_text_fallback() -> Result<String> {
+    simulate_cmd_c_with_applescript()?;
+
+    // Wait for clipboard update
+    sleep(Duration::from_millis(100));
+
+    // Read copied text
     let mut clipboard = Clipboard::new()?;
+    let selected_text = clipboard.get_text()?.trim().to_string();
 
-    // Save the original clipboard contents (if any)
-    // let original_clipboard_text = clipboard.get_text().ok();
+    if selected_text.is_empty() {
+        bail!(InputError::TextSelectionMissing)
+    } else {
+        Ok(selected_text)
+    }
+}
 
+fn _simulate_cmd_c_with_cgevent() {
     let keycode: CGKeyCode = 8; // C key
     let event_source = CGEventSource::new(CGEventSourceStateID::CombinedSessionState)
         .expect("Could not create CGEventSource.");
@@ -76,21 +89,27 @@ fn get_selected_text_fallback() -> Result<String> {
         .expect("Could not create CGEvent for Cmd+C key press.");
     key_up.set_flags(CGEventFlags::CGEventFlagCommand);
     key_up.post(CGEventTapLocation::HID);
+}
 
-    // Wait for clipboard update
-    sleep(Duration::from_millis(100));
+fn simulate_cmd_c_with_applescript() -> Result<()> {
+    const APPLE_SCRIPT: &str =
+        r#"tell application "System Events" to keystroke "c" using command down"#;
+    let output = Command::new("osascript")
+        .arg("-e")
+        .arg(APPLE_SCRIPT)
+        .output();
 
-    // Read copied text
-    let selected_text = clipboard.get_text()?.trim().to_string();
-
-    // // Restore clipboard content
-    // if let Some(original_text) = original_clipboard_text {
-    //     clipboard.set_text(original_text)?;
-    // }
-
-    if selected_text.is_empty() {
-        bail!(InputError::TextSelectionMissing)
-    } else {
-        Ok(selected_text)
+    match output {
+        Ok(output) => {
+            println!("Output status: {:?}", output.status);
+            if !output.status.success() {
+                bail!(InputError::AccessibilityPermissionsMissing);
+            }
+        }
+        Err(_) => {
+            bail!(InputError::AccessibilityPermissionsMissing);
+        }
     }
+
+    Ok(())
 }
