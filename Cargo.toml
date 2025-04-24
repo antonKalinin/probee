@@ -2,7 +2,7 @@
 name = "probee"
 authors = ["Anton Kalinin <hurricanebox@gmail.com>"]
 homepage = "https://probee.ai/"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 description = "Probee is a shortcut to your own collection of AI prompts."
 
@@ -19,6 +19,7 @@ minimum_system_version = "11.0"
 frameworks = []
 entitlements = "macos/entitlements.plist"
 infoPlistPath = "macos/Info.plist"
+signingIdentity = "Developer ID Application: Anton Kalinin (4B82KM45QA)"
 
 [package.metadata.packager.dmg]
 appFolderPosition = { x = 432, y = 180 }
