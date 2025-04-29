@@ -1,7 +1,8 @@
+use std::panic;
+
 use dotenv::dotenv;
 use events::AppEvent;
 use gpui::{App, Application};
-use std::panic;
 
 mod app;
 mod assets;
@@ -50,17 +51,27 @@ async fn main() {
         let app_entity = app_window.unwrap().entity(cx).unwrap();
 
         let _ = cx
-            .subscribe(&app_entity, |_app_root, event, cx| match event {
+            .subscribe(&app_entity, move |_app_root, event, cx| match event {
                 AppEvent::OpenSettings => {
+                    let windows = cx.windows();
+
+                    if windows.len() == 2 {
+                        let handle = windows.get(1).unwrap();
+                        // TODO: Error prone, probably better just do nothing
+                        let _ = handle.update(cx, |_view, window, _cx| {
+                            window.remove_window();
+                        });
+                    }
+
                     let settings_window_options = utils::settings_window_options(cx);
                     let _ = cx.open_window(settings_window_options, SettingsRoot::build);
-
-                    cx.activate(false);
+                    cx.activate(true);
                 }
                 _ => {}
             })
             .detach();
 
-        let _ = platform::create_status_bar_item();
+        // TODO: Log status menu initialization failure
+        let _ = platform::init_status_menu();
     });
 }

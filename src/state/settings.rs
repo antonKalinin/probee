@@ -7,7 +7,10 @@ use crate::services::User;
 #[derive(Debug, Clone, PartialEq)]
 pub enum SettingsTabType {
     General,
+    Assistant,
+    Shortcuts,
     Profile,
+    About,
 }
 
 #[derive(Debug)]

@@ -28,6 +28,7 @@ pub struct AppRoot {
     error_view: Entity<ErrorView>,
 
     visible: bool,
+    settings_opened: bool,
     focus_handle: FocusHandle,
 }
 
@@ -178,6 +179,7 @@ impl AppRoot {
                 error_view,
 
                 visible: state.read(cx).visible,
+                settings_opened: false,
                 focus_handle,
             }
         });
@@ -248,14 +250,6 @@ impl AppRoot {
             set_active_assistant_id(cx, Some(assistant.id.clone()));
         }
     }
-
-    fn toggle_library_view(
-        &mut self,
-        _: &ToggleLibraryView,
-        _: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-    }
 }
 
 impl Render for AppRoot {
@@ -280,7 +274,6 @@ impl Render for AppRoot {
             .on_action(cx.listener(Self::open_settings))
             .on_action(cx.listener(Self::select_next_assistant))
             .on_action(cx.listener(Self::select_prev_assistant))
-            .on_action(cx.listener(Self::toggle_library_view))
             .track_focus(&self.focus_handle)
             .size_full()
             .flex()

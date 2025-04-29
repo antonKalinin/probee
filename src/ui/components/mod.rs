@@ -1,4 +1,5 @@
 pub mod button;
+pub mod checkbox;
 pub mod error;
 pub mod header;
 pub mod icon;
@@ -8,6 +9,7 @@ pub mod skeleton;
 pub mod spinner;
 
 pub use button::*;
+pub use checkbox::*;
 pub use error::*;
 pub use header::*;
 pub use icon::*;

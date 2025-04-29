@@ -6,13 +6,15 @@ use crate::state::settings::*;
 use crate::ui::*;
 
 pub struct SettingsRoot {
-    error_view: Entity<ErrorView>,
-    general_view: Entity<GeneralSettingsView>,
-    login_view: Entity<LoginView>,
-    profile_view: Entity<ProfileView>,
+    active_tab: SettingsTabType,
 
-    general_tab: Entity<SettingsTab>,
-    profile_tab: Entity<SettingsTab>,
+    // tabs content
+    about_view: Entity<AboutView>,
+    general_view: Entity<GeneralSettingsView>,
+    shortcuts_view: Entity<ShortcutsView>,
+
+    error_view: Entity<ErrorView>,
+    tabs: Vec<Entity<SettingsTab>>,
 }
 
 impl SettingsRoot {
@@ -22,22 +24,35 @@ impl SettingsRoot {
         let view = cx.new(move |cx| {
             let state = state_controller.state.clone();
 
-            let error_view = cx.new(|cx| ErrorView::new(cx, &state));
-            let login_view = cx.new(|cx| LoginView::new(cx, &state));
-            let profile_view = cx.new(|cx| ProfileView::new(cx, &state));
+            let about_view = cx.new(|cx| AboutView::new(cx, &state));
             let general_view = cx.new(|cx| GeneralSettingsView::new(cx, &state));
+            let shortcuts_view = cx.new(|cx| ShortcutsView::new(cx, &state));
+            let error_view = cx.new(|cx| ErrorView::new(cx, &state));
 
-            let general_tab = cx.new(|cx| SettingsTab::new(SettingsTabType::General, &state, cx));
-            let profile_tab = cx.new(|cx| SettingsTab::new(SettingsTabType::Profile, &state, cx));
+            let tabs = vec![
+                cx.new(|cx| SettingsTab::new(SettingsTabType::General, &state, cx)),
+                cx.new(|cx| SettingsTab::new(SettingsTabType::Assistant, &state, cx)),
+                cx.new(|cx| SettingsTab::new(SettingsTabType::Shortcuts, &state, cx)),
+                cx.new(|cx| SettingsTab::new(SettingsTabType::About, &state, cx)),
+            ];
+
+            cx.observe(&state, |this: &mut SettingsRoot, state, cx| {
+                let data = state.read(cx);
+
+                this.active_tab = data.active_tab.clone();
+                cx.notify();
+            })
+            .detach();
 
             SettingsRoot {
-                error_view,
-                general_view,
-                login_view,
-                profile_view,
+                active_tab: state.read(cx).active_tab.clone(),
 
-                general_tab,
-                profile_tab,
+                about_view,
+                general_view,
+                shortcuts_view,
+
+                tabs,
+                error_view,
             }
         });
 
@@ -69,13 +84,22 @@ impl Render for SettingsRoot {
             .justify_center()
             .border_b_1()
             .border_color(theme.border)
-            .children([self.general_tab.clone(), self.profile_tab.clone()]);
+            .children(self.tabs.iter().map(|tab| tab.clone()));
 
-        let content = div().w_full().h_full().px_4().py_2().children([
-            div().child(self.general_view.clone()),
-            div().child(self.login_view.clone()),
-            div().child(self.profile_view.clone()),
-        ]);
+        let content = div()
+            .w_full()
+            .h_full()
+            .px_4()
+            .py_2()
+            .when(self.active_tab == SettingsTabType::General, |this| {
+                this.child(self.general_view.clone())
+            })
+            .when(self.active_tab == SettingsTabType::Shortcuts, |this| {
+                this.child(self.shortcuts_view.clone())
+            })
+            .when(self.active_tab == SettingsTabType::About, |this| {
+                this.child(self.about_view.clone())
+            });
 
         let error = div().child(self.error_view.clone());
 

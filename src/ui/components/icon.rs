@@ -22,10 +22,12 @@ fn to_kebap(s: &str) -> String {
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum IconName {
+    Apple,
     ArrowBigUp,
     BookA,
     BookMarked,
     BookType,
+    BotMessageSquare,
     Check,
     ChevronDown,
     ChevronLeft,
@@ -50,6 +52,7 @@ pub enum IconName {
     Send,
     Settings,
     Sigma,
+    Signature,
     SpellCheck,
     Table,
     TableProperties,
