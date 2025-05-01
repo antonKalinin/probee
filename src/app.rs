@@ -7,7 +7,7 @@ use gpui::{
 use crate::assistant::*;
 use crate::errors::*;
 use crate::events::*;
-use crate::services::{Api, Auth, Storage};
+use crate::services::{Api, Auth, Storage, StorageKey};
 use crate::state::app::*;
 use crate::ui::*;
 use crate::utils;
@@ -93,7 +93,7 @@ impl AppRoot {
 
                         cx.spawn(async move |cx| {
                             let assistants = api.get_assistants(cx).await;
-                            let saved_assistant_id = storage.get("assistant_id".into());
+                            let saved_assistant_id = storage.get(StorageKey::AssistantId);
 
                             AppStateController::update_async(
                                 |this, cx| match assistants {
@@ -120,7 +120,7 @@ impl AppRoot {
                     }
                     AppEvent::AssistantChanged(id) => {
                         let storage = cx.global_mut::<Storage>();
-                        let _ = storage.set("assistant_id".into(), id.clone());
+                        let _ = storage.set(StorageKey::AssistantId, id.clone());
                         // TODO: As soon as assistant is changed, reset it in cx.global
                     }
                     AppEvent::InputChanged(input) => {
@@ -264,7 +264,6 @@ impl Render for AppRoot {
         let content = div()
             .on_children_prepainted(move |bounds, window, cx| {
                 let content_height: f32 = bounds.iter().map(|b| b.size.height.0).sum();
-                set_content_height(cx, content_height);
                 window.set_frame(utils::app_window_bounds(cx, content_height));
             })
             .child(content.children([assistant_view, library_view])) // only one view is visible per time

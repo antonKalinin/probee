@@ -1,5 +1,5 @@
 use gpui::{
-    point, px, App, Bounds, Pixels, Size, TitlebarOptions, WindowBackgroundAppearance,
+    point, px, App, Bounds, Pixels, Point, Size, TitlebarOptions, WindowBackgroundAppearance,
     WindowBounds, WindowKind, WindowOptions,
 };
 
@@ -10,7 +10,9 @@ pub static APP_MARGIN_TOP: f32 = 44.;
 pub static APP_MARGIN_RIGHT: f32 = 16.;
 
 pub static SETTINGS_WIDTH: f32 = 640.;
-pub static SETTINGS_HEIGHT: f32 = 480.;
+pub static SETTINGS_HEIGHT: f32 = 400.;
+pub static SETTINGS_MIN_HEIGHT: f32 = 296.;
+pub static SETTINGS_MAX_HEIGHT: f32 = 640.;
 
 pub fn app_window_options(cx: &mut App) -> WindowOptions {
     let displays = cx.displays();
@@ -45,9 +47,31 @@ pub fn app_window_options(cx: &mut App) -> WindowOptions {
     options
 }
 
+pub fn app_window_bounds(cx: &mut App, height: f32) -> Bounds<Pixels> {
+    let displays = cx.displays();
+    let display = displays.first().unwrap();
+
+    let height = height.max(APP_MIN_HEIGHT);
+    let height = height.min(APP_MAX_HEIGHT);
+
+    let size = Size {
+        width: px(APP_WIDTH),
+        height: px(height),
+    };
+
+    Bounds {
+        origin: display.bounds().top_right()
+            - point(
+                size.width + px(APP_MARGIN_RIGHT),
+                -(size.height + px(APP_MARGIN_TOP)),
+            ),
+        size,
+    }
+}
+
 pub fn settings_window_options(cx: &mut App) -> WindowOptions {
     let displays = cx.displays();
-    let display = displays.first().unwrap(); // TODO: Support multiple displays
+    let display = displays.first().unwrap();
 
     let size = Size {
         width: px(SETTINGS_WIDTH),
@@ -83,24 +107,17 @@ pub fn settings_window_options(cx: &mut App) -> WindowOptions {
     options
 }
 
-pub fn app_window_bounds(cx: &mut App, height: f32) -> Bounds<Pixels> {
-    let displays = cx.displays();
-    let display = displays.first().unwrap();
-
-    let height = height.max(APP_MIN_HEIGHT);
-    let height = height.min(APP_MAX_HEIGHT);
+pub fn settings_window_bounds(_cx: &mut App, origin: Point<Pixels>, height: f32) -> Bounds<Pixels> {
+    let height = height.max(SETTINGS_MIN_HEIGHT);
+    let height = height.min(SETTINGS_MAX_HEIGHT);
 
     let size = Size {
-        width: px(APP_WIDTH),
+        width: px(SETTINGS_WIDTH),
         height: px(height),
     };
 
     Bounds {
-        origin: display.bounds().top_right()
-            - point(
-                size.width + px(APP_MARGIN_RIGHT),
-                -(size.height + px(APP_MARGIN_TOP)),
-            ),
+        origin: point(origin.x, origin.y + px(height)),
         size,
     }
 }

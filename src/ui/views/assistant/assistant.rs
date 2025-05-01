@@ -1,7 +1,7 @@
 use gpui::*;
 
 use crate::events::*;
-use crate::services::{Api, Storage};
+use crate::services::{Api, Storage, StorageKey};
 use crate::state::app::*;
 use crate::ui::*;
 
@@ -44,7 +44,7 @@ impl AssistantView {
             });
 
             let assistants = api.get_assistants(cx).await;
-            let saved_assistant_id = storage.get("assistant_id".into());
+            let saved_assistant_id = storage.get(StorageKey::AssistantId);
 
             AppStateController::update_async(
                 |this, cx| match assistants {

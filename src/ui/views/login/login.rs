@@ -1,7 +1,7 @@
 use gpui::*;
 use std::time::Duration;
 
-use crate::services::{Auth, Storage};
+use crate::services::{Auth, Storage, StorageKey};
 use crate::state::settings::*;
 use crate::ui::*;
 
@@ -13,8 +13,6 @@ pub struct LoginView {
     email: Option<String>,
     email_input: Entity<LegacyTextInput>,
 }
-
-const EMAIL_STORAGE_KEY: &str = "recent_email";
 
 impl LoginView {
     pub fn new(cx: &mut Context<Self>, state: &Entity<SettingsState>) -> Self {
@@ -34,7 +32,7 @@ impl LoginView {
         .detach();
 
         let storage = cx.global::<Storage>();
-        let recent_email = storage.get(EMAIL_STORAGE_KEY.into());
+        let recent_email = storage.get(StorageKey::AuthEmail);
 
         let email_input =
             cx.new(|cx| LegacyTextInput::new(recent_email, Some("Enter your email".into()), cx));
@@ -92,7 +90,7 @@ impl Render for LoginView {
             let storage = cx.global::<Storage>().clone();
 
             // Save recently used email to storage to prefill the input on next login
-            let _ = storage.set(EMAIL_STORAGE_KEY.into(), email.clone());
+            let _ = storage.set(StorageKey::AuthEmail, email.clone());
 
             cx.spawn(async move |_this, cx| {
                 let login_result = auth.login_with_email(cx, email.as_str()).await;
@@ -188,7 +186,6 @@ impl Render for LoginView {
 
         div()
             .w(px(320.))
-            .line_height(theme.line_height)
             .text_color(theme.foreground)
             .text_size(theme.text_size)
             .line_height(theme.line_height)

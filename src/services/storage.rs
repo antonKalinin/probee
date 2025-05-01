@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt;
 use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::PathBuf;
@@ -29,7 +30,61 @@ pub struct Storage {
     cipher: Aes256Gcm,
 }
 
-// TODO: Refactor to store only known keys
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+pub enum StorageKey {
+    // auth
+    AuthEmail,
+    AuthUserId,
+    AuthAccessToken,
+    AuthAccessTokenExpiresAt,
+    AuthRefreshToken,
+
+    // assistant
+    AssistantId,
+    AssistantModel,
+    AssistantApiKey,
+    AssistantCustomPrompt,
+    AssistantCustomPromptTemperature,
+    AssistantCustomPromptMaxTokens,
+
+    // settings
+    SettingsTheme,
+    SettingsFontSize,
+    SettingsPosition,
+    SettingsStartOnLogin,
+
+    // shortcuts
+    ShortcutsToogleVisibility,
+    ShortcutsRunAssistant,
+    ShortcutsNextPrompt,
+    ShortcutsPrevPropmt,
+}
+
+impl StorageKey {
+    pub fn stringify(&self) -> String {
+        let str = self.to_string();
+
+        // snake_case notation
+        str.chars().fold(String::new(), |mut str, char| {
+            if char.is_uppercase() || char.is_numeric() {
+                if !str.is_empty() {
+                    str.push('_');
+                }
+                str.push(char.to_ascii_lowercase());
+            } else {
+                str.push(char);
+            }
+            str
+        })
+    }
+}
+
+impl fmt::Display for StorageKey {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Debug::fmt(self, f)
+    }
+}
+
 impl Storage {
     pub fn init(cx: &mut App) {
         let storage_salt = env!("STORAGE_SALT");
@@ -67,10 +122,10 @@ impl Storage {
         Ok(store)
     }
 
-    pub fn set(&self, key: String, value: String) -> Result<()> {
+    pub fn set(&self, key: StorageKey, value: String) -> Result<()> {
         {
             let mut data = self.data.lock().unwrap();
-            data.insert(key, value);
+            data.insert(key.stringify(), value);
         }
 
         self.flush()?;
@@ -78,15 +133,15 @@ impl Storage {
         Ok(())
     }
 
-    pub fn get(&self, key: &str) -> Option<String> {
+    pub fn get(&self, key: StorageKey) -> Option<String> {
         let data = self.data.lock().unwrap();
-        data.get(key).cloned()
+        data.get(&key.stringify()).cloned()
     }
 
-    pub fn delete(&self, key: &str) -> Result<()> {
+    pub fn delete(&self, key: StorageKey) -> Result<()> {
         {
             let mut data = self.data.lock().unwrap();
-            data.remove(key);
+            data.remove(&key.stringify());
         }
 
         self.flush()?;
@@ -173,12 +228,15 @@ mod tests {
         let store = Storage::new(path.clone(), salt)?;
 
         // Test set and get
-        store.set("key1".to_string(), "value1".to_string())?;
-        assert_eq!(store.get("key1"), Some("value1".to_string()));
+        store.set(StorageKey::AssistantApiKey, "api_key_value_123".to_string())?;
+        assert_eq!(
+            store.get(StorageKey::AssistantApiKey),
+            Some("api_key_value_123".to_string())
+        );
 
         // Test delete
-        store.delete("key1")?;
-        assert_eq!(store.get("key1"), None);
+        store.delete(StorageKey::AssistantApiKey)?;
+        assert_eq!(store.get(StorageKey::AssistantApiKey), None);
 
         Ok(())
     }
@@ -192,12 +250,15 @@ mod tests {
         // Create store and add data
         {
             let store = Storage::new(path.clone(), salt)?;
-            store.set("key1".to_string(), "value1".to_string())?;
+            store.set(StorageKey::SettingsFontSize, "small".to_string())?;
         }
 
         // Create new store instance and verify data
         let store2 = Storage::new(path.clone(), salt)?;
-        assert_eq!(store2.get("key1"), Some("value1".to_string()));
+        assert_eq!(
+            store2.get(StorageKey::SettingsFontSize),
+            Some("small".to_string())
+        );
 
         Ok(())
     }

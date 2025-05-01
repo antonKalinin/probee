@@ -16,7 +16,6 @@ pub struct AppState {
     pub active_assistant_id: Option<String>,
     pub active_view: AppView,
     pub assistants: Vec<AssistantConfig>,
-    pub content_height: f32,
     pub error: Option<Error>,
     pub input: Option<String>,
     pub loading: bool,
@@ -54,7 +53,6 @@ impl AppStateController {
             active_assistant_id: None,
             active_view: AppView::AssistantView,
             assistants: vec![],
-            content_height: 40.,
             error: None,
             input: None,
             loading: false,
@@ -108,12 +106,6 @@ impl AppStateController {
             state.error = None;
 
             cx.notify();
-        });
-    }
-
-    pub fn set_content_height(&self, cx: &mut App, height: f32) {
-        self.state.update(cx, |state, _cx| {
-            state.content_height = height;
         });
     }
 
@@ -209,10 +201,6 @@ pub fn set_error(cx: &mut App, error: Option<Error>) {
 
 pub fn set_error_async(cx: &mut AsyncApp, error: Option<Error>) {
     AppStateController::update_async(|this, cx| this.set_error(cx, error), cx);
-}
-
-pub fn set_content_height(cx: &mut App, height: f32) {
-    AppStateController::update(|this, cx| this.set_content_height(cx, height), cx);
 }
 
 pub fn set_visible(cx: &mut App, visible: bool) {

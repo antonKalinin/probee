@@ -54,8 +54,8 @@ impl Render for GeneralSettingsView {
 
         div()
             .w_full()
-            .h_full()
-            .pt_4()
+            .h(px(320.))
+            .py_8()
             .text_color(theme.foreground)
             .text_size(theme.text_size)
             .line_height(theme.line_height)

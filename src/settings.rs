@@ -1,9 +1,8 @@
 use gpui::{div, prelude::*, App, AppContext, Entity, Window};
 
 use crate::state::settings::*;
-// use crate::services::{Api, Auth, Storage};
-// use crate::services::{AssistantConfig, User};
 use crate::ui::*;
+use crate::utils;
 
 pub struct SettingsRoot {
     active_tab: SettingsTabType,
@@ -88,9 +87,16 @@ impl Render for SettingsRoot {
 
         let content = div()
             .w_full()
-            .h_full()
-            .px_4()
-            .py_2()
+            .on_children_prepainted(move |bounds, window, cx| {
+                let content_height: f32 = bounds.iter().map(|b| b.size.height.0).sum();
+                let next_height = 32. + 64. + content_height; // title + tabs + content
+                let origin = window.bounds().origin;
+
+                println!("Content height: {}", content_height);
+                println!("Next height: {}", next_height);
+
+                window.set_frame(utils::settings_window_bounds(cx, origin, next_height));
+            })
             .when(self.active_tab == SettingsTabType::General, |this| {
                 this.child(self.general_view.clone())
             })
@@ -111,6 +117,6 @@ impl Render for SettingsRoot {
             .child(title)
             .child(tabs)
             .child(content)
-            .child(error)
+            .child(error) // Error should be within content
     }
 }

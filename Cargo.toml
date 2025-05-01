@@ -13,6 +13,7 @@ identifier = "ai.probee"
 copyright = "Copyright (c) Anton Kalinin 2025. All rights reserved."
 category = "Productivity"
 icons = ["icons/*.png"]
+resources = ["assets/images/icon_white_32.png"]
 
 [package.metadata.packager.macos]
 minimum_system_version = "11.0"

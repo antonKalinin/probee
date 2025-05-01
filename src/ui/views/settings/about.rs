@@ -2,7 +2,7 @@ use cargo_packager_updater::{semver::Version, url::Url, Update};
 use gpui::*;
 
 use crate::state::settings::*;
-use crate::ui::{Button, ButtonVariants as _, Sizable as _, Theme};
+use crate::ui::{Button, ButtonVariants as _, Sizable as _, StyledExt, Theme};
 
 pub struct AboutView {
     visible: bool,
@@ -92,25 +92,14 @@ impl Render for AboutView {
             return div().into_any_element();
         }
 
-        let _space = || div().flex().flex_grow().flex_shrink_0();
-        let section = || div().w_full().flex().flex_col().items_start().pb_2();
+        let content_row = div()
+            .w_full()
+            .gap_6()
+            .flex()
+            .flex_row()
+            .items_start()
+            .justify_center();
 
-        let row = || div().w_full().flex().flex_row().mb_2().items_center();
-
-        let label = |text: &str| {
-            div()
-                .w(px(240.))
-                .text_align(TextAlign::Right)
-                .text_size(theme.subtext_size)
-                .mr_4()
-                .child(text.to_owned())
-        };
-        let gapped = || div().flex().flex_row().gap_2().items_center();
-
-        // Version section
-        let current_version = div()
-            .text_size(theme.subtext_size)
-            .child(env!("CARGO_PKG_VERSION"));
         let version_update = div().child(
             Button::new("check-updates-button")
                 .label("Check for Updates")
@@ -119,17 +108,48 @@ impl Render for AboutView {
                 .on_click(AboutView::check_updates),
         );
 
+        let image_source: ImageSource = SharedString::new("images/icon_black_512.png").into();
+        let logo = div().child(img(image_source).size_20());
+
+        let details = div()
+            .flex()
+            .flex_col()
+            .child(
+                div()
+                    .mb_2()
+                    .text_size(theme.text_size)
+                    .font_bold()
+                    .child("Probee"),
+            )
+            .child(
+                div()
+                    .mb_1()
+                    .text_size(theme.subtext_size)
+                    .child(format!("Version {}", env!("CARGO_PKG_VERSION"))),
+            )
+            .child(
+                div()
+                    .flex_col()
+                    .line_height(px(16.))
+                    .text_color(theme.muted_foreground)
+                    .text_size(theme.subtext_size)
+                    .child(div().child("© Anton Kalinin"))
+                    .child(div().child("2024-2025. All rights reserved.")), // TODO: Dynamic year
+            );
+
         div()
             .w_full()
             .h_full()
+            .py_8()
             .text_color(theme.foreground)
             .text_size(theme.text_size)
             .line_height(theme.line_height)
             .font_family(theme.font_family.clone())
-            .child(section().child(row().children(vec![
-                label("Version"),
-                gapped().child(current_version).child(version_update),
-            ])))
+            .child(content_row.children(vec![logo, details]))
+            // .child(section().child(row().children(vec![
+            //     label("Version"),
+            //     gapped().child(current_version).child(version_update),
+            // ])))
             .into_any_element()
     }
 }

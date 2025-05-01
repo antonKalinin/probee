@@ -13,12 +13,7 @@ use tiny_http::Server;
 use url::Url;
 
 use crate::errors::AuthError;
-use crate::services::Storage;
-
-const STORAGE_USER_ID_KEY: &str = "user_id";
-const STORAGE_ACCESS_TOKEN_KEY: &str = "access_token";
-const STORAGE_REFRESH_TOKEN_KEY: &str = "refresh_token";
-const STORAGE_ACCESS_TOKEN_EXPIRES_AT_KEY: &str = "access_token_expires_at";
+use crate::services::{Storage, StorageKey};
 
 /*
  * Auth service that uses Supabase Auth API as the backend.
@@ -76,21 +71,21 @@ impl Auth {
     }
 
     pub fn get_access_token_async(cx: &mut AsyncApp) -> Option<String> {
-        cx.read_global(|storage: &Storage, _cx| storage.get(STORAGE_ACCESS_TOKEN_KEY))
+        cx.read_global(|storage: &Storage, _cx| storage.get(StorageKey::AuthAccessToken))
             .unwrap_or(None)
     }
 
     fn get_refresh_token(cx: &mut AsyncApp) -> Option<String> {
-        cx.read_global(|storage: &Storage, _cx| storage.get(STORAGE_REFRESH_TOKEN_KEY))
+        cx.read_global(|storage: &Storage, _cx| storage.get(StorageKey::AuthRefreshToken))
             .unwrap_or(None)
     }
 
     fn reset_auth_data(cx: &mut AsyncApp) -> Result<()> {
         cx.read_global(|storage: &Storage, _cx| {
-            let _ = storage.delete(STORAGE_USER_ID_KEY);
-            let _ = storage.delete(STORAGE_ACCESS_TOKEN_KEY);
-            let _ = storage.delete(STORAGE_REFRESH_TOKEN_KEY);
-            let _ = storage.delete(STORAGE_ACCESS_TOKEN_EXPIRES_AT_KEY);
+            let _ = storage.delete(StorageKey::AuthUserId);
+            let _ = storage.delete(StorageKey::AuthAccessToken);
+            let _ = storage.delete(StorageKey::AuthRefreshToken);
+            let _ = storage.delete(StorageKey::AuthAccessTokenExpiresAt);
         })?;
 
         Ok(())
@@ -195,10 +190,10 @@ impl Auth {
         let _: Result<()> = cx.read_global(|storage: &Storage, _cx| {
             let expires_at = token.expires_at.to_string();
 
-            storage.set("user_id".into(), user_id)?;
-            storage.set("access_token".into(), token.access_token)?;
-            storage.set("refresh_token".into(), token.refresh_token)?;
-            storage.set("access_token_expires_at".into(), expires_at)?;
+            storage.set(StorageKey::AuthUserId, user_id)?;
+            storage.set(StorageKey::AuthAccessToken, token.access_token)?;
+            storage.set(StorageKey::AuthRefreshToken, token.refresh_token)?;
+            storage.set(StorageKey::AuthAccessTokenExpiresAt, expires_at)?;
 
             Ok(())
         })?;
@@ -321,10 +316,10 @@ impl Auth {
         let _: Result<()> = cx.read_global(|storage: &Storage, _cx| {
             let expires_at = token.expires_at.to_string();
 
-            storage.set("user_id".into(), user_id)?;
-            storage.set("access_token".into(), token.access_token)?;
-            storage.set("refresh_token".into(), token.refresh_token)?;
-            storage.set("access_token_expires_at".into(), expires_at)?;
+            storage.set(StorageKey::AuthUserId, user_id)?;
+            storage.set(StorageKey::AuthAccessToken, token.access_token)?;
+            storage.set(StorageKey::AuthRefreshToken, token.refresh_token)?;
+            storage.set(StorageKey::AuthAccessTokenExpiresAt, expires_at)?;
 
             Ok(())
         })?;
@@ -418,10 +413,10 @@ impl Auth {
         }
 
         let _: Result<()> = cx.read_global(|storage: &Storage, _cx| {
-            storage.delete(STORAGE_USER_ID_KEY)?;
-            storage.delete(STORAGE_ACCESS_TOKEN_KEY)?;
-            storage.delete(STORAGE_REFRESH_TOKEN_KEY)?;
-            storage.delete(STORAGE_ACCESS_TOKEN_EXPIRES_AT_KEY)?;
+            storage.delete(StorageKey::AuthUserId)?;
+            storage.delete(StorageKey::AuthAccessToken)?;
+            storage.delete(StorageKey::AuthRefreshToken)?;
+            storage.delete(StorageKey::AuthAccessTokenExpiresAt)?;
 
             Ok(())
         })?;

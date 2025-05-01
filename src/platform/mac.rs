@@ -2,7 +2,8 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use cocoa::appkit::{
-    NSImage, NSImageView, NSMenu, NSMenuItem, NSSquareStatusItemLength, NSStatusBar, NSStatusItem,
+    NSEventModifierFlags, NSImage, NSImageView, NSMenu, NSMenuItem, NSSquareStatusItemLength,
+    NSStatusBar, NSStatusItem,
 };
 use cocoa::base::{id, nil, selector};
 use cocoa::foundation::{NSAutoreleasePool, NSString};
@@ -21,9 +22,11 @@ pub fn register_selector() -> *const Class {
         let superclass = class!(NSObject);
         let mut decl = ClassDecl::new("MenuHandler", superclass).unwrap();
 
+        decl.add_method(sel!(openApp:), open_app as extern "C" fn(&Object, Sel, id));
+
         decl.add_method(
-            sel!(activate:),
-            activate_application as extern "C" fn(&Object, Sel, id),
+            sel!(checkUpdates:),
+            check_updates as extern "C" fn(&Object, Sel, id),
         );
 
         decl.add_method(
@@ -43,11 +46,22 @@ pub fn create_status_item(handler: id) -> Result<()> {
     unsafe {
         HANDLER = Some(handler); // Store handler reference
 
-        let icon_path =
-            std::fs::canonicalize(PathBuf::from("./assets/images/icon_white_32x32.png"))?;
-        let icon_path_str = icon_path.to_str().unwrap();
-        let ns_icon_path = NSString::alloc(nil).init_str(icon_path_str);
-        let image: id = NSImage::alloc(nil).initByReferencingFile_(ns_icon_path);
+        // Use NSBundle to get path to resource in .app bundle
+        let main_bundle: id = msg_send![class!(NSBundle), mainBundle];
+        let resource_name = NSString::alloc(nil).init_str("icon_white_32");
+        let resource_type = NSString::alloc(nil).init_str("png");
+
+        let mut icon_path: id =
+            msg_send![main_bundle, pathForResource:resource_name ofType:resource_type];
+
+        if icon_path == nil {
+            let icon_path_buf =
+                std::fs::canonicalize(PathBuf::from("./assets/images/icon_white_32.png"))?;
+
+            icon_path = NSString::alloc(nil).init_str(icon_path_buf.to_str().unwrap());
+        }
+
+        let image: id = NSImage::alloc(nil).initByReferencingFile_(icon_path);
         let _: () = msg_send![image, setTemplate: true];
 
         let status_item =
@@ -57,8 +71,8 @@ pub fn create_status_item(handler: id) -> Result<()> {
 
         let menu = NSMenu::new(nil).autorelease();
 
-        let activate_title = NSString::alloc(nil).init_str("Show Probee");
-        let activate_action = selector("activate:");
+        let activate_title = NSString::alloc(nil).init_str("Open Probee");
+        let activate_action = selector("openApp:");
         let activate_item = NSMenuItem::alloc(nil)
             .initWithTitle_action_keyEquivalent_(
                 activate_title,
@@ -67,7 +81,23 @@ pub fn create_status_item(handler: id) -> Result<()> {
             )
             .autorelease();
         activate_item.setTarget_(handler);
+        activate_item.setKeyEquivalentModifierMask_(NSEventModifierFlags::NSAlternateKeyMask);
         menu.addItem_(activate_item);
+
+        let separator = NSMenuItem::separatorItem(nil);
+        menu.addItem_(separator);
+
+        let check_updates_title = NSString::alloc(nil).init_str("Check for Updates");
+        let check_updates_action = selector("checkUpdates:");
+        let check_updates_item = NSMenuItem::alloc(nil)
+            .initWithTitle_action_keyEquivalent_(
+                check_updates_title,
+                check_updates_action,
+                NSString::alloc(nil).init_str(""),
+            )
+            .autorelease();
+        check_updates_item.setTarget_(handler);
+        menu.addItem_(check_updates_item);
 
         let settings_title = NSString::alloc(nil).init_str("Settings...");
         let settings_action = selector("openSettings:");
@@ -75,7 +105,7 @@ pub fn create_status_item(handler: id) -> Result<()> {
             .initWithTitle_action_keyEquivalent_(
                 settings_title,
                 settings_action,
-                NSString::alloc(nil).init_str(""),
+                NSString::alloc(nil).init_str(","),
             )
             .autorelease();
         settings_item.setTarget_(handler);
@@ -114,8 +144,12 @@ pub fn init_status_menu() -> Result<()> {
     }
 }
 
-extern "C" fn activate_application(_this: &Object, _cmd: Sel, _notification: id) {
-    println!("Application activated");
+extern "C" fn open_app(_this: &Object, _cmd: Sel, _notification: id) {
+    println!("Open app");
+}
+
+extern "C" fn check_updates(_this: &Object, _cmd: Sel, _notification: id) {
+    println!("Check updates");
 }
 
 extern "C" fn open_settings(_this: &Object, _cmd: Sel, _notification: id) {
