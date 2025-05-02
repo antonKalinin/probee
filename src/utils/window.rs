@@ -11,7 +11,7 @@ pub static APP_MARGIN_RIGHT: f32 = 16.;
 
 pub static SETTINGS_WIDTH: f32 = 640.;
 pub static SETTINGS_HEIGHT: f32 = 400.;
-pub static SETTINGS_MIN_HEIGHT: f32 = 296.;
+pub static SETTINGS_MIN_HEIGHT: f32 = 280.;
 pub static SETTINGS_MAX_HEIGHT: f32 = 640.;
 
 pub fn app_window_options(cx: &mut App) -> WindowOptions {

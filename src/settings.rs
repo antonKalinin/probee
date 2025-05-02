@@ -92,9 +92,6 @@ impl Render for SettingsRoot {
                 let next_height = 32. + 64. + content_height; // title + tabs + content
                 let origin = window.bounds().origin;
 
-                println!("Content height: {}", content_height);
-                println!("Next height: {}", next_height);
-
                 window.set_frame(utils::settings_window_bounds(cx, origin, next_height));
             })
             .when(self.active_tab == SettingsTabType::General, |this| {

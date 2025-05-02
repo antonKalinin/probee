@@ -71,6 +71,21 @@ pub fn create_status_item(handler: id) -> Result<()> {
 
         let menu = NSMenu::new(nil).autorelease();
 
+        let settings_title = NSString::alloc(nil).init_str("Settings...");
+        let settings_action = selector("openSettings:");
+        let settings_item = NSMenuItem::alloc(nil)
+            .initWithTitle_action_keyEquivalent_(
+                settings_title,
+                settings_action,
+                NSString::alloc(nil).init_str(""),
+            )
+            .autorelease();
+        settings_item.setTarget_(handler);
+        menu.addItem_(settings_item);
+
+        let separator = NSMenuItem::separatorItem(nil);
+        menu.addItem_(separator);
+
         let activate_title = NSString::alloc(nil).init_str("Open Probee");
         let activate_action = selector("openApp:");
         let activate_item = NSMenuItem::alloc(nil)
@@ -84,9 +99,6 @@ pub fn create_status_item(handler: id) -> Result<()> {
         activate_item.setKeyEquivalentModifierMask_(NSEventModifierFlags::NSAlternateKeyMask);
         menu.addItem_(activate_item);
 
-        let separator = NSMenuItem::separatorItem(nil);
-        menu.addItem_(separator);
-
         let check_updates_title = NSString::alloc(nil).init_str("Check for Updates");
         let check_updates_action = selector("checkUpdates:");
         let check_updates_item = NSMenuItem::alloc(nil)
@@ -98,18 +110,6 @@ pub fn create_status_item(handler: id) -> Result<()> {
             .autorelease();
         check_updates_item.setTarget_(handler);
         menu.addItem_(check_updates_item);
-
-        let settings_title = NSString::alloc(nil).init_str("Settings...");
-        let settings_action = selector("openSettings:");
-        let settings_item = NSMenuItem::alloc(nil)
-            .initWithTitle_action_keyEquivalent_(
-                settings_title,
-                settings_action,
-                NSString::alloc(nil).init_str(","),
-            )
-            .autorelease();
-        settings_item.setTarget_(handler);
-        menu.addItem_(settings_item);
 
         let separator = NSMenuItem::separatorItem(nil);
         menu.addItem_(separator);

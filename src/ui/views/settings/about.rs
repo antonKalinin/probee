@@ -1,12 +1,17 @@
+use std::time::{Duration, Instant};
+
 use cargo_packager_updater::{semver::Version, url::Url, Update};
-use gpui::*;
+use gpui::{
+    div, img, prelude::*, px, ClickEvent, Entity, ImageSource, SharedString, WeakEntity, Window,
+};
 
 use crate::state::settings::*;
-use crate::ui::{Button, ButtonVariants as _, Sizable as _, StyledExt, Theme};
+use crate::ui::{Button, Sizable as _, StyledExt, Theme};
 
 pub struct AboutView {
     visible: bool,
     update: Option<Update>,
+    update_checked_at: Option<Instant>,
 }
 
 impl AboutView {
@@ -24,11 +29,22 @@ impl AboutView {
         AboutView {
             visible,
             update: None,
+            update_checked_at: None,
         }
     }
 
-    fn check_updates(_event: &ClickEvent, _window: &mut Window, cx: &mut App) {
-        cx.spawn(async move |_cx| {
+    pub fn can_check_for_update(&mut self) -> bool {
+        let now = Instant::now();
+        let hour = Duration::from_secs(3600);
+
+        match self.update_checked_at {
+            Some(last_checked) => now.duration_since(last_checked) >= hour,
+            None => true,
+        }
+    }
+
+    fn check_updates(&self, _event: &ClickEvent, _window: &mut Window, cx: &mut Context<Self>) {
+        cx.spawn(async move |weak_view: WeakEntity<Self>, cx| {
             let pubkey = env!("CARGO_PACKAGER_SIGN_PUBLIC_KEY");
             let updates_url = format!(
                 "{}/functions/v1/updates/{}",
@@ -56,31 +72,35 @@ impl AboutView {
             let updater = updater_builder.build().unwrap();
 
             match updater.check() {
-                Ok(update) => {
-                    if let Some(update) = update {
-                        let on_chunk = |chunk_size, _chunk| {
-                            println!("Downloaded {} bytes", chunk_size);
-                        };
-
-                        let on_download_finished = || println!("Download finished");
-
-                        let update_result =
-                            update.download_and_install_extended(on_chunk, on_download_finished);
-
-                        match update_result {
-                            Ok(_) => println!("Update installed successfully"),
-                            Err(err) => println!("Failed to install update: {}", err),
-                        }
-                    } else {
-                        println!("No update available")
-                    }
+                Ok(app_update) => {
+                    let _ = weak_view.update(cx, |view, cx| {
+                        view.update = app_update;
+                        view.update_checked_at = Some(Instant::now());
+                        cx.notify();
+                    });
                 }
                 Err(err) => {
+                    // TODO: Handle error
                     println!("Failed to check for update: {}", err);
                 }
             }
         })
         .detach();
+    }
+
+    fn install_update(&self, _event: &ClickEvent, _window: &mut Window, cx: &mut Context<Self>) {
+        let update = self.update.clone();
+
+        if update.is_none() {
+            return;
+        }
+
+        let update_result = update.unwrap().download_and_install();
+
+        match update_result {
+            Ok(_) => println!("Update installed successfully"),
+            Err(err) => println!("Failed to install update: {}", err),
+        }
     }
 }
 
@@ -94,18 +114,42 @@ impl Render for AboutView {
 
         let content_row = div()
             .w_full()
+            .py_8()
             .gap_6()
             .flex()
             .flex_row()
             .items_start()
             .justify_center();
 
-        let version_update = div().child(
+        let footer_row = div()
+            .w_full()
+            .gap_4()
+            .p_4()
+            .flex()
+            .flex_row()
+            .items_center()
+            .justify_center();
+
+        let check_update_button = div().child(
             Button::new("check-updates-button")
                 .label("Check for Updates")
                 .small()
-                .ghost()
-                .on_click(AboutView::check_updates),
+                .on_click(cx.listener({
+                    |this, event, window, cx: &mut Context<Self>| {
+                        this.check_updates(event, window, cx);
+                    }
+                })),
+        );
+
+        let install_update_button = div().child(
+            Button::new("install-update-button")
+                .label("Install Update")
+                .small()
+                .on_click(cx.listener({
+                    |this, event, window, cx: &mut Context<Self>| {
+                        this.install_update(event, window, cx);
+                    }
+                })),
         );
 
         let image_source: ImageSource = SharedString::new("images/icon_black_512.png").into();
@@ -140,16 +184,25 @@ impl Render for AboutView {
         div()
             .w_full()
             .h_full()
-            .py_8()
             .text_color(theme.foreground)
             .text_size(theme.text_size)
             .line_height(theme.line_height)
             .font_family(theme.font_family.clone())
             .child(content_row.children(vec![logo, details]))
-            // .child(section().child(row().children(vec![
-            //     label("Version"),
-            //     gapped().child(current_version).child(version_update),
-            // ])))
+            .child(
+                footer_row
+                    .when(self.can_check_for_update(), |this| {
+                        this.child(check_update_button)
+                    })
+                    .when(!self.can_check_for_update(), |this| {
+                        this.text_size(theme.subtext_size)
+                            .text_color(theme.muted_foreground)
+                            .child("You have the latest version")
+                    })
+                    .when(self.update.is_some(), |this| {
+                        this.child(install_update_button)
+                    }),
+            )
             .into_any_element()
     }
 }
