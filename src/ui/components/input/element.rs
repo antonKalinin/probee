@@ -5,6 +5,8 @@ use gpui::{
 };
 use smallvec::SmallVec;
 
+use crate::ui::ActiveTheme;
+
 use super::TextInput;
 
 const RIGHT_MARGIN: Pixels = px(5.);
@@ -423,7 +425,7 @@ impl Element for TextElement {
             vec![run]
         };
 
-        let font_size = style.font_size.to_pixels(window.rem_size());
+        let font_size = px(13.0);
         let wrap_width = if multi_line {
             Some(bounds.size.width - RIGHT_MARGIN)
         } else {

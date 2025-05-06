@@ -1,4 +1,4 @@
-use gpui::{div, prelude::*, App, AppContext, Entity, Window};
+use gpui::{div, prelude::*, px, App, AppContext, Entity, Window};
 
 use crate::state::settings::*;
 use crate::ui::*;
@@ -9,6 +9,7 @@ pub struct SettingsRoot {
 
     // tabs content
     about_view: Entity<AboutView>,
+    assistant_view: Entity<AssistantSettingsView>,
     general_view: Entity<GeneralSettingsView>,
     shortcuts_view: Entity<ShortcutsView>,
 
@@ -17,15 +18,16 @@ pub struct SettingsRoot {
 }
 
 impl SettingsRoot {
-    pub fn build(_window: &mut Window, cx: &mut App) -> Entity<Self> {
+    pub fn build(window: &mut Window, cx: &mut App) -> Entity<Self> {
         let state_controller = cx.global::<SettingsStateController>().clone();
 
         let view = cx.new(move |cx| {
             let state = state_controller.state.clone();
 
             let about_view = cx.new(|cx| AboutView::new(cx, &state));
-            let general_view = cx.new(|cx| GeneralSettingsView::new(cx, &state));
-            let shortcuts_view = cx.new(|cx| ShortcutsView::new(cx, &state));
+            let general_view = cx.new(|cx| GeneralSettingsView::new(&state, cx));
+            let assistant_view = cx.new(|cx| AssistantSettingsView::new(&state, window, cx));
+            let shortcuts_view = cx.new(|cx| ShortcutsView::new(&state, cx));
             let error_view = cx.new(|cx| ErrorView::new(cx, &state));
 
             let tabs = vec![
@@ -47,6 +49,7 @@ impl SettingsRoot {
                 active_tab: state.read(cx).active_tab.clone(),
 
                 about_view,
+                assistant_view,
                 general_view,
                 shortcuts_view,
 
@@ -92,10 +95,16 @@ impl Render for SettingsRoot {
                 let next_height = 32. + 64. + content_height; // title + tabs + content
                 let origin = window.bounds().origin;
 
-                window.set_frame(utils::settings_window_bounds(cx, origin, next_height));
+                window.set_frame(
+                    utils::settings_window_bounds(cx, origin, next_height),
+                    false,
+                );
             })
             .when(self.active_tab == SettingsTabType::General, |this| {
                 this.child(self.general_view.clone())
+            })
+            .when(self.active_tab == SettingsTabType::Assistant, |this| {
+                this.child(self.assistant_view.clone())
             })
             .when(self.active_tab == SettingsTabType::Shortcuts, |this| {
                 this.child(self.shortcuts_view.clone())

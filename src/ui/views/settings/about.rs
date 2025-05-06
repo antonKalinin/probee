@@ -1,3 +1,5 @@
+use std::env;
+use std::process::{exit, Command};
 use std::time::{Duration, Instant};
 
 use cargo_packager_updater::{semver::Version, url::Url, Update};
@@ -88,7 +90,7 @@ impl AboutView {
         .detach();
     }
 
-    fn install_update(&self, _event: &ClickEvent, _window: &mut Window, cx: &mut Context<Self>) {
+    fn install_update(&self, _event: &ClickEvent, _window: &mut Window, _cx: &mut Context<Self>) {
         let update = self.update.clone();
 
         if update.is_none() {
@@ -98,8 +100,44 @@ impl AboutView {
         let update_result = update.unwrap().download_and_install();
 
         match update_result {
-            Ok(_) => println!("Update installed successfully"),
+            Ok(_) => self.restart_app(),
+            // TODO: Handle error
             Err(err) => println!("Failed to install update: {}", err),
+        }
+    }
+
+    fn restart_app(&self) {
+        // Get path to the current executable
+        let current_exe = match env::current_exe() {
+            Ok(path) => path,
+            Err(e) => {
+                eprintln!("Failed to get current executable path: {}", e);
+                return;
+            }
+        };
+
+        println!("Current executable path: {:?}", current_exe);
+
+        let app_path = current_exe
+            .ancestors()
+            .find(|p| p.extension().map_or(false, |ext| ext == "app"));
+
+        if app_path.is_none() {
+            // restart app manually
+            eprintln!("Failed to find app path");
+            return;
+        }
+
+        // macos only
+        let result = Command::new("open").arg(app_path.unwrap()).spawn();
+
+        match result {
+            Ok(_) => {
+                exit(0);
+            }
+            Err(e) => {
+                eprintln!("Failed to relaunch app: {}", e);
+            }
         }
     }
 }
@@ -124,7 +162,7 @@ impl Render for AboutView {
         let footer_row = div()
             .w_full()
             .gap_4()
-            .p_4()
+            .pb_6()
             .flex()
             .flex_row()
             .items_center()
@@ -143,7 +181,7 @@ impl Render for AboutView {
 
         let install_update_button = div().child(
             Button::new("install-update-button")
-                .label("Install Update")
+                .label("Install Update & Restart")
                 .small()
                 .on_click(cx.listener({
                     |this, event, window, cx: &mut Context<Self>| {

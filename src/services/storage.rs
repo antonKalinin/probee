@@ -41,6 +41,7 @@ pub enum StorageKey {
 
     // assistant
     AssistantId,
+    AssistantProvider,
     AssistantModel,
     AssistantApiKey,
     AssistantCustomPrompt,

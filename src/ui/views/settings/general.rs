@@ -10,7 +10,7 @@ pub struct GeneralSettingsView {
 }
 
 impl GeneralSettingsView {
-    pub fn new(cx: &mut Context<Self>, state: &Entity<SettingsState>) -> Self {
+    pub fn new(state: &Entity<SettingsState>, cx: &mut Context<Self>) -> Self {
         let data = state.read(cx);
         let visible = data.active_tab == SettingsTabType::General;
 
@@ -43,14 +43,21 @@ impl Render for GeneralSettingsView {
                 .w(px(232.))
                 .text_align(TextAlign::Right)
                 .text_size(theme.subtext_size)
+                .text_color(theme.muted_foreground)
+                .font_weight(FontWeight::MEDIUM)
                 .mr_6()
                 .child(text.to_owned())
         };
 
+        let handle_startup = cx.listener(|this, value: &bool, _window, cx| {
+            this.startup_on_login = value.clone();
+            cx.notify();
+        });
+
         let startup_launch_checkbox = Checkbox::new("startup-lauch")
             .label("Start Probee at login")
-            .checked(true)
-            .on_click(|checked, _window, cx| {});
+            .checked(self.startup_on_login)
+            .on_click(handle_startup);
 
         div()
             .w_full()
@@ -61,7 +68,6 @@ impl Render for GeneralSettingsView {
             .line_height(theme.line_height)
             .font_family(theme.font_family.clone())
             .child(row().children(vec![label("Startup"), div().child(startup_launch_checkbox)]))
-            .child(row().children(vec![label("Position")]))
             .child(row().children(vec![label("Theme")]))
             .into_any_element()
     }

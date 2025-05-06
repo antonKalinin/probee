@@ -10,7 +10,7 @@ pub struct ShortcutsView {
 }
 
 impl ShortcutsView {
-    pub fn new(cx: &mut Context<Self>, state: &Entity<SettingsState>) -> Self {
+    pub fn new(state: &Entity<SettingsState>, cx: &mut Context<Self>) -> Self {
         let data = state.read(cx);
         let visible = data.active_tab == SettingsTabType::About;
 

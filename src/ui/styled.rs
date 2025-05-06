@@ -7,6 +7,8 @@ use std::fmt::{self, Display, Formatter};
 // use super::components::scroll::{Scrollable, ScrollbarAxis};
 use crate::ui::ActiveTheme;
 
+use super::Colorize;
+
 /// Returns a `Div` as horizontal flex layout.
 #[inline]
 pub fn h_flex() -> Div {
@@ -65,6 +67,12 @@ pub trait StyledExt: Styled + Sized {
             .mb(margins.bottom.into())
             .ml(margins.left.into())
             .mr(margins.right.into())
+    }
+
+    /// Render a border with a width of 1px, color ring color
+    #[inline]
+    fn focused_border(self, cx: &App) -> Self {
+        self.border_color(cx.theme().border.darken(0.25))
     }
 
     /// Wraps the element in a ScrollView.

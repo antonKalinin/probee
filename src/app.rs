@@ -264,7 +264,7 @@ impl Render for AppRoot {
         let content = div()
             .on_children_prepainted(move |bounds, window, cx| {
                 let content_height: f32 = bounds.iter().map(|b| b.size.height.0).sum();
-                window.set_frame(utils::app_window_bounds(cx, content_height));
+                window.set_frame(utils::app_window_bounds(cx, content_height), true);
             })
             .child(content.children([assistant_view, library_view])) // only one view is visible per time
             .child(self.error_view.clone());

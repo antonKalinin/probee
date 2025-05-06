@@ -12,6 +12,8 @@ use gpui::{
 };
 use serde::{Deserialize, Serialize};
 
+use crate::ui::ActiveTheme;
+
 /// Scrollbar show mode.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash, Default)]
 pub enum ScrollbarShow {
@@ -357,7 +359,9 @@ impl Scrollbar {
     }
 
     fn style_for_hovered_bar(cx: &App) -> (Hsla, Hsla, Hsla, Pixels, Pixels) {
-        let (inset, radius) = if cx.theme().scrollbar_show.is_hover() {
+        let (inset, radius) = if true
+        /* cx.theme().scrollbar_show.is_hover() */
+        {
             (THUMB_INSET, THUMB_RADIUS - px(1.))
         } else {
             (THUMB_INSET - px(1.), THUMB_RADIUS)
@@ -513,8 +517,8 @@ impl Element for Scrollbar {
             };
 
             let state = self.state.clone();
-            let is_always_to_show = cx.theme().scrollbar_show.is_always();
-            let is_hover_to_show = cx.theme().scrollbar_show.is_hover();
+            let is_always_to_show = false; // cx.theme().scrollbar_show.is_always();
+            let is_hover_to_show = true; // cx.theme().scrollbar_show.is_hover();
             let is_hovered_on_bar = state.get().hovered_axis == Some(axis);
             let is_hovered_on_thumb = state.get().hovered_on_thumb == Some(axis);
 
@@ -629,12 +633,15 @@ impl Element for Scrollbar {
         _: &mut Self::RequestLayoutState,
         prepaint: &mut Self::PrepaintState,
         window: &mut Window,
-        cx: &mut App,
+        _cx: &mut App,
     ) {
         let hitbox_bounds = prepaint.hitbox.bounds;
-        let is_visible =
-            self.state.get().is_scrollbar_visible() || cx.theme().scrollbar_show.is_always();
-        let is_hover_to_show = cx.theme().scrollbar_show.is_hover();
+        // let is_visible =
+        //     self.state.get().is_scrollbar_visible() || cx.theme().scrollbar_show.is_always();
+        // let is_hover_to_show = cx.theme().scrollbar_show.is_hover();
+
+        let is_visible = false;
+        let is_hover_to_show = true;
 
         // Update last_scroll_time when offset is changed.
         if self.scroll_handle.offset() != self.state.get().last_scroll_offset {

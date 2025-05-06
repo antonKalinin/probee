@@ -20,7 +20,7 @@ use crate::assets::Assets;
 use crate::services::*;
 use crate::settings::SettingsRoot;
 use crate::state::*;
-use crate::ui::Theme;
+use crate::ui::{ActiveTheme, Components, Theme};
 use crate::utils::devtools;
 
 #[async_std::main]
@@ -42,6 +42,7 @@ async fn main() {
         HotkeyManager::init(cx);
         Storage::init(cx);
         Theme::init(cx);
+        Components::init(cx);
         // state
         AppStateController::init(cx);
         SettingsStateController::init(cx);
@@ -55,9 +56,9 @@ async fn main() {
                 AppEvent::OpenSettings => {
                     let windows = cx.windows();
 
+                    // FIXME: Error prone, probably better just do nothing
                     if windows.len() == 2 {
                         let handle = windows.get(1).unwrap();
-                        // TODO: Error prone, probably better just do nothing
                         let _ = handle.update(cx, |_view, window, _cx| {
                             window.remove_window();
                         });
@@ -72,6 +73,8 @@ async fn main() {
             .detach();
 
         // TODO: Log status menu initialization failure
-        let _ = platform::init_status_menu();
+        let _ = platform::init_status_menu(cx);
+
+        // app_entity.update(cx, |_, cx| cx.emit(AppEvent::OpenSettings));
     });
 }

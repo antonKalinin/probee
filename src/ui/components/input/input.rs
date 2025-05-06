@@ -25,12 +25,13 @@ use gpui::{
 
 use super::blink_cursor::BlinkCursor;
 use super::change::Change;
-use super::clear_button;
+use super::clear_button::clear_button;
 use super::element::TextElement;
+use super::history::History;
 
-use crate::scroll::{Scrollbar, ScrollbarAxis, ScrollbarState};
+use crate::ui::scroll::{Scrollbar, ScrollbarAxis, ScrollbarState};
 use crate::ui::{
-    ActiveTheme, Button, ButtonVariants, History, Size, Spinner, StyleSized, StyledExt,
+    ActiveTheme, Button, ButtonVariants, IconName, Sizable, Size, Spinner, StyleSized, StyledExt,
 };
 
 #[derive(Clone, PartialEq, Eq, Deserialize)]
@@ -1438,11 +1439,11 @@ impl TextInput {
         self.focus_handle.is_focused(window) && self.blink_cursor.read(cx).visible()
     }
 
-    fn on_focus(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        let input_entity = cx.entity();
-        Root::update(window, cx, |root, _, _| {
-            root.focused_input = Some(input_entity)
-        });
+    fn on_focus(&mut self, _window: &mut Window, cx: &mut Context<Self>) {
+        let _input_entity = cx.entity();
+        // Root::update(window, cx, |root, _, _| {
+        //     root.focused_input = Some(input_entity)
+        // });
 
         self.blink_cursor.update(cx, |cursor, cx| {
             cursor.start(cx);
@@ -1451,9 +1452,9 @@ impl TextInput {
     }
 
     fn on_blur(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        Root::update(window, cx, |root, _, _| {
-            root.focused_input = None;
-        });
+        // Root::update(window, cx, |root, _, _| {
+        //     root.focused_input = None;
+        // });
 
         self.unselect(window, cx);
         self.blink_cursor.update(cx, |cursor, cx| {
@@ -1736,11 +1737,9 @@ impl Focusable for TextInput {
 
 impl Render for TextInput {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        const LINE_HEIGHT: Rems = Rems(1.25);
+        const LINE_HEIGHT: Rems = Rems(1.);
         let focused = self.focus_handle.is_focused(window);
         let mut gap_x = match self.size {
-            Size::Small => px(4.),
-            Size::Large => px(8.),
             _ => px(4.),
         };
         if self.no_gap {
@@ -1815,8 +1814,8 @@ impl Render for TextInput {
                 })
                 .border_color(cx.theme().input)
                 .border_1()
-                .rounded(cx.theme().radius)
-                .when(cx.theme().shadow, |this| this.shadow_sm())
+                .rounded_md()
+                // .when(cx.theme().shadow, |this| this.shadow_sm())
                 .when(focused, |this| this.focused_border(cx))
             })
             .when(prefix.is_none(), |this| this.input_pl(self.size))
@@ -1834,7 +1833,7 @@ impl Render for TextInput {
                     .child(TextElement::new(cx.entity().clone())),
             )
             .when(self.loading, |this| {
-                this.child(Indicator::new().color(cx.theme().muted_foreground))
+                this.child(Spinner::new().color(cx.theme().muted_foreground))
             })
             .children(self.render_toggle_mask_button(window, cx))
             .when(

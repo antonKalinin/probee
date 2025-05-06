@@ -32,7 +32,6 @@ impl SettingsTab {
             SettingsTabType::General => Icon::new(IconName::Settings),
             SettingsTabType::Assistant => Icon::new(IconName::BotMessageSquare),
             SettingsTabType::Shortcuts => Icon::new(IconName::Command),
-            SettingsTabType::Profile => Icon::new(IconName::CircleUserRound),
             SettingsTabType::About => Icon::new(IconName::Signature),
         };
 
@@ -56,7 +55,6 @@ impl SettingsTab {
             SettingsTabType::General => "General",
             SettingsTabType::Assistant => "Assistant",
             SettingsTabType::Shortcuts => "Shortcuts",
-            SettingsTabType::Profile => "Profile",
             SettingsTabType::About => "About",
         };
 

@@ -4,6 +4,8 @@ use gpui::{
     Point, Position, ScrollHandle, ScrollWheelEvent, Style, Window,
 };
 
+use crate::ui::AxisExt;
+
 /// Make a scrollable mask element to cover the parent view with the mouse wheel event listening.
 ///
 /// When the mouse wheel is scrolled, will move the `scroll_handle` scrolling with the `axis` direction.

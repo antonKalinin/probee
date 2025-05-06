@@ -7,6 +7,7 @@ use cocoa::appkit::{
 };
 use cocoa::base::{id, nil, selector};
 use cocoa::foundation::{NSAutoreleasePool, NSString};
+use gpui::App;
 use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};
 use objc::{class, msg_send, sel, sel_impl};
@@ -15,6 +16,8 @@ use objc_id::Id;
 static mut HANDLER: Option<id> = None;
 static mut STATUS_ITEM: Option<Id<Object>> = None;
 static mut STATUS_MENU: Option<Id<Object>> = None;
+
+const MAC_PLATFORM_IVAR: &str = "platform";
 
 #[cfg(target_os = "macos")]
 pub fn register_selector() -> *const Class {
@@ -42,7 +45,7 @@ unsafe fn _ns_string(string: &str) -> id {
     unsafe { NSString::alloc(nil).init_str(string).autorelease() }
 }
 
-pub fn create_status_item(handler: id) -> Result<()> {
+fn create_status_item(handler: id) -> Result<()> {
     unsafe {
         HANDLER = Some(handler); // Store handler reference
 
@@ -135,7 +138,7 @@ pub fn create_status_item(handler: id) -> Result<()> {
 }
 
 #[cfg(target_os = "macos")]
-pub fn init_status_menu() -> Result<()> {
+pub fn init_status_menu(_cx: &mut App) -> Result<()> {
     unsafe {
         let handler_class = register_selector();
         let handler: id = msg_send![handler_class, new];
@@ -155,3 +158,28 @@ extern "C" fn check_updates(_this: &Object, _cmd: Sel, _notification: id) {
 extern "C" fn open_settings(_this: &Object, _cmd: Sel, _notification: id) {
     println!("Open settings");
 }
+
+// unsafe fn get_mac_platform(object: &mut Object) -> &MacPlatform {
+//     unsafe {
+//         let platform_ptr: *mut c_void = *object.get_ivar(MAC_PLATFORM_IVAR);
+//         assert!(!platform_ptr.is_null());
+//         &*(platform_ptr as *const MacPlatform)
+//     }
+// }
+
+// extern "C" fn handle_status_item(this: &mut Object, _cmd: Sel, item: id) {
+//     unsafe {
+//         let platform = get_mac_platform(this);
+//         let mut lock = platform.0.lock();
+//         if let Some(mut callback) = lock.menu_command.take() {
+//             let tag: NSInteger = msg_send![item, tag];
+//             let index = tag as usize;
+//             if let Some(action) = lock.menu_actions.get(index) {
+//                 let action = action.boxed_clone();
+//                 drop(lock);
+//                 callback(&*action);
+//             }
+//             platform.0.lock().menu_command.get_or_insert(callback);
+//         }
+//     }
+// }

@@ -2,9 +2,9 @@ use crate::ui::{
     v_flex, ActiveTheme, Disableable, IconName, Selectable, Sizable, Size, StyledExt as _,
 };
 use gpui::{
-    div, prelude::FluentBuilder as _, px, relative, svg, AnyElement, App, Div, ElementId,
-    InteractiveElement, IntoElement, ParentElement, RenderOnce, SharedString,
-    StatefulInteractiveElement, Styled, Window,
+    div, prelude::FluentBuilder as _, px, svg, AnyElement, App, Div, ElementId, InteractiveElement,
+    IntoElement, ParentElement, RenderOnce, SharedString, StatefulInteractiveElement, Styled,
+    Window,
 };
 
 /// A Checkbox element.

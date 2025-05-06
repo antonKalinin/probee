@@ -9,7 +9,7 @@ pub static APP_MAX_HEIGHT: f32 = 640.;
 pub static APP_MARGIN_TOP: f32 = 44.;
 pub static APP_MARGIN_RIGHT: f32 = 16.;
 
-pub static SETTINGS_WIDTH: f32 = 640.;
+pub static SETTINGS_WIDTH: f32 = 600.;
 pub static SETTINGS_HEIGHT: f32 = 400.;
 pub static SETTINGS_MIN_HEIGHT: f32 = 280.;
 pub static SETTINGS_MAX_HEIGHT: f32 = 640.;

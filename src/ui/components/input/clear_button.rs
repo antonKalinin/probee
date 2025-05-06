@@ -1,6 +1,6 @@
 use gpui::{App, Styled};
 
-use super::{
+use crate::ui::{
     button::{Button, ButtonVariants as _},
     ActiveTheme as _, Icon, IconName, Sizable as _,
 };
