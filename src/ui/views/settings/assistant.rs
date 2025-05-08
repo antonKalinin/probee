@@ -22,13 +22,14 @@ impl AssistantSettingsView {
         .detach();
 
         let fruits = SearchableVec::new(vec![
-            "Apple".into(),
-            "Orange".into(),
-            "Banana".into(),
-            "Grape".into(),
-            "Pineapple".into(),
-            "Watermelon & This is a long long long long long long long long long title".into(),
-            "Avocado".into(),
+            "GPT-4.1".into(),
+            "GPT-4.1 mini".into(),
+            "GPT-4.1 nano".into(),
+            "GPT-4o".into(),
+            "GPT-4o mini".into(),
+            "Claude 3.7".into(),
+            "Claude 3.5 Sonnet".into(),
+            "Claude 3.5 Haiku".into(),
         ]);
 
         let api_key_input =
@@ -69,6 +70,8 @@ impl Render for AssistantSettingsView {
 
         let value = || div().w(px(280.));
 
+        let separator = || div().w_full().border_b_1().border_color(theme.border);
+
         div()
             .w_full()
             .h(px(400.))
@@ -81,10 +84,15 @@ impl Render for AssistantSettingsView {
                 label("Model"),
                 value().child(self.model_dropdown.clone()),
             ]))
-            .child(row().children(vec![
-                label("API Key"),
-                value().child(self.api_key_input.clone()),
-            ]))
+            .child(
+                row()
+                    .children(vec![
+                        label("API Key"),
+                        value().child(self.api_key_input.clone()),
+                    ])
+                    .mb_8(),
+            )
+            .child(separator())
             .into_any_element()
     }
 }

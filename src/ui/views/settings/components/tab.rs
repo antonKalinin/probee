@@ -40,12 +40,10 @@ impl SettingsTab {
             false => theme.muted_foreground,
         };
 
-        div().flex().size_4().child(
-            icon.group_hover("settings-tab", |style| {
-                style.text_color(theme.secondary_foreground)
-            })
-            .text_color(text_color),
-        )
+        icon.group_hover("settings-tab", |style| {
+            style.text_color(theme.secondary_foreground)
+        })
+        .text_color(text_color)
     }
 
     fn render_label(&self, cx: &Context<Self>) -> impl IntoElement {

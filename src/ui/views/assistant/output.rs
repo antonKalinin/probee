@@ -1,10 +1,9 @@
 use gpui::*;
-use std::time::Duration;
 
 use crate::clipboard::Clipboard;
 use crate::events::UiEvent;
 use crate::state::app::*;
-use crate::ui::{Icon, IconName, Spinner, Theme};
+use crate::ui::{Spinner, Theme};
 
 use super::clear_output_button::ClearOutputButton;
 use super::copy_output_button::CopyOutputButton;

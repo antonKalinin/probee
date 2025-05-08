@@ -1,5 +1,5 @@
 use gpui::{
-    div, prelude::FluentBuilder as _, AnyElement, App, ClickEvent, Div, ElementId,
+    div, prelude::FluentBuilder as _, px, AnyElement, App, ClickEvent, Div, ElementId,
     InteractiveElement, IntoElement, MouseButton, MouseMoveEvent, ParentElement, RenderOnce,
     Stateful, StatefulInteractiveElement as _, Styled, Window,
 };
@@ -122,6 +122,7 @@ impl ParentElement for ListItem {
 
 impl RenderOnce for ListItem {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
+        let text_size = px(13.);
         let is_active = self.confirmed || self.selected;
 
         self.base
@@ -140,7 +141,7 @@ impl RenderOnce for ListItem {
                     this.on_mouse_move(move |ev, window, cx| (on_mouse_enter)(ev, window, cx))
                 })
                 .when(!is_active, |this| {
-                    this.hover(|this| this.bg(cx.theme().primary_hover))
+                    this.hover(|this| this.bg(cx.theme().accent))
                 })
             })
             .when(self.disabled, |this| {
@@ -152,7 +153,7 @@ impl RenderOnce for ListItem {
                     .items_center()
                     .justify_between()
                     .gap_x_1()
-                    .child(div().w_full().children(self.children))
+                    .child(div().text_size(text_size).w_full().children(self.children))
                     .when_some(self.check_icon, |this, icon| {
                         this.child(
                             div()

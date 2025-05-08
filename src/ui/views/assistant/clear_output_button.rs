@@ -41,8 +41,7 @@ impl Render for ClearOutputButton {
             Icon::new(IconName::CircleX)
         })
         .text_color(icon_color)
-        .hover(|style| style.text_color(theme.foreground))
-        .size_full();
+        .hover(|style| style.text_color(theme.foreground));
 
         let on_click = cx.listener({
             move |this, _event, _window, cx: &mut Context<Self>| {
@@ -66,7 +65,6 @@ impl Render for ClearOutputButton {
             .w_6()
             .p_1()
             .rounded_full()
-            .border_1()
             .on_mouse_down(MouseButton::Left, on_click)
             .hover(|style| style.bg(theme.muted))
             .cursor_pointer()

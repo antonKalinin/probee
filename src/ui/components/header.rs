@@ -48,11 +48,9 @@ impl Render for Header {
 
         let row = || div().flex().flex_row().flex_wrap().items_center();
 
-        let dropdown_icon = div().size_4().ml_3().child(
-            Icon::new(IconName::ChevronDown)
-                .text_color(theme.foreground)
-                .size_full(),
-        );
+        let dropdown_icon = Icon::new(IconName::ChevronDown)
+            .text_color(theme.foreground)
+            .ml_3();
 
         div()
             .flex()
@@ -61,7 +59,10 @@ impl Render for Header {
             .px_1()
             .text_size(theme.text_size)
             .font_weight(FontWeight::MEDIUM)
-            .child(row().children(vec![div().child(assistant.name.clone()), dropdown_icon]))
+            .child(row().children(vec![
+                div().child(assistant.name.clone()),
+                div().child(dropdown_icon),
+            ]))
             .cursor_pointer()
             .on_mouse_down(MouseButton::Left, on_click)
             .into_any_element()

@@ -130,11 +130,15 @@ impl InteractiveElement for Icon {
 }
 
 impl RenderOnce for Icon {
-    fn render(self, _: &mut Window, _cx: &mut App) -> impl IntoElement {
+    fn render(self, _window: &mut Window, _cx: &mut App) -> impl IntoElement {
+        let has_base_size = self.style.size.width.is_some() || self.style.size.height.is_some();
+
         let mut base = self.base;
         *base.style() = self.style;
 
-        base.flex_shrink_0().path(self.path).size_full()
+        base.path(self.path)
+            .flex_shrink_0()
+            .when(!has_base_size, |this| this.size_4())
     }
 }
 
@@ -145,12 +149,15 @@ impl From<Icon> for AnyElement {
 }
 
 impl Render for Icon {
-    fn render(&mut self, _: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+        let has_base_size = self.style.size.width.is_some() || self.style.size.height.is_some();
+
         let mut base = svg().flex_none();
         *base.style() = self.style.clone();
 
         base.path(self.path.clone())
-            .size_full()
+            .flex_shrink_0()
+            .when(!has_base_size, |this| this.size_4())
             .when_some(self.rotation, |this, rotation| {
                 this.with_transformation(Transformation::rotate(rotation))
             })

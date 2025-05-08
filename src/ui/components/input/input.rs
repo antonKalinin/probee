@@ -1833,7 +1833,11 @@ impl Render for TextInput {
                     .child(TextElement::new(cx.entity().clone())),
             )
             .when(self.loading, |this| {
-                this.child(Spinner::new().color(cx.theme().muted_foreground))
+                this.child(
+                    Spinner::new()
+                        .color(cx.theme().muted_foreground)
+                        .size(px(16.)),
+                )
             })
             .children(self.render_toggle_mask_button(window, cx))
             .when(

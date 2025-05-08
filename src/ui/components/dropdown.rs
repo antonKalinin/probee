@@ -164,6 +164,7 @@ where
                 .selected(selected)
                 .input_text_size(size)
                 .list_size(size)
+                .cursor_pointer()
                 .child(div().whitespace_nowrap().child(item.title().to_string()));
             Some(list_item)
         } else {
@@ -557,7 +558,10 @@ where
 
     /// Returns the title element for the dropdown input.
     fn display_title(&self, _: &Window, cx: &App) -> impl IntoElement {
+        let text_size = px(13.);
+
         let default_title = div()
+            .text_size(text_size)
             .text_color(cx.theme().accent_foreground)
             .child(
                 self.placeholder
@@ -594,6 +598,7 @@ where
         };
 
         div()
+            .text_size(text_size)
             .when(self.disabled, |this| {
                 this.text_color(cx.theme().muted_foreground)
             })
@@ -601,6 +606,7 @@ where
     }
 
     /// Set the items for the dropdown.
+    #[allow(dead_code)]
     pub fn set_items(&mut self, items: D, _: &mut Window, cx: &mut Context<Self>)
     where
         D: DropdownDelegate + 'static,

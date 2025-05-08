@@ -342,9 +342,9 @@ where
 
                     // Always wait 100ms to avoid flicker
                     // Timer::after(Duration::from_millis(100)).await;
-                    // _ = this.update_in(window, |this, window, cx| {
-                    //     this.set_querying(false, window, cx);
-                    // });
+                    _ = this.update_in(window, |this, window, cx| {
+                        this.set_querying(false, window, cx);
+                    });
                 });
             }
             InputEvent::PressEnter { secondary } => self.on_action_confirm(
@@ -497,7 +497,6 @@ where
             .id("list-item")
             .w_full()
             .relative()
-            .children(self.delegate.render_item(ix, window, cx))
             .when(self.selectable, |this| {
                 this.when(selected || right_clicked, |this| {
                     this.child(
@@ -507,9 +506,7 @@ where
                             .left(px(0.))
                             .right(px(0.))
                             .bottom(px(0.))
-                            .when(selected, |this| this.bg(cx.theme().primary))
-                            .border_1()
-                            .border_color(cx.theme().primary_active),
+                            .when(selected, |this| this.bg(cx.theme().accent)),
                     )
                 })
                 .on_mouse_down(
@@ -534,6 +531,7 @@ where
                     }),
                 )
             })
+            .children(self.delegate.render_item(ix, window, cx))
     }
 }
 

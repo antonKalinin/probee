@@ -67,11 +67,7 @@ impl Render for ErrorView {
             .rounded_full()
             .shadow_md()
             .bg(theme.background)
-            .child(
-                div()
-                    .size_4()
-                    .child(Icon::new(IconName::HeartCrack).text_color(red500)),
-            );
+            .child(Icon::new(IconName::HeartCrack).text_color(red500));
 
         let title = div()
             .text_color(theme.foreground)

@@ -21,7 +21,7 @@ pub use header::*;
 pub use icon::*;
 pub use input::*;
 pub use list::*;
-pub use scroll::*;
+// pub use scroll::*;
 pub use skeleton::*;
 pub use spinner::*;
 
@@ -29,6 +29,7 @@ pub struct Components;
 
 impl Components {
     pub fn init(cx: &mut App) {
+        list::init(cx);
         input::init(cx);
         dropdown::init(cx);
     }
