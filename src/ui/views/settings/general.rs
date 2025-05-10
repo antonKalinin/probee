@@ -3,10 +3,13 @@ use gpui::*;
 use crate::state::settings::*;
 use crate::ui::{Checkbox, Theme};
 
+use super::components::ThemeSwitch;
+
 pub struct GeneralSettingsView {
     visible: bool,
-
     startup_on_login: bool,
+
+    theme_switch: Entity<ThemeSwitch>,
 }
 
 impl GeneralSettingsView {
@@ -21,9 +24,12 @@ impl GeneralSettingsView {
         })
         .detach();
 
+        let theme_switch = cx.new(|cx| ThemeSwitch::new(&state, cx));
+
         GeneralSettingsView {
             visible,
             startup_on_login: true,
+            theme_switch,
         }
     }
 }
@@ -68,7 +74,7 @@ impl Render for GeneralSettingsView {
             .line_height(theme.line_height)
             .font_family(theme.font_family.clone())
             .child(row().children(vec![label("Startup"), div().child(startup_launch_checkbox)]))
-            .child(row().children(vec![label("Theme")]))
+            .child(row().children(vec![label("Theme"), div().child(self.theme_switch.clone())]))
             .into_any_element()
     }
 }

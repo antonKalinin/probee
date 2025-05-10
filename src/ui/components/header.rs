@@ -60,7 +60,7 @@ impl Render for Header {
             .text_size(theme.text_size)
             .font_weight(FontWeight::MEDIUM)
             .child(row().children(vec![
-                div().child(assistant.name.clone()),
+                div().text_color(theme.primary).child(assistant.name.clone()),
                 div().child(dropdown_icon),
             ]))
             .cursor_pointer()

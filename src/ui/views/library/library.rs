@@ -76,6 +76,7 @@ impl Render for LibraryView {
                 .hover(|style| style.bg(theme.muted))
                 .child(
                     div()
+                        .text_color(theme.primary)
                         .text_size(theme.text_size)
                         .font_weight(FontWeight::MEDIUM)
                         .child(assistant.name.clone()),

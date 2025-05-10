@@ -5,6 +5,7 @@ use gpui::{
 use std::ops::{Deref, DerefMut};
 
 use super::{hsl, Colorize};
+use crate::storage::*;
 
 fn load_fonts(cx: &mut App) -> gpui::Result<()> {
     let font_paths = cx.asset_source().list("fonts")?;
@@ -270,10 +271,18 @@ impl Global for Theme {}
 impl Theme {
     pub fn init(cx: &mut App) {
         let _ = load_fonts(cx);
+        let saved_theme = cx.global::<Storage>().get(StorageKey::SettingsTheme);
 
-        let mode = match cx.window_appearance() {
-            WindowAppearance::Dark | WindowAppearance::VibrantDark => ThemeMode::Dark,
-            WindowAppearance::Light | WindowAppearance::VibrantLight => ThemeMode::Light,
+        let mode = match saved_theme {
+            Some(theme) => match theme.as_str() {
+                "light" => ThemeMode::Light,
+                "dark" => ThemeMode::Dark,
+                _ => ThemeMode::Light,
+            },
+            None => match cx.window_appearance() {
+                WindowAppearance::Dark | WindowAppearance::VibrantDark => ThemeMode::Dark,
+                WindowAppearance::Light | WindowAppearance::VibrantLight => ThemeMode::Light,
+            },
         };
 
         // Sets theme to global if it's not already set

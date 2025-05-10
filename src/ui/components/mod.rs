@@ -11,6 +11,7 @@ pub mod input;
 pub mod list;
 pub mod scroll;
 pub mod skeleton;
+pub mod slider;
 pub mod spinner;
 
 pub use button::*;
@@ -21,6 +22,7 @@ pub use header::*;
 pub use icon::*;
 pub use input::*;
 pub use list::*;
+pub use slider::*;
 // pub use scroll::*;
 pub use skeleton::*;
 pub use spinner::*;
