@@ -90,7 +90,7 @@ impl AboutView {
         .detach();
     }
 
-    fn install_update(&self, _event: &ClickEvent, _window: &mut Window, _cx: &mut Context<Self>) {
+    fn install_update(&self, _event: &ClickEvent, _window: &mut Window, cx: &mut Context<Self>) {
         let update = self.update.clone();
 
         if update.is_none() {
@@ -100,13 +100,13 @@ impl AboutView {
         let update_result = update.unwrap().download_and_install();
 
         match update_result {
-            Ok(_) => self.restart_app(),
+            Ok(_) => cx.restart(None),
             // TODO: Handle error
             Err(err) => println!("Failed to install update: {}", err),
         }
     }
 
-    fn restart_app(&self) {
+    fn _restart_app(&self) {
         // Get path to the current executable
         let current_exe = match env::current_exe() {
             Ok(path) => path,

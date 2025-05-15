@@ -45,7 +45,7 @@ pub trait DropdownItem {
     /// Customize the display title used to selected item in Dropdown Input.
     ///
     /// If return None, the title will be used.
-    fn display_title(&self) -> Option<AnyElement> {
+    fn display_title(&self, _cx: &App) -> Option<AnyElement> {
         None
     }
     fn value(&self) -> &Self::Value;
@@ -583,7 +583,7 @@ where
             .delegate
             .get(*selected_index)
             .map(|item| {
-                if let Some(el) = item.display_title() {
+                if let Some(el) = item.display_title(cx) {
                     el
                 } else {
                     if let Some(prefix) = self.title_prefix.as_ref() {

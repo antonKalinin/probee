@@ -75,6 +75,10 @@ impl Render for GeneralSettingsView {
             .font_family(theme.font_family.clone())
             .child(row().children(vec![label("Startup"), div().child(startup_launch_checkbox)]))
             .child(row().children(vec![label("Theme"), div().child(self.theme_switch.clone())]))
+            // .child(row().children(vec![
+            //     label("Hide After"),
+            //     div().v_flex().child(self.hide_slider.clone()),
+            // ]))
             .into_any_element()
     }
 }

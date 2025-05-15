@@ -5,6 +5,7 @@ pub enum UiEvent {
     ClearOutput,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum AppEvent {
     AssistantChanged(String),

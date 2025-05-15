@@ -9,6 +9,7 @@ pub enum ApiError {
     RequestError(reqwest::Error),
 }
 
+#[allow(dead_code)]
 #[derive(Error, Debug)]
 pub enum AuthError {
     #[error("Error while logging in\n{0}")]

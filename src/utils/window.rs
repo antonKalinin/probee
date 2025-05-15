@@ -82,7 +82,7 @@ pub fn settings_window_options(cx: &mut App) -> WindowOptions {
     let bounds = Bounds {
         origin: point(
             display.bounds().center().x - size.center().x,
-            display.bounds().center().y - size.center().y,
+            display.bounds().center().y - size.center().y * 2.,
         ),
         size,
     };

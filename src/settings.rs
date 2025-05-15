@@ -1,4 +1,4 @@
-use gpui::{div, prelude::*, px, App, AppContext, Entity, Window};
+use gpui::{div, prelude::*, App, AppContext, Entity, Window};
 
 use crate::state::settings::*;
 use crate::ui::*;

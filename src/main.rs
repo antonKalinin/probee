@@ -20,7 +20,7 @@ use crate::assets::Assets;
 use crate::services::*;
 use crate::settings::SettingsRoot;
 use crate::state::*;
-use crate::ui::{ActiveTheme, Components, Theme};
+use crate::ui::{Components, Theme};
 use crate::utils::devtools;
 
 #[async_std::main]
@@ -49,7 +49,7 @@ async fn main() {
 
         let app_window_options = utils::app_window_options(cx);
         let app_window = cx.open_window(app_window_options, AppRoot::build);
-        let app_entity = app_window.unwrap().entity(cx).unwrap();
+        let app_entity = app_window.as_ref().unwrap().entity(cx).unwrap();
 
         let _ = cx
             .subscribe(&app_entity, move |_app_root, event, cx| match event {

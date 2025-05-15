@@ -49,10 +49,13 @@ impl Render for Header {
         let row = || div().flex().flex_row().flex_wrap().items_center();
 
         let dropdown_icon = Icon::new(IconName::ChevronDown)
+            .opacity(0.)
             .text_color(theme.foreground)
-            .ml_3();
+            .ml_3()
+            .group_hover("assistant-name", |style| style.opacity(1.));
 
         div()
+            .group("assistant-name")
             .flex()
             .flex_row()
             .flex_wrap()

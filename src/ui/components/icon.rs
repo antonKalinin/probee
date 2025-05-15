@@ -68,6 +68,10 @@ pub enum IconName {
     TriangleAlert,
     WholeWord,
     X,
+
+    // Custom
+    Anthropic,
+    OpenAi,
 }
 
 impl IconName {

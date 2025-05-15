@@ -3,11 +3,12 @@ use gpui::{
     actions, div, prelude::*, App, AppContext, Entity, EventEmitter, FocusHandle, KeyBinding,
     Window,
 };
+use std::time::Duration;
 
 use crate::assistant::*;
 use crate::errors::*;
 use crate::events::*;
-use crate::services::{Api, Auth, Storage, StorageKey};
+use crate::services::{Api, Storage, StorageKey};
 use crate::state::app::*;
 use crate::ui::*;
 use crate::utils;
@@ -28,7 +29,6 @@ pub struct AppRoot {
     error_view: Entity<ErrorView>,
 
     visible: bool,
-    settings_opened: bool,
     focus_handle: FocusHandle,
 }
 
@@ -44,45 +44,7 @@ impl AppRoot {
         cx.bind_keys([KeyBinding::new("alt-2", SelectNextAssistant, None)]);
         cx.bind_keys([KeyBinding::new("alt-`", ToggleLibraryView, None)]);
 
-        let auth = cx.global::<Auth>().clone();
         let global_state = cx.global::<AppStateController>().clone();
-
-        // Try to authenticate user if token is present
-        // If token is absent, nothing to do, need to login first
-        // If token is expired, try to refresh it and retry to authenticate
-        cx.spawn(async move |cx| {
-            let user = auth.get_user(cx).await;
-
-            // match user {
-            //     Ok(user) => {
-            //         set_user_async(cx, Some(user));
-            //         set_authenticated_async(cx, true);
-            //     }
-            //     Err(err) => match err
-            //         .downcast_ref::<AuthError>()
-            //         .unwrap_or(&AuthError::UnknownError)
-            //     {
-            //         AuthError::InvalidTokenError(_) => {
-            //             let user = auth.refresh_access_token(cx).await;
-
-            //             match user {
-            //                 Ok(user) => {
-            //                     set_user_async(cx, Some(user));
-            //                     set_authenticated_async(cx, true);
-            //                 }
-            //                 Err(_err) => {
-            //                     // refresh token is probably expired, need to login again
-            //                 }
-            //             }
-            //         }
-            //         AuthError::NoTokenError => {
-            //             // nothing to do, need to login first
-            //         }
-            //         _ => set_error_async(cx, Some(err)),
-            //     },
-            // };
-        })
-        .detach();
 
         let _app_events_subscribtion = cx
             .subscribe(&global_state.state, |_state, event, cx| {
@@ -166,12 +128,25 @@ impl AppRoot {
             let library_view = cx.new(|cx| LibraryView::new(cx, &state));
             let error_view = cx.new(|cx| ErrorView::new(cx, &state));
 
-            let _ = cx
-                .observe(&state, |this: &mut AppRoot, state, cx| {
-                    this.visible = state.read(cx).visible;
-                    cx.notify();
-                })
-                .detach();
+            cx.observe(&state, |this: &mut AppRoot, state, cx| {
+                this.visible = state.read(cx).visible;
+                cx.notify();
+            })
+            .detach();
+
+            // cx.on_focus(handle, window, |_this, _window, cx| {});
+            // cx.on_blur(&focus_handle, window, |_this, _window, cx| {
+            //     cx.spawn(async move |this, cx| {
+            //         cx.background_executor().timer(Duration::from_secs(5)).await;
+
+            //         this.update(cx, |_this, cx| {
+            //             set_visible(cx, false);
+            //         })
+            //         .ok();
+            //     })
+            //     .detach();
+            // })
+            // .detach();
 
             AppRoot {
                 assistant_view,
@@ -179,7 +154,6 @@ impl AppRoot {
                 error_view,
 
                 visible: state.read(cx).visible,
-                settings_opened: false,
                 focus_handle,
             }
         });

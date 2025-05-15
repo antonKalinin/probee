@@ -207,6 +207,10 @@ pub fn set_visible(cx: &mut App, visible: bool) {
     AppStateController::update(|this, cx| this.set_visible(cx, visible), cx);
 }
 
+pub fn set_visible_async(cx: &mut AsyncApp, visible: bool) {
+    AppStateController::update_async(|this, cx| this.set_visible(cx, visible), cx);
+}
+
 pub fn toggle_visible(cx: &mut App) {
     AppStateController::update(
         |this, cx| {

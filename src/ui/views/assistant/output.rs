@@ -94,8 +94,7 @@ impl Output {
 
         let spinner = div()
             .flex()
-            .size_6()
-            .child(Spinner::new().color(theme.muted_foreground));
+            .child(Spinner::new().size(px(24.)).color(theme.muted_foreground));
 
         div()
             .flex()

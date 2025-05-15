@@ -11,6 +11,7 @@ pub fn hsl(h: f32, s: f32, l: f32) -> Hsla {
     hsla(h / 360., s / 100.0, l / 100.0, 1.0)
 }
 
+#[allow(dead_code)]
 pub trait Colorize: Sized {
     /// Returns a new color with the given opacity.
     ///
