@@ -2,7 +2,7 @@ use gpui::*;
 
 use crate::clipboard::Clipboard;
 use crate::events::UiEvent;
-use crate::state::app::*;
+use crate::state::app_state::*;
 use crate::ui::{Spinner, Theme};
 
 use super::clear_output_button::ClearOutputButton;

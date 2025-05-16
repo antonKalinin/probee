@@ -1,6 +1,6 @@
 use gpui::*;
 
-use crate::state::settings::*;
+use crate::state::settings_state::*;
 use crate::ui::{ActiveTheme, Dropdown, DropdownItem, Icon, IconName, TextInput, Theme};
 
 use super::components::{Prompt, PromptList};

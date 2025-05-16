@@ -7,7 +7,7 @@ use gpui::{
     div, img, prelude::*, px, ClickEvent, Entity, ImageSource, SharedString, WeakEntity, Window,
 };
 
-use crate::state::settings::*;
+use crate::state::settings_state::*;
 use crate::ui::{Button, Sizable as _, StyledExt, Theme};
 
 pub struct AboutView {

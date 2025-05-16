@@ -1,6 +1,6 @@
 use gpui::{div, prelude::*, App, AppContext, Entity, Window};
 
-use crate::state::settings::*;
+use crate::state::settings_state::*;
 use crate::ui::*;
 use crate::utils;
 

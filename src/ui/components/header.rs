@@ -2,7 +2,7 @@ use gpui::*;
 
 use crate::events::UiEvent;
 use crate::services::AssistantConfig;
-use crate::state::app::*;
+use crate::state::app_state::*;
 use crate::ui::*;
 
 pub struct Header {

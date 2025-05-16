@@ -1,7 +1,8 @@
 use anyhow::Error;
 use gpui::{App, AppContext, AsyncApp, BorrowAppContext, Entity, EventEmitter, Global};
+use uuid::Uuid;
 
-use super::error::*;
+use super::error_state::*;
 use crate::events::AppEvent;
 use crate::services::AssistantConfig;
 
@@ -18,8 +19,11 @@ pub struct AppState {
     pub assistants: Vec<AssistantConfig>,
     pub error: Option<Error>,
     pub input: Option<String>,
-    pub loading: bool,
     pub output: String,
+    pub blur_id: Option<Uuid>,
+
+    pub focused: bool,
+    pub loading: bool,
     pub visible: bool,
 }
 
@@ -55,8 +59,11 @@ impl AppStateController {
             assistants: vec![],
             error: None,
             input: None,
-            loading: false,
             output: "".to_owned(),
+            blur_id: None,
+
+            focused: false,
+            loading: false,
             visible: true,
         });
 
@@ -131,6 +138,17 @@ impl AppStateController {
         });
     }
 
+    pub fn set_focused(&self, cx: &mut App, focused: bool) {
+        self.state.update(cx, |state, cx| {
+            if !focused {
+                state.blur_id = Some(Uuid::new_v4());
+            }
+
+            state.focused = focused;
+            cx.notify();
+        });
+    }
+
     pub fn set_loading(&self, cx: &mut App, loading: bool) {
         self.state.update(cx, |model, cx| {
             model.loading = loading;
@@ -167,6 +185,16 @@ pub fn get_active_assistant(cx: &App) -> Option<AssistantConfig> {
     }
 }
 
+pub fn get_focused(cx: &mut App) -> bool {
+    let state = cx.global::<AppStateController>().state.read(cx);
+    state.focused
+}
+
+pub fn get_blur_id(cx: &mut App) -> Option<Uuid> {
+    let state = cx.global::<AppStateController>().state.read(cx);
+    state.blur_id
+}
+
 pub fn set_active_assistant_id(cx: &mut App, id: Option<String>) {
     AppStateController::update(|this, cx| this.set_active_assistant_id(cx, id), cx);
 }
@@ -201,6 +229,10 @@ pub fn set_error(cx: &mut App, error: Option<Error>) {
 
 pub fn set_error_async(cx: &mut AsyncApp, error: Option<Error>) {
     AppStateController::update_async(|this, cx| this.set_error(cx, error), cx);
+}
+
+pub fn set_focused(cx: &mut App, focused: bool) {
+    AppStateController::update(|this, cx| this.set_focused(cx, focused), cx);
 }
 
 pub fn set_visible(cx: &mut App, visible: bool) {

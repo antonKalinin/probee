@@ -1,7 +1,7 @@
 use gpui::prelude::FluentBuilder as _;
 use gpui::*;
 
-use crate::state::settings::*;
+use crate::state::settings_state::*;
 use crate::storage::*;
 use crate::ui::{Icon, IconName, Theme, ThemeMode};
 

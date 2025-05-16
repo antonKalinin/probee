@@ -2,7 +2,7 @@ use gpui::*;
 use std::time::Duration;
 
 use crate::events::UiEvent;
-use crate::state::app::*;
+use crate::state::app_state::*;
 use crate::ui::{ActiveTheme, Icon, IconName};
 
 pub struct ClearOutputButton {

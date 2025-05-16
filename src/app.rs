@@ -9,7 +9,7 @@ use crate::assistant::*;
 use crate::errors::*;
 use crate::events::*;
 use crate::services::{Api, Storage, StorageKey};
-use crate::state::app::*;
+use crate::state::app_state::*;
 use crate::ui::*;
 use crate::utils;
 
@@ -134,19 +134,30 @@ impl AppRoot {
             })
             .detach();
 
-            // cx.on_focus(handle, window, |_this, _window, cx| {});
-            // cx.on_blur(&focus_handle, window, |_this, _window, cx| {
-            //     cx.spawn(async move |this, cx| {
-            //         cx.background_executor().timer(Duration::from_secs(5)).await;
+            cx.on_focus(&focus_handle, window, |_this, _window, cx| {
+                set_focused(cx, true);
+            })
+            .detach();
 
-            //         this.update(cx, |_this, cx| {
-            //             set_visible(cx, false);
-            //         })
-            //         .ok();
-            //     })
-            //     .detach();
-            // })
-            // .detach();
+            cx.on_blur(&focus_handle, window, |_this, _window, cx| {
+                set_focused(cx, false);
+                let blur_id = get_blur_id(cx);
+
+                cx.spawn(async move |this, cx| {
+                    cx.background_executor().timer(Duration::from_secs(5)).await;
+
+                    this.update(cx, |_this, cx| {
+                        // hide the the only window if it is not focused more than 5 seconds
+                        if !get_focused(cx) && get_blur_id(cx) == blur_id && cx.windows().len() == 1
+                        {
+                            set_visible(cx, false);
+                        }
+                    })
+                    .ok();
+                })
+                .detach();
+            })
+            .detach();
 
             AppRoot {
                 assistant_view,

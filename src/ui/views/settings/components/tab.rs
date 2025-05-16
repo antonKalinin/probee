@@ -1,6 +1,6 @@
 use gpui::*;
 
-use crate::state::settings::*;
+use crate::state::settings_state::*;
 use crate::ui::{Icon, IconName, Theme};
 
 pub struct SettingsTab {

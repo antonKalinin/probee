@@ -1,7 +1,7 @@
-pub mod app;
-pub mod error;
-pub mod settings;
+pub mod app_state;
+pub mod error_state;
+pub mod settings_state;
 
-pub use app::AppStateController;
-pub use error::ErrorState;
-pub use settings::SettingsStateController;
+pub use app_state::AppStateController;
+pub use error_state::ErrorState;
+pub use settings_state::SettingsStateController;

@@ -2,7 +2,7 @@ use gpui::*;
 
 use crate::events::*;
 use crate::services::{Api, Storage, StorageKey};
-use crate::state::app::*;
+use crate::state::app_state::*;
 use crate::ui::*;
 
 use super::output::Output;

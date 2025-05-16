@@ -1,6 +1,6 @@
 use gpui::*;
 
-use crate::state::settings::*;
+use crate::state::settings_state::*;
 use crate::ui::{Checkbox, Theme};
 
 use super::components::ThemeSwitch;

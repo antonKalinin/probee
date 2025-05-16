@@ -1,7 +1,7 @@
 use anyhow::Error;
 use gpui::{prelude::*, App, AppContext, AsyncApp, Entity, Global};
 
-use super::error::*;
+use super::error_state::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum SettingsTabType {
