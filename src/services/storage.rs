@@ -41,12 +41,13 @@ pub enum StorageKey {
 
     // assistant
     AssistantId,
-    AssistantProvider,
     AssistantModel,
-    AssistantApiKey,
     AssistantCustomPrompt,
     AssistantCustomPromptTemperature,
     AssistantCustomPromptMaxTokens,
+    // provider specific
+    AnthropicApiKey,
+    AssistantOpenAiApiKey,
 
     // settings
     SettingsTheme,
@@ -229,15 +230,15 @@ mod tests {
         let store = Storage::new(path.clone(), salt)?;
 
         // Test set and get
-        store.set(StorageKey::AssistantApiKey, "api_key_value_123".to_string())?;
+        store.set(StorageKey::AnthropicApiKey, "api_key_value_123".to_string())?;
         assert_eq!(
-            store.get(StorageKey::AssistantApiKey),
+            store.get(StorageKey::AnthropicApiKey),
             Some("api_key_value_123".to_string())
         );
 
         // Test delete
-        store.delete(StorageKey::AssistantApiKey)?;
-        assert_eq!(store.get(StorageKey::AssistantApiKey), None);
+        store.delete(StorageKey::AnthropicApiKey)?;
+        assert_eq!(store.get(StorageKey::AnthropicApiKey), None);
 
         Ok(())
     }

@@ -52,12 +52,12 @@ serde_json = "1.0.138"                                                          
 sha2 = "0.10.8"                                                                                                             # authentication
 smallvec = "1.13.2"                                                                                                         # optimized vector struct used in gpui elements
 thiserror = "2.0.7"                                                                                                         # custom errors
-tiny_http = "0.12.0"
+tiny_http = "0.12.0"                                                                                                        # auth response catching
 tokio = { version = "1.43.0", features = ["sync"] }
 tokio-stream = "0.1.17"
 unicode-segmentation = "1.12.0"                                                                                             # character segmentation for input handling
 url = "2.5.4"
-uuid = { version = "1.16.0", features = ["v4"] }                                                                            # unique identifiers
+uuid = { version = "1.16.0", features = ["v4"] }                                                                            # assistant id generation
 
 # platform specific dependencies
 [target.'cfg(target_os = "macos")'.dependencies]

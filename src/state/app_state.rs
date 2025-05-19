@@ -1,6 +1,5 @@
 use anyhow::Error;
 use gpui::{App, AppContext, AsyncApp, BorrowAppContext, Entity, EventEmitter, Global};
-use uuid::Uuid;
 
 use super::error_state::*;
 use crate::events::AppEvent;
@@ -20,7 +19,7 @@ pub struct AppState {
     pub error: Option<Error>,
     pub input: Option<String>,
     pub output: String,
-    pub blur_id: Option<Uuid>,
+    pub blur_id: u16,
 
     pub focused: bool,
     pub loading: bool,
@@ -60,7 +59,7 @@ impl AppStateController {
             error: None,
             input: None,
             output: "".to_owned(),
-            blur_id: None,
+            blur_id: 0,
 
             focused: false,
             loading: false,
@@ -141,7 +140,13 @@ impl AppStateController {
     pub fn set_focused(&self, cx: &mut App, focused: bool) {
         self.state.update(cx, |state, cx| {
             if !focused {
-                state.blur_id = Some(Uuid::new_v4());
+                // Blur id increments every time app window loses focus.
+                // If app won't get focus again in short time, window will be hidden.
+                // Blur id helps to understand whatever app got focus again or not.
+                state.blur_id = state.blur_id + 1;
+                if state.blur_id > u16::MAX - 1 {
+                    state.blur_id = 0;
+                }
             }
 
             state.focused = focused;
@@ -190,7 +195,7 @@ pub fn get_focused(cx: &mut App) -> bool {
     state.focused
 }
 
-pub fn get_blur_id(cx: &mut App) -> Option<Uuid> {
+pub fn get_blur_id(cx: &mut App) -> u16 {
     let state = cx.global::<AppStateController>().state.read(cx);
     state.blur_id
 }
@@ -237,10 +242,6 @@ pub fn set_focused(cx: &mut App, focused: bool) {
 
 pub fn set_visible(cx: &mut App, visible: bool) {
     AppStateController::update(|this, cx| this.set_visible(cx, visible), cx);
-}
-
-pub fn set_visible_async(cx: &mut AsyncApp, visible: bool) {
-    AppStateController::update_async(|this, cx| this.set_visible(cx, visible), cx);
 }
 
 pub fn toggle_visible(cx: &mut App) {

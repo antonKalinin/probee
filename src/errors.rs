@@ -47,7 +47,7 @@ pub enum AssistantError {
     #[error("Assistant config is missing\nIt seems that you haven't selected any assistant. In case you have, please try again or restart the app.")]
     MissingConfig,
     #[error("Assistant provider is missing\nPlease try again or restart the app.")]
-    MissingProvider,
+    MissingProviderClient,
     #[error("Can't resolve assistnat intructions")]
     MissingSystemPrompt,
     #[error("Unsupported assistant provider\n{0}")]

@@ -1,90 +1,132 @@
-use anyhow::{Ok, Result};
-use gpui::{App, Global};
+use anyhow::Result;
+use gpui::{App, Global, SharedString};
+use serde::{Deserialize, Serialize};
 use tokio_stream::wrappers::ReceiverStream;
+use uuid::Uuid;
 
-use crate::api::AssistantConfig;
 use crate::errors::*;
+use crate::services::storage::{Storage, StorageKey};
 
 use super::providers::*;
 
 type ResultStream = ReceiverStream<String>;
 
 #[async_trait::async_trait]
-pub trait AssistantProvider {
+pub trait AssistantProviderClient {
     async fn generate_response(
         &self,
         system_prompt: String,
         user_input: String,
     ) -> Result<ResultStream>;
 
-    fn box_clone(&self) -> Box<dyn AssistantProvider>;
+    fn box_clone(&self) -> Box<dyn AssistantProviderClient>;
+}
+
+#[derive(Clone, Deserialize, Debug, Serialize)]
+pub enum ModelProvider {
+    Anthropic,
+    OpenAI,
+}
+
+#[derive(Clone, Deserialize, Debug, Serialize)]
+pub struct Model {
+    name: SharedString,
+    provider: ModelProvider,
+}
+
+impl Model {
+    pub fn new(name: impl Into<SharedString>, provider: ModelProvider) -> Self {
+        Self {
+            name: name.into(),
+            provider,
+        }
+    }
+}
+
+#[derive(Clone, Default)]
+pub struct Prompt {
+    id: String,
+    name: SharedString,
+    text: SharedString,
+    created_at: String,
+    updated_at: String,
+}
+
+impl Prompt {
+    pub fn new(name: impl Into<SharedString>, text: impl Into<SharedString>) -> Self {
+        Self {
+            id: Uuid::new_v4().to_string(),
+            name: name.into(),
+            text: text.into(),
+            created_at: "2025-05-13T14:25:30.123Z".into(),
+            updated_at: "2025-05-13T14:25:30.123Z".into(),
+        }
+    }
 }
 
 pub struct Assistant {
-    config: Option<AssistantConfig>,
-    provider: Option<Box<dyn AssistantProvider>>,
+    model: Option<Model>,
+    prompt: Option<Prompt>,
+    provider_client: Option<Box<dyn AssistantProviderClient>>,
 }
 
 impl Clone for Assistant {
     fn clone(&self) -> Self {
         Self {
-            config: self.config.clone(),
-            provider: self.provider.as_ref().map(|p| p.box_clone()),
+            model: self.model.clone(),
+            prompt: self.prompt.clone(),
+            provider_client: self.provider_client.as_ref().map(|p| p.box_clone()),
         }
     }
 }
 
 impl Assistant {
-    fn resolve_system_prompt(&self) -> Result<String> {
-        if self.config.is_none() {
-            return Err(AssistantError::MissingConfig.into());
-        }
-
-        let config = self.config.as_ref().unwrap();
-        let system_prompt = config
-            .messages
-            .iter()
-            .find(|message| message.role == "system");
-
-        if let Some(system_prompt) = system_prompt {
-            return Ok(system_prompt.content.clone());
-        } else {
-            return Err(AssistantError::MissingSystemPrompt.into());
-        }
-    }
-
     pub fn init(cx: &mut App) {
+        let storage = cx.global::<Storage>();
+        let model: Option<Model> = storage
+            .get(StorageKey::AssistantModel)
+            .map(|model_str| serde_json::from_str(&model_str).unwrap());
+
+        let provider_client: Option<Box<dyn AssistantProviderClient>> = match model.clone() {
+            Some(model) => match model.provider {
+                ModelProvider::Anthropic => Some(Box::new(AnthropicProviderClient::new(cx))),
+                _ => Some(Box::new(AnthropicProviderClient::new(cx))),
+            },
+            None => None,
+        };
+
         cx.set_global(Assistant {
-            config: None,
-            provider: None,
+            model,
+            prompt: None,
+            provider_client,
         });
     }
 
-    pub fn set_config(&mut self, config: AssistantConfig) -> Result<()> {
-        let provider_name = config.model.provider.clone();
+    pub fn set_model(&mut self, model: Model, cx: &mut App) {
+        self.model = Some(model.clone());
+        self.provider_client = match model.provider {
+            ModelProvider::Anthropic => Some(Box::new(AnthropicProviderClient::new(cx))),
+            _ => None,
+        };
+    }
 
-        match provider_name.as_str() {
-            "anthropic" => {
-                self.config = Some(config);
-                self.provider = Some(Box::new(AnthropicProvider::new()));
-            }
-            _ => {
-                return Err(AssistantError::UnsupportedProvider(provider_name).into());
-            }
-        }
-
-        Ok(())
+    pub fn set_prompt(&mut self, prompt: Prompt) {
+        self.prompt = Some(prompt);
     }
 
     pub async fn generate_response(&self, input: String) -> Result<ResultStream> {
-        if self.provider.is_none() {
-            return Err(AssistantError::MissingProvider.into());
+        if self.provider_client.is_none() {
+            return Err(AssistantError::MissingProviderClient.into());
         }
 
-        let system_prompt = self.resolve_system_prompt()?;
-        let provider = self.provider.as_ref().unwrap();
+        if self.prompt.is_none() {
+            return Err(AssistantError::MissingSystemPrompt.into());
+        }
 
-        provider
+        let system_prompt = self.prompt.as_ref().unwrap().text.to_string();
+        let provider_client = self.provider_client.as_ref().unwrap();
+
+        provider_client
             .generate_response(system_prompt, input.to_owned())
             .await
     }

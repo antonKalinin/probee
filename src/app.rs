@@ -95,7 +95,16 @@ impl AppRoot {
                         }
 
                         // TODO: Config should not be reset on every input change
-                        let _ = assistant.set_config(assistant_config.unwrap().clone());
+                        let propmt_name = assistant_config.as_ref().unwrap().name.clone();
+                        let propmt = assistant_config
+                            .as_ref()
+                            .unwrap()
+                            .messages
+                            .get(0)
+                            .unwrap()
+                            .content
+                            .clone();
+                        let _ = assistant.set_prompt(Prompt::new(propmt_name, propmt));
 
                         set_error(cx, None);
                         set_output(cx, "".to_owned());

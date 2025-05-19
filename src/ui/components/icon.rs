@@ -50,6 +50,7 @@ pub enum IconName {
     MessageSquareX,
     Milk,
     Moon,
+    PencilOff,
     Plus,
     Scan,
     Search,

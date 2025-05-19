@@ -1,5 +1,6 @@
 use anyhow::Result;
 use futures::StreamExt;
+use gpui::App;
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client,
@@ -9,7 +10,8 @@ use tokio::sync::mpsc::channel;
 use tokio_stream::wrappers::ReceiverStream;
 
 use crate::errors::*;
-use crate::services::assistant::AssistantProvider;
+use crate::services::assistant::AssistantProviderClient;
+use crate::services::storage::{Storage, StorageKey};
 
 #[derive(Serialize)]
 struct Message {
@@ -99,13 +101,15 @@ struct MessageDeltaContent {
 }
 
 #[derive(Clone, Debug)]
-pub struct AnthropicProvider {
+pub struct AnthropicProviderClient {
+    model: String,
     client: Client,
 }
 
-impl AnthropicProvider {
-    pub fn new() -> Self {
-        let api_key = env!("ANTHROPIC_API_KEY");
+impl AnthropicProviderClient {
+    pub fn new(cx: &mut App) -> Self {
+        let storage = cx.global::<Storage>();
+        let api_key = storage.get(StorageKey::AnthropicApiKey).unwrap_or_default();
 
         if api_key.is_empty() {
             // TODO: set state error
@@ -119,21 +123,28 @@ impl AnthropicProvider {
 
         let client = Client::builder().default_headers(headers).build().unwrap();
 
-        Self { client }
+        Self {
+            client,
+            model: "claude-3-5-sonnet-20241022".to_owned(),
+        }
+    }
+
+    pub fn set_model(&mut self, model: String) {
+        self.model = model;
     }
 }
 
 type ResultStream = ReceiverStream<String>;
 
 #[async_trait::async_trait]
-impl AssistantProvider for AnthropicProvider {
+impl AssistantProviderClient for AnthropicProviderClient {
     async fn generate_response(
         &self,
         system_prompt: String,
         user_input: String,
     ) -> Result<ResultStream> {
         let request = AnthropicRequest {
-            model: "claude-3-5-sonnet-20241022".to_owned(),
+            model: self.model.clone(),
             system: system_prompt,
             temperature: 0.2,
             messages: vec![Message {
@@ -212,7 +223,7 @@ impl AssistantProvider for AnthropicProvider {
         Ok(output_stream)
     }
 
-    fn box_clone(&self) -> Box<dyn AssistantProvider> {
+    fn box_clone(&self) -> Box<dyn AssistantProviderClient> {
         Box::new(self.clone())
     }
 }

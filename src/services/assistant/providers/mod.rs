@@ -1,3 +1,3 @@
 mod anthropic;
 
-pub use anthropic::AnthropicProvider;
+pub use anthropic::AnthropicProviderClient;

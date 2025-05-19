@@ -1,11 +1,15 @@
 use gpui::*;
 
 use crate::state::settings_state::*;
-use crate::ui::{ActiveTheme, Dropdown, DropdownItem, Icon, IconName, TextInput, Theme};
+use crate::storage::{Storage, StorageKey};
+use crate::ui::{
+    ActiveTheme, Button, Dropdown, DropdownEvent, DropdownItem, Icon, IconName, InputEvent,
+    Sizable as _, TextInput, Theme,
+};
 
 use super::components::{Prompt, PromptList};
 
-const VIEW_HEIGHT: f32 = 480.0;
+const VIEW_HEIGHT: f32 = 464.0;
 
 #[derive(Clone)]
 enum ModelProvider {
@@ -64,20 +68,15 @@ pub struct AssistantSettingsView {
     prompt_list: Entity<PromptList>,
 
     provider: ModelProvider,
-    visible: bool,
 }
 
 impl AssistantSettingsView {
-    pub fn new(state: &Entity<SettingsState>, window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let data = state.read(cx);
-        let visible = data.active_tab == SettingsTabType::Assistant;
-
-        cx.observe(state, |this, state, cx| {
-            let data = state.read(cx);
-            this.visible = data.active_tab == SettingsTabType::Assistant;
-            cx.notify();
-        })
-        .detach();
+    pub fn new(
+        _state: &Entity<SettingsState>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Self {
+        let storage = cx.global::<Storage>();
 
         let models = vec![
             Model::new("Claude 3.7", ModelProvider::Anthropic),
@@ -91,18 +90,69 @@ impl AssistantSettingsView {
         ];
 
         let prompts = vec![
-            Prompt::new("Change Tone to Confident", "This is the first prompt."),
-            Prompt::new("Translate to Russian", "This is the second prompt."),
-            Prompt::new("Explain This in Simple Terms", "This is the third prompt."),
-            Prompt::new("Translate to English", "This is the forth prompt."),
+            Prompt::new("Change Tone to Confident", ""),
+            Prompt::new("Change Tone to Professional", ""),
+            Prompt::new("Explain This in Simple Terms", ""),
+            Prompt::new("Translate to Chinese", ""),
+            Prompt::new("Translate to English", ""),
+            Prompt::new("Translate to German", ""),
+            Prompt::new("Translate to Spanish", ""),
+            Prompt::new("Translate to Russian", ""),
         ];
 
-        let api_key_input =
-            cx.new(|cx| TextInput::new(window, cx).placeholder("Enter Anthropic API Key"));
+        let provider = ModelProvider::Anthropic;
+
+        let api_key = (match provider {
+            ModelProvider::Anthropic => storage.get(StorageKey::AnthropicApiKey),
+            ModelProvider::OpenAI => storage.get(StorageKey::AssistantOpenAiApiKey),
+        })
+        .unwrap_or(String::from(""));
+
+        let api_key_input = cx.new(|cx| {
+            let mut text_input = TextInput::new(window, cx).placeholder("Enter Anthropic API Key");
+
+            text_input.set_text(api_key, window, cx);
+            text_input
+        });
+
+        cx.subscribe(&api_key_input, |this, input, event, cx| {
+            if let InputEvent::Blur = event {
+                let api_key = input.read(cx).text();
+                let storage = cx.global::<Storage>();
+                let storage_key = match this.provider {
+                    ModelProvider::Anthropic => StorageKey::AnthropicApiKey,
+                    ModelProvider::OpenAI => StorageKey::AssistantOpenAiApiKey,
+                };
+
+                let _ = storage.set(storage_key, api_key.into());
+            }
+        })
+        .detach();
 
         let model_dropdown = cx.new(|cx| {
             Dropdown::new("model-dropdown", models, Some(0), window, cx).placeholder("Select Model")
         });
+
+        cx.subscribe(&model_dropdown, |this, _dropdown, event, cx| {
+            let DropdownEvent::Confirm(value) = event;
+
+            if let Some(model) = value {
+                this.provider = model.provider.clone();
+
+                this.api_key_input.update(cx, |input, cx| {
+                    let placeholder = match model.provider {
+                        ModelProvider::Anthropic => "Enter Anthropic API Key",
+                        ModelProvider::OpenAI => "Enter OpenAI API Key",
+                    };
+
+                    input.set_placeholder(placeholder);
+                    // input.set_text("".to_string(), window, cx);
+                });
+
+                cx.notify();
+            }
+        })
+        .detach();
 
         let prompt_list = cx.new(|cx| PromptList::new(prompts, window, cx));
 
@@ -111,7 +161,6 @@ impl AssistantSettingsView {
             model_dropdown,
             prompt_list,
 
-            visible,
             provider: ModelProvider::Anthropic,
         }
     }
@@ -120,10 +169,6 @@ impl AssistantSettingsView {
 impl Render for AssistantSettingsView {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
-
-        if !self.visible {
-            return div().into_any_element();
-        }
 
         let row = || div().w_full().flex().flex_row().mb_6().items_center();
 
@@ -139,8 +184,14 @@ impl Render for AssistantSettingsView {
         };
 
         let value = || div().w(px(280.));
-
         let separator = || div().w_full().border_b_1().border_color(theme.border);
+
+        let create_prompt_button = div().child(
+            Button::new("create-prompt-button")
+                .label("Create New Prompt")
+                .small()
+                .on_click(cx.listener({ |this, event, window, cx: &mut Context<Self>| {} })),
+        );
 
         div()
             .w_full()
@@ -170,6 +221,12 @@ impl Render for AssistantSettingsView {
                         label("Prompts").pt_1(),
                         value().child(self.prompt_list.clone()),
                     ])
+                    .mt_8(),
+            )
+            .child(
+                row()
+                    .items_start()
+                    .children(vec![label("").pt_1(), value().child(create_prompt_button)])
                     .mt_8(),
             )
             .into_any_element()

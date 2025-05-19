@@ -3,7 +3,7 @@ use gpui::{
     Render, RenderOnce, SharedString, Styled, Window,
 };
 
-use crate::ui::{h_flex, List, ListDelegate, ListItem, Theme};
+use crate::ui::{h_flex, Checkbox, Icon, IconName, List, ListDelegate, ListItem, Theme};
 
 #[derive(Clone, Default)]
 pub struct Prompt {
@@ -40,32 +40,29 @@ impl RenderOnce for PromptListItem {
     fn render(self, _: &mut Window, cx: &mut App) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
-        let text_color = if self.selected {
-            theme.accent_foreground
-        } else {
-            theme.foreground
-        };
-
-        let bg_color = if self.selected {
-            theme.secondary
-        } else if self.ix % 2 == 0 {
-            theme.background
-        } else {
-            theme.secondary
-        };
+        let propmt_enabled_checkbox = Checkbox::new(self.ix).checked(true).on_click(|a, b, c| {});
+        let readonly_icon = Icon::new(IconName::PencilOff)
+            .size_3()
+            .text_color(theme.muted_foreground);
 
         self.base
             .px_3()
             .py_1()
             .overflow_x_hidden()
-            .bg(bg_color)
+            .cursor_pointer()
             .child(
                 h_flex()
                     .items_center()
                     .justify_between()
-                    .gap_2()
-                    .text_color(text_color)
-                    .child(self.prompt.name),
+                    .child(
+                        h_flex()
+                            .items_center()
+                            .justify_start()
+                            .gap_2()
+                            .child(propmt_enabled_checkbox)
+                            .child(self.prompt.name.clone()),
+                    )
+                    .child(readonly_icon),
             )
     }
 }
@@ -144,10 +141,15 @@ impl PromptList {
     pub fn new(prompts: Vec<Prompt>, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let delegate = PromptListDelegate {
             prompts,
-            selected_index: Some(0),
+            selected_index: None,
         };
 
-        let prompt_list = cx.new(|cx| List::new(delegate, window, cx).no_query().max_h(rems(10.)));
+        let prompt_list = cx.new(|cx| {
+            List::new(delegate, window, cx)
+                .no_query()
+                .selectable(false)
+                .max_h(rems(11.5))
+        });
 
         PromptList { prompt_list }
     }
