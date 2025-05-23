@@ -1,5 +1,6 @@
 use gpui::*;
 
+use crate::assistant::{Model, ModelProvider};
 use crate::state::settings_state::*;
 use crate::storage::{Storage, StorageKey};
 use crate::ui::{
@@ -11,32 +12,11 @@ use super::components::{Prompt, PromptList};
 
 const VIEW_HEIGHT: f32 = 464.0;
 
-#[derive(Clone)]
-enum ModelProvider {
-    Anthropic,
-    OpenAI,
-}
-
-#[derive(Clone)]
-struct Model {
-    name: SharedString,
-    provider: ModelProvider,
-}
-
-impl Model {
-    pub fn new(name: impl Into<SharedString>, provider: ModelProvider) -> Self {
-        Self {
-            name: name.into(),
-            provider,
-        }
-    }
-}
-
 impl DropdownItem for Model {
     type Value = Model;
 
     fn title(&self) -> SharedString {
-        self.name.clone()
+        self.title.clone()
     }
 
     fn display_title(&self, cx: &App) -> Option<gpui::AnyElement> {
@@ -52,7 +32,7 @@ impl DropdownItem for Model {
                 })
                 .text_color(cx.theme().primary),
             )
-            .child(self.name.clone());
+            .child(self.title.clone());
 
         Some(element.into_any_element())
     }
@@ -77,18 +57,7 @@ impl AssistantSettingsView {
         cx: &mut Context<Self>,
     ) -> Self {
         let storage = cx.global::<Storage>();
-
-        let models = vec![
-            Model::new("Claude 3.7", ModelProvider::Anthropic),
-            Model::new("Claude 3.5 Sonnet", ModelProvider::Anthropic),
-            Model::new("Claude 3.5 Haiku", ModelProvider::Anthropic),
-            Model::new("GPT-4.1", ModelProvider::OpenAI),
-            Model::new("GPT-4.1 mini", ModelProvider::OpenAI),
-            Model::new("GPT-4.1 nano", ModelProvider::OpenAI),
-            Model::new("GPT-4o", ModelProvider::OpenAI),
-            Model::new("GPT-4o mini", ModelProvider::OpenAI),
-        ];
-
+        let models = Model::get_models();
         let prompts = vec![
             Prompt::new("Change Tone to Confident", ""),
             Prompt::new("Change Tone to Professional", ""),
@@ -100,9 +69,18 @@ impl AssistantSettingsView {
             Prompt::new("Translate to Russian", ""),
         ];
 
-        let provider = ModelProvider::Anthropic;
+        let default_model = models.get(0).unwrap();
+        let model = storage
+            .get(StorageKey::AssistantModel)
+            .map(|value| serde_json::from_str::<Model>(&value))
+            .transpose() // converts Option<Result<T, E>> to Result<Option<T>, E>
+            .map(|opt| opt.unwrap_or(default_model.clone()))
+            .unwrap_or_else(|err| {
+                println!("Error parsing model: {:?}", err);
+                default_model.clone()
+            });
 
-        let api_key = (match provider {
+        let api_key = (match model.provider {
             ModelProvider::Anthropic => storage.get(StorageKey::AnthropicApiKey),
             ModelProvider::OpenAI => storage.get(StorageKey::AssistantOpenAiApiKey),
         })
@@ -129,24 +107,31 @@ impl AssistantSettingsView {
         })
         .detach();
 
+        let model_index = models.iter().position(|item| item.name == model.name);
         let model_dropdown = cx.new(|cx| {
-            Dropdown::new("model-dropdown", models, Some(0), window, cx).placeholder("Select Model")
+            Dropdown::new("model-dropdown", models, model_index, window, cx)
+                .placeholder("Select Model")
         });
 
         cx.subscribe(&model_dropdown, |this, _dropdown, event, cx| {
             let DropdownEvent::Confirm(value) = event;
 
             if let Some(model) = value {
-                this.provider = model.provider.clone();
+                // Save model to storage
+                let storage = cx.global::<Storage>();
+                let _ = storage.set(
+                    StorageKey::AssistantModel,
+                    serde_json::to_string(&model).unwrap(),
+                );
 
-                this.api_key_input.update(cx, |input, cx| {
+                this.provider = model.provider.clone();
+                this.api_key_input.update(cx, |input, _cx| {
                     let placeholder = match model.provider {
                         ModelProvider::Anthropic => "Enter Anthropic API Key",
                         ModelProvider::OpenAI => "Enter OpenAI API Key",
                     };
 
                     input.set_placeholder(placeholder);
-                    // input.set_text("".to_string(), window, cx);
                 });
 
                 cx.notify();

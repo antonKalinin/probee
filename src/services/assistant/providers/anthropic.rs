@@ -9,9 +9,9 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::channel;
 use tokio_stream::wrappers::ReceiverStream;
 
-use crate::errors::*;
 use crate::services::assistant::AssistantProviderClient;
 use crate::services::storage::{Storage, StorageKey};
+use crate::{errors::*, state::settings_state::set_error};
 
 #[derive(Serialize)]
 struct Message {
@@ -112,7 +112,10 @@ impl AnthropicProviderClient {
         let api_key = storage.get(StorageKey::AnthropicApiKey).unwrap_or_default();
 
         if api_key.is_empty() {
-            // TODO: set state error
+            set_error(
+                cx,
+                Some(AssistantError::MissingProviederApiKey(String::from("Anthropic")).into()),
+            );
         }
 
         let mut headers = HeaderMap::new();

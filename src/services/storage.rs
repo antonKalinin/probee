@@ -42,9 +42,7 @@ pub enum StorageKey {
     // assistant
     AssistantId,
     AssistantModel,
-    AssistantCustomPrompt,
-    AssistantCustomPromptTemperature,
-    AssistantCustomPromptMaxTokens,
+    CustomAssistants,
     // provider specific
     AnthropicApiKey,
     AssistantOpenAiApiKey,
@@ -52,7 +50,7 @@ pub enum StorageKey {
     // settings
     SettingsTheme,
     SettingsFontSize,
-    SettingsPosition,
+    SttingsTransparency,
     SettingsStartOnLogin,
 
     // shortcuts

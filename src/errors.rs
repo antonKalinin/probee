@@ -44,12 +44,12 @@ pub enum AuthError {
 
 #[derive(Error, Debug)]
 pub enum AssistantError {
-    #[error("Assistant config is missing\nIt seems that you haven't selected any assistant. In case you have, please try again or restart the app.")]
-    MissingConfig,
+    #[error("Assistant prompt is missing\nIt seems that you haven't selected any assistant. In case you have, please try again or restart the app.")]
+    MissingPrompt,
     #[error("Assistant provider is missing\nPlease try again or restart the app.")]
     MissingProviderClient,
-    #[error("Can't resolve assistnat intructions")]
-    MissingSystemPrompt,
+    #[error("{0} API key is missing\nPlease provide the API key in the settings.")]
+    MissingProviederApiKey(String),
     #[error("Unsupported assistant provider\n{0}")]
     UnsupportedProvider(String),
 }

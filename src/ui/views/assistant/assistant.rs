@@ -36,33 +36,32 @@ impl AssistantView {
         })
         .detach();
 
-        // load assistants in the background
+        // load prompts in the background
         cx.spawn(async move |weak_view, cx| {
             let _ = weak_view.update(cx, |this: &mut AssistantView, cx| {
                 this.loading = true;
                 cx.notify();
             });
 
-            let assistants = api.get_assistants(cx).await;
-            let saved_assistant_id = storage.get(StorageKey::AssistantId);
+            let prompts = api.get_prompts(cx).await;
+            let saved_propmt_id = storage.get(StorageKey::AssistantId);
 
             AppStateController::update_async(
-                |this, cx| match assistants {
-                    Ok(assistants) => {
-                        this.set_assistants(cx, assistants.clone());
-                        let assistant_ids =
-                            assistants.iter().map(|a| a.id.clone()).collect::<Vec<_>>();
-                        let first_assistant_id = assistant_ids.first().cloned();
+                |this, cx| match prompts {
+                    Ok(prompts) => {
+                        this.set_promts(cx, prompts.clone());
+                        let prompts_ids = prompts.iter().map(|a| a.id.clone()).collect::<Vec<_>>();
+                        let first_prompt_id = prompts_ids.first().cloned();
 
-                        // ensure if the saved assistant id is still valid
-                        let saved_assistant_id = saved_assistant_id
+                        // ensure if the saved prompt id is still valid
+                        let saved_propmt_id = saved_propmt_id
                             .as_ref()
-                            .filter(|id| assistant_ids.contains(id))
+                            .filter(|id| prompts_ids.contains(id))
                             .cloned();
 
-                        match (saved_assistant_id, first_assistant_id) {
+                        match (saved_propmt_id, first_prompt_id) {
                             (Some(id), _) | (None, Some(id)) => {
-                                this.set_active_assistant_id(cx, Some(id))
+                                this.set_active_prompt_id(cx, Some(id))
                             }
                             _ => {}
                         }
@@ -109,14 +108,14 @@ impl Render for AssistantView {
                 .into_any_element();
         }
 
-        let assistant_header = div().child(self.header_view.clone());
+        let prompt_header = div().child(self.header_view.clone());
         let output = div().child(self.output_view.clone());
 
         div()
             .flex()
             .flex_col()
             .flex_shrink_0()
-            .child(assistant_header)
+            .child(prompt_header)
             .child(output)
             .into_any_element()
     }

@@ -1,31 +1,32 @@
 use gpui::*;
 
 use crate::events::UiEvent;
-use crate::services::AssistantConfig;
+use crate::services::Prompt;
 use crate::state::app_state::*;
 use crate::ui::*;
 
 pub struct Header {
-    assistant: Option<AssistantConfig>,
+    prompt: Option<Prompt>,
 }
 
 impl Header {
     pub fn new(cx: &mut Context<Self>, state: &Entity<AppState>) -> Self {
         let _ = cx
             .observe(state, |this, model, cx| {
-                if let Some(assistant_id) = model.read(cx).active_assistant_id.clone() {
-                    this.assistant = model
+                if let Some(prompt) = model.read(cx).active_prompt_id.clone() {
+                    this.prompt = model
                         .read(cx)
-                        .assistants
+                        .prompts
                         .iter()
-                        .find(|a| a.id == assistant_id)
+                        .find(|a| a.id == prompt)
                         .cloned();
+
                     cx.notify();
                 }
             })
             .detach();
 
-        Header { assistant: None }
+        Header { prompt: None }
     }
 }
 
@@ -33,12 +34,12 @@ impl Render for Header {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
-        if self.assistant.is_none() {
-            // TODO: push to select assistant
+        if self.prompt.is_none() {
+            // TODO: push to select prompt
             return div().into_any_element();
         }
 
-        let assistant = self.assistant.as_ref().unwrap();
+        let prompt = self.prompt.as_ref().unwrap();
 
         let on_click = cx.listener({
             move |_this, _event, _window, cx: &mut Context<Self>| {
@@ -52,10 +53,10 @@ impl Render for Header {
             .opacity(0.)
             .text_color(theme.foreground)
             .ml_3()
-            .group_hover("assistant-name", |style| style.opacity(1.));
+            .group_hover("prompt-name", |style| style.opacity(1.));
 
         div()
-            .group("assistant-name")
+            .group("prompt-name")
             .flex()
             .flex_row()
             .flex_wrap()
@@ -63,7 +64,7 @@ impl Render for Header {
             .text_size(theme.text_size)
             .font_weight(FontWeight::MEDIUM)
             .child(row().children(vec![
-                div().text_color(theme.primary).child(assistant.name.clone()),
+                div().text_color(theme.primary).child(prompt.name.clone()),
                 div().child(dropdown_icon),
             ]))
             .cursor_pointer()

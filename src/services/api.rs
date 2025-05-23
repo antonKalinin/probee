@@ -8,7 +8,7 @@ use serde::Deserialize;
 use std::env;
 
 use crate::errors::ApiError;
-use crate::services::Auth;
+use crate::services::{Auth, Prompt};
 
 /*
  * Api service that uses Supabase REST API as the backend.
@@ -25,27 +25,9 @@ pub struct Message {
     pub content: String,
 }
 
-#[derive(Clone, Deserialize, Debug)]
-pub struct Model {
-    pub name: String,
-    pub provider: String,
-}
-
-#[derive(Clone, Deserialize, Debug)]
-pub struct AssistantConfig {
-    pub id: String,
-    pub name: String,
-    pub description: String,
-    pub model: Model,
-    pub messages: Vec<Message>,
-    pub temperature: f32,
-    pub updated_at: String,
-    pub created_at: String,
-}
-
 #[derive(Deserialize, Debug)]
 pub struct GetAssistantsResponse {
-    assistants: Vec<AssistantConfig>,
+    prompts: Vec<Prompt>,
 }
 
 impl Api {
@@ -72,9 +54,9 @@ impl Api {
         });
     }
 
-    pub async fn get_assistants(&self, cx: &mut AsyncApp) -> Result<Vec<AssistantConfig>> {
-        // Returns public assistants for authenticated users and personal assistants for their authors.
-        let url = format!("{}{}", self.base_url, "/rest/v1/assistants");
+    pub async fn get_prompts(&self, cx: &mut AsyncApp) -> Result<Vec<Prompt>> {
+        // Returns public prompts for authenticated users and personal prompts for their authors.
+        let url = format!("{}{}", self.base_url, "/rest/v1/prompts");
 
         let access_token = Auth::get_access_token_async(cx).unwrap_or("".into());
         let response = self
@@ -91,12 +73,12 @@ impl Api {
             return Ok(vec![]);
         }
 
-        let assistants = response
-            .json::<Vec<AssistantConfig>>()
+        let prompts = response
+            .json::<Vec<Prompt>>()
             .await
             .map_err(|original_err| ApiError::DecodingError(original_err))?;
 
-        Ok(assistants)
+        Ok(prompts)
     }
 }
 

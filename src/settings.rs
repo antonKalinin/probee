@@ -31,8 +31,8 @@ impl SettingsRoot {
             let error_view = cx.new(|cx| ErrorView::new(cx, &state));
 
             let tabs = vec![
-                cx.new(|cx| SettingsTab::new(SettingsTabType::General, &state, cx)),
                 cx.new(|cx| SettingsTab::new(SettingsTabType::Assistant, &state, cx)),
+                cx.new(|cx| SettingsTab::new(SettingsTabType::General, &state, cx)),
                 cx.new(|cx| SettingsTab::new(SettingsTabType::Shortcuts, &state, cx)),
                 cx.new(|cx| SettingsTab::new(SettingsTabType::About, &state, cx)),
             ];

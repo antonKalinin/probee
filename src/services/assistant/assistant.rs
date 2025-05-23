@@ -30,34 +30,70 @@ pub enum ModelProvider {
 
 #[derive(Clone, Deserialize, Debug, Serialize)]
 pub struct Model {
-    name: SharedString,
-    provider: ModelProvider,
+    pub title: SharedString,
+    pub name: String,
+    pub provider: ModelProvider,
 }
 
 impl Model {
-    pub fn new(name: impl Into<SharedString>, provider: ModelProvider) -> Self {
+    pub fn new(title: impl Into<SharedString>, name: String, provider: ModelProvider) -> Self {
         Self {
+            title: title.into(),
             name: name.into(),
             provider,
         }
     }
+
+    pub fn get_models() -> Vec<Self> {
+        vec![
+            Self::new(
+                "Claude 4 Opus",
+                "claude-opus-4-20250514".to_string(),
+                ModelProvider::Anthropic,
+            ),
+            Self::new(
+                "Claude 4 Sonnet",
+                "claude-sonnet-4-20250514".to_string(),
+                ModelProvider::Anthropic,
+            ),
+            Self::new(
+                "Claude 3.7",
+                "claude-3-7-sonnet-20250219".to_string(),
+                ModelProvider::Anthropic,
+            ),
+            Self::new(
+                "Claude 3.5 Sonnet",
+                "claude-3-5-sonnet-20241022".into(),
+                ModelProvider::Anthropic,
+            ),
+            Self::new(
+                "Claude 3 Haiku",
+                "claude-3-haiku-20240307".into(),
+                ModelProvider::Anthropic,
+            ),
+        ]
+    }
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone, Deserialize, Debug)]
 pub struct Prompt {
-    id: String,
-    name: SharedString,
-    text: SharedString,
-    created_at: String,
-    updated_at: String,
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub system_message: String,
+    pub temperature: f32,
+    pub updated_at: String,
+    pub created_at: String,
 }
 
 impl Prompt {
-    pub fn new(name: impl Into<SharedString>, text: impl Into<SharedString>) -> Self {
+    pub fn new(name: String, message: String) -> Self {
         Self {
             id: Uuid::new_v4().to_string(),
             name: name.into(),
-            text: text.into(),
+            description: "".into(),
+            system_message: message.into(),
+            temperature: 0.2,
             created_at: "2025-05-13T14:25:30.123Z".into(),
             updated_at: "2025-05-13T14:25:30.123Z".into(),
         }
@@ -83,9 +119,10 @@ impl Clone for Assistant {
 impl Assistant {
     pub fn init(cx: &mut App) {
         let storage = cx.global::<Storage>();
+        let default_model = Model::get_models().get(0).unwrap().clone();
         let model: Option<Model> = storage
             .get(StorageKey::AssistantModel)
-            .map(|model_str| serde_json::from_str(&model_str).unwrap());
+            .map(|model_str| serde_json::from_str(&model_str).unwrap_or(default_model));
 
         let provider_client: Option<Box<dyn AssistantProviderClient>> = match model.clone() {
             Some(model) => match model.provider {
@@ -120,10 +157,10 @@ impl Assistant {
         }
 
         if self.prompt.is_none() {
-            return Err(AssistantError::MissingSystemPrompt.into());
+            return Err(AssistantError::MissingPrompt.into());
         }
 
-        let system_prompt = self.prompt.as_ref().unwrap().text.to_string();
+        let system_prompt = self.prompt.as_ref().unwrap().system_message.clone();
         let provider_client = self.provider_client.as_ref().unwrap();
 
         provider_client

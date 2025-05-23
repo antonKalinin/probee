@@ -3,7 +3,7 @@ use gpui::{App, AppContext, AsyncApp, BorrowAppContext, Entity, EventEmitter, Gl
 
 use super::error_state::*;
 use crate::events::AppEvent;
-use crate::services::AssistantConfig;
+use crate::services::Prompt;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum AppView {
@@ -13,13 +13,13 @@ pub enum AppView {
 
 #[derive(Debug)]
 pub struct AppState {
-    pub active_assistant_id: Option<String>,
+    pub active_prompt_id: Option<String>,
     pub active_view: AppView,
-    pub assistants: Vec<AssistantConfig>,
+    pub blur_id: u16,
     pub error: Option<Error>,
     pub input: Option<String>,
     pub output: String,
-    pub blur_id: u16,
+    pub prompts: Vec<Prompt>,
 
     pub focused: bool,
     pub loading: bool,
@@ -53,13 +53,13 @@ impl ErrorStateController for AppStateController {
 impl AppStateController {
     pub fn init(cx: &mut App) {
         let state: Entity<AppState> = cx.new(|_cx| AppState {
-            active_assistant_id: None,
+            active_prompt_id: None,
             active_view: AppView::AssistantView,
-            assistants: vec![],
+            blur_id: 0,
             error: None,
             input: None,
             output: "".to_owned(),
-            blur_id: 0,
+            prompts: vec![],
 
             focused: false,
             loading: false,
@@ -87,9 +87,9 @@ impl AppStateController {
         });
     }
 
-    pub fn set_active_assistant_id(&self, cx: &mut App, id: Option<String>) {
+    pub fn set_active_prompt_id(&self, cx: &mut App, id: Option<String>) {
         self.state.update(cx, |state, cx| {
-            state.active_assistant_id = id.clone();
+            state.active_prompt_id = id.clone();
 
             if let Some(id) = id {
                 cx.emit(AppEvent::AssistantChanged(id));
@@ -99,9 +99,9 @@ impl AppStateController {
         });
     }
 
-    pub fn set_assistants(&self, cx: &mut App, assistants: Vec<AssistantConfig>) {
+    pub fn set_promts(&self, cx: &mut App, prompts: Vec<Prompt>) {
         self.state.update(cx, |state, cx| {
-            state.assistants = assistants;
+            state.prompts = prompts;
             cx.notify();
         });
     }
@@ -177,18 +177,27 @@ impl AppStateController {
 
 /* Helper functions */
 
-pub fn get_active_assistant(cx: &App) -> Option<AssistantConfig> {
+pub fn get_active_prompt(cx: &App) -> Option<Prompt> {
     let state = cx.global::<AppStateController>().state.read(cx);
 
-    match state.active_assistant_id.clone() {
-        Some(id) => state
-            .assistants
-            .iter()
-            .find(|assistant| assistant.id == id)
-            .cloned(),
+    match state.active_prompt_id.clone() {
+        Some(id) => state.prompts.iter().find(|prompt| prompt.id == id).cloned(),
         None => None,
     }
 }
+
+// pub fn get_active_assistant(cx: &App) -> Option<AssistantConfig> {
+//     let state = cx.global::<AppStateController>().state.read(cx);
+
+//     match state.active_prompt_id.clone() {
+//         Some(id) => state
+//             .assistants
+//             .iter()
+//             .find(|assistant| assistant.id == id)
+//             .cloned(),
+//         None => None,
+//     }
+// }
 
 pub fn get_focused(cx: &mut App) -> bool {
     let state = cx.global::<AppStateController>().state.read(cx);
@@ -200,8 +209,8 @@ pub fn get_blur_id(cx: &mut App) -> u16 {
     state.blur_id
 }
 
-pub fn set_active_assistant_id(cx: &mut App, id: Option<String>) {
-    AppStateController::update(|this, cx| this.set_active_assistant_id(cx, id), cx);
+pub fn set_active_prompt_id(cx: &mut App, id: Option<String>) {
+    AppStateController::update(|this, cx| this.set_active_prompt_id(cx, id), cx);
 }
 
 pub fn set_active_view(cx: &mut App, view: AppView) {

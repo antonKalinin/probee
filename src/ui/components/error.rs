@@ -1,5 +1,6 @@
 use gpui::*;
 
+use crate::state::settings_state::set_error;
 use crate::state::ErrorState;
 use crate::ui::*;
 
@@ -58,21 +59,42 @@ impl Render for ErrorView {
                 String::from("Something went wrong"),
             ));
 
+        let handle_clear = cx.listener({
+            move |this, _event, _window, cx: &mut Context<Self>| {
+                set_error(cx, None);
+                this.visible = false;
+                cx.notify();
+            }
+        });
+
+        let clear_button = Icon::new(IconName::X)
+            .text_color(theme.muted_foreground)
+            .hover(|style| style.text_color(theme.primary))
+            .size_4()
+            .mr_2()
+            .on_mouse_down(MouseButton::Left, handle_clear)
+            .cursor_pointer();
+
         let alert_icon = div()
             .flex()
             .items_center()
             .justify_center()
             .p_2()
-            .mr_2()
+            .mr_3()
             .rounded_full()
             .shadow_md()
             .bg(theme.background)
             .child(Icon::new(IconName::HeartCrack).text_color(red500));
 
         let title = div()
+            .flex()
+            .flex_row()
+            .items_center()
+            .justify_between()
             .text_color(theme.foreground)
             .text_size(theme.text_size)
-            .child(error_title);
+            .child(error_title)
+            .child(clear_button);
 
         let body = div()
             .w_72()

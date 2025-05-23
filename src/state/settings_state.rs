@@ -43,7 +43,7 @@ impl ErrorStateController for SettingsStateController {
 impl SettingsStateController {
     pub fn init(cx: &mut App) {
         let state: Entity<SettingsState> = cx.new(|_cx| SettingsState {
-            active_tab: SettingsTabType::General,
+            active_tab: SettingsTabType::Assistant,
             error: None,
             loading: false,
         });
@@ -72,13 +72,6 @@ impl SettingsStateController {
     pub fn set_active_tab(&self, cx: &mut App, tab: SettingsTabType) {
         self.state.update(cx, |state, cx| {
             state.active_tab = tab;
-            cx.notify();
-        });
-    }
-
-    pub fn set_error(&self, cx: &mut App, error: Option<Error>) {
-        self.state.update(cx, |state, cx| {
-            state.error = error;
             cx.notify();
         });
     }

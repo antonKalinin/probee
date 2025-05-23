@@ -1,15 +1,14 @@
 use gpui::*;
 
 use crate::events::*;
-use crate::services::AssistantConfig;
+use crate::services::Prompt;
 use crate::state::app_state::*;
 use crate::ui::*;
 
 pub struct LibraryView {
+    active_prompt_id: Option<String>,
     header_view: Entity<Header>,
-
-    assistants: Vec<AssistantConfig>,
-    active_assistant_id: Option<String>,
+    prompts: Vec<Prompt>,
     visible: bool,
 }
 
@@ -19,8 +18,8 @@ impl LibraryView {
 
         cx.observe(state, |this, model, cx| {
             this.visible = model.read(cx).active_view == AppView::LibraryView;
-            this.assistants = model.read(cx).assistants.clone();
-            this.active_assistant_id = model.read(cx).active_assistant_id.clone();
+            this.prompts = model.read(cx).prompts.clone();
+            this.active_prompt_id = model.read(cx).active_prompt_id.clone();
 
             cx.notify();
         })
@@ -36,8 +35,8 @@ impl LibraryView {
         LibraryView {
             header_view,
 
-            assistants: state.read(cx).assistants.clone(),
-            active_assistant_id: state.read(cx).active_assistant_id.clone(),
+            prompts: state.read(cx).prompts.clone(),
+            active_prompt_id: state.read(cx).active_prompt_id.clone(),
             visible: false,
         }
     }
@@ -54,17 +53,18 @@ impl Render for LibraryView {
         let header = div().child(self.header_view.clone());
         let assistant_list = || div().my_2();
 
-        let assistant_items = self.assistants.iter().map(|assistant| {
-            let assistant_id = assistant.id.clone();
+        let assistant_items = self.prompts.iter().map(|assistant| {
+            let propmt_id = assistant.id.clone();
 
-            let bg_color = match &self.active_assistant_id {
-                Some(active_assistant_id) if active_assistant_id == &assistant_id => theme.accent,
+            let bg_color = match &self.active_prompt_id {
+                Some(active_prompt_id) if active_prompt_id == &propmt_id => theme.accent,
                 _ => theme.background,
             };
 
             let on_click = cx.listener(move |_this, _event, _window, cx: &mut Context<Self>| {
-                set_active_assistant_id(cx, Some(assistant_id.clone()));
+                set_active_prompt_id(cx, Some(propmt_id.clone()));
                 set_active_view(cx, AppView::AssistantView);
+                set_output(cx, "".to_owned());
             });
 
             div()

@@ -26,10 +26,10 @@ impl Output {
         cx.observe(state, |this, state, cx| {
             let error = state.read(cx).error.is_some();
             let loading = state.read(cx).loading;
-            let assistant = get_active_assistant(cx);
+            let prompt = get_active_prompt(cx);
 
             this.text = state.read(cx).output.clone();
-            this.description = assistant.map(|a| a.description.clone()).unwrap_or_default();
+            this.description = prompt.map(|a| a.description.clone()).unwrap_or_default();
             this.loading = loading;
             this.visible = state.read(cx).active_view == AppView::AssistantView && !error;
             cx.notify();

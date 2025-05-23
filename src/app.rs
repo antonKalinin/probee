@@ -40,78 +40,75 @@ impl AppRoot {
         focus_handle.focus(window);
 
         cx.bind_keys([KeyBinding::new("cmd-,", OpenSettings, None)]);
+        // TODO: Load this bindings from storage
         cx.bind_keys([KeyBinding::new("alt-1", SelectPrevAssistant, None)]);
         cx.bind_keys([KeyBinding::new("alt-2", SelectNextAssistant, None)]);
         cx.bind_keys([KeyBinding::new("alt-`", ToggleLibraryView, None)]);
 
-        let global_state = cx.global::<AppStateController>().clone();
+        let api = cx.global::<Api>().clone();
+        let storage = cx.global::<Storage>().clone();
+        let state_controller = cx.global::<AppStateController>().clone();
+
+        cx.spawn(async move |cx| {
+            let prompts = api.get_prompts(cx).await;
+            let saved_propmt_id = storage.get(StorageKey::AssistantId);
+
+            AppStateController::update_async(
+                |this, cx| match prompts {
+                    Ok(prompts) => {
+                        this.set_promts(cx, prompts.clone());
+                        let prompts_ids = prompts.iter().map(|a| a.id.clone()).collect::<Vec<_>>();
+                        let first_prompt_id = prompts_ids.first().cloned();
+
+                        // ensure if the saved prompt id is still valid
+                        let saved_propmt_id = saved_propmt_id
+                            .as_ref()
+                            .filter(|id| prompts_ids.contains(id))
+                            .cloned();
+
+                        match (saved_propmt_id, first_prompt_id) {
+                            (Some(id), _) | (None, Some(id)) => {
+                                this.set_active_prompt_id(cx, Some(id))
+                            }
+                            _ => {}
+                        }
+                    }
+                    Err(err) => {
+                        set_error(cx, Some(err));
+                    }
+                },
+                cx,
+            );
+        })
+        .detach();
 
         let _app_events_subscribtion = cx
-            .subscribe(&global_state.state, |_state, event, cx| {
+            .subscribe(&state_controller.state, |_state, event, cx| {
                 let _ = match event.clone() {
-                    AppEvent::Authenticated => {
-                        let api = cx.global::<Api>().clone();
-                        let storage = cx.global::<Storage>().clone();
-
-                        cx.spawn(async move |cx| {
-                            let assistants = api.get_assistants(cx).await;
-                            let saved_assistant_id = storage.get(StorageKey::AssistantId);
-
-                            AppStateController::update_async(
-                                |this, cx| match assistants {
-                                    Ok(assistants) => {
-                                        this.set_assistants(cx, assistants.clone());
-                                        let first_assistant_id =
-                                            assistants.first().map(|a| a.id.clone());
-
-                                        match (saved_assistant_id, first_assistant_id) {
-                                            (Some(id), _) | (None, Some(id)) => {
-                                                this.set_active_assistant_id(cx, Some(id))
-                                            }
-                                            _ => {}
-                                        }
-                                    }
-                                    Err(err) => {
-                                        set_error(cx, Some(err));
-                                    }
-                                },
-                                cx,
-                            );
-                        })
-                        .detach();
-                    }
                     AppEvent::AssistantChanged(id) => {
                         let storage = cx.global_mut::<Storage>();
                         let _ = storage.set(StorageKey::AssistantId, id.clone());
-                        // TODO: As soon as assistant is changed, reset it in cx.global
+                        // TODO: As soon as prompt is changed, reset it in cx.global
                     }
                     AppEvent::InputChanged(input) => {
-                        let mut assistant = cx.global::<Assistant>().clone();
-                        let assistant_config = get_active_assistant(cx);
-                        if assistant_config.is_none() {
-                            let err = AssistantError::MissingConfig.into();
+                        let mut assitant = cx.global::<Assistant>().clone();
+                        let prompt = get_active_prompt(cx);
+
+                        if prompt.is_none() {
+                            let err = AssistantError::MissingPrompt.into();
                             set_error(cx, Some(err));
                             return;
                         }
 
                         // TODO: Config should not be reset on every input change
-                        let propmt_name = assistant_config.as_ref().unwrap().name.clone();
-                        let propmt = assistant_config
-                            .as_ref()
-                            .unwrap()
-                            .messages
-                            .get(0)
-                            .unwrap()
-                            .content
-                            .clone();
-                        let _ = assistant.set_prompt(Prompt::new(propmt_name, propmt));
+                        let _ = assitant.set_prompt(prompt.unwrap());
 
                         set_error(cx, None);
                         set_output(cx, "".to_owned());
                         set_loading(cx, true);
 
                         cx.spawn(async move |cx| {
-                            let output = assistant.generate_response(input).await;
+                            let output = assitant.generate_response(input).await;
 
                             set_loading_async(cx, false);
 
@@ -132,7 +129,7 @@ impl AppRoot {
             .detach();
 
         let view = cx.new(move |cx| {
-            let state = global_state.state.clone();
+            let state = state_controller.state.clone();
             let assistant_view = cx.new(|cx| AssistantView::new(cx, &state));
             let library_view = cx.new(|cx| LibraryView::new(cx, &state));
             let error_view = cx.new(|cx| ErrorView::new(cx, &state));
@@ -185,63 +182,65 @@ impl AppRoot {
         cx.emit(AppEvent::OpenSettings);
     }
 
-    fn select_next_assistant(
+    fn select_next_prompt(
         &mut self,
         _: &SelectNextAssistant,
         _: &mut Window,
         cx: &mut Context<Self>,
     ) {
         let app_state = cx.global::<AppStateController>().clone().state.read(cx);
-        let assistants = app_state.assistants.clone();
-        let curr_assistant_id = app_state.active_assistant_id.clone();
+        let prompts = app_state.prompts.clone();
+        let curr_prompt_id = app_state.active_prompt_id.clone();
 
-        if curr_assistant_id.is_none() {
+        if curr_prompt_id.is_none() {
             return;
         }
 
-        let curr_assistant_index = (assistants
+        let curr_prompt_index = (prompts
             .iter()
-            .position(|assistant| &assistant.id == curr_assistant_id.as_ref().unwrap()))
+            .position(|prompt| &prompt.id == curr_prompt_id.as_ref().unwrap()))
         .unwrap_or(0);
 
-        let next_assistant_index = if curr_assistant_index == assistants.len() - 1 {
+        let next_prompt_index = if curr_prompt_index == prompts.len() - 1 {
             0
         } else {
-            curr_assistant_index + 1
+            curr_prompt_index + 1
         };
 
-        if let Some(assistant) = assistants.get(next_assistant_index) {
-            set_active_assistant_id(cx, Some(assistant.id.clone()));
+        if let Some(prompt) = prompts.get(next_prompt_index) {
+            set_active_prompt_id(cx, Some(prompt.id.clone()));
+            set_output(cx, "".to_owned());
         }
     }
 
-    fn select_prev_assistant(
+    fn select_prev_prompt(
         &mut self,
         _: &SelectPrevAssistant,
         _: &mut Window,
         cx: &mut Context<Self>,
     ) {
         let app_state = cx.global::<AppStateController>().clone().state.read(cx);
-        let assistants = app_state.assistants.clone();
-        let curr_assistant_id = app_state.active_assistant_id.clone();
+        let prompts = app_state.prompts.clone();
+        let curr_prompt_id = app_state.active_prompt_id.clone();
 
-        if curr_assistant_id.is_none() {
+        if curr_prompt_id.is_none() {
             return;
         }
 
-        let curr_assistant_index = (assistants
+        let curr_prompt_index = (prompts
             .iter()
-            .position(|assistant| &assistant.id == curr_assistant_id.as_ref().unwrap()))
+            .position(|prompt| &prompt.id == curr_prompt_id.as_ref().unwrap()))
         .unwrap_or(0);
 
-        let next_assistant_index = if curr_assistant_index == 0 {
-            assistants.len() - 1
+        let next_prompt_index = if curr_prompt_index == 0 {
+            prompts.len() - 1
         } else {
-            curr_assistant_index - 1
+            curr_prompt_index - 1
         };
 
-        if let Some(assistant) = assistants.get(next_assistant_index) {
-            set_active_assistant_id(cx, Some(assistant.id.clone()));
+        if let Some(prompt) = prompts.get(next_prompt_index) {
+            set_active_prompt_id(cx, Some(prompt.id.clone()));
+            set_output(cx, "".to_owned());
         }
     }
 }
@@ -265,8 +264,8 @@ impl Render for AppRoot {
 
         div()
             .on_action(cx.listener(Self::open_settings))
-            .on_action(cx.listener(Self::select_next_assistant))
-            .on_action(cx.listener(Self::select_prev_assistant))
+            .on_action(cx.listener(Self::select_next_prompt))
+            .on_action(cx.listener(Self::select_prev_prompt))
             .track_focus(&self.focus_handle)
             .size_full()
             .flex()
