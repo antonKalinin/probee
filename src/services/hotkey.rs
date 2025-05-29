@@ -32,6 +32,10 @@ impl HotkeyManager {
         cx.set_global::<HotkeyManager>(HotkeyManager { manager });
 
         cx.spawn(async move |cx| {
+            if let Ok(event) = GlobalHotKeyEvent::receiver().try_recv() {
+                println!("{:?}", event);
+            }
+
             let mut hotkey_pressed_at: Option<Instant> = None;
             let long_press_duration = Duration::from_millis(300);
 

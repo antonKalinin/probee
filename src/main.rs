@@ -41,6 +41,7 @@ async fn main() {
         Auth::init(cx);
         Clipboard::init(cx);
         HotkeyManager::init(cx);
+        GlobalHotkeyManager::init(cx);
         Theme::init(cx);
         Components::init(cx);
         // state

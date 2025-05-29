@@ -1,4 +1,6 @@
 pub mod devtools;
+pub mod keyboard;
 pub mod window;
 
+pub use keyboard::*;
 pub use window::*;

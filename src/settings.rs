@@ -11,7 +11,7 @@ pub struct SettingsRoot {
     about_view: Entity<AboutView>,
     assistant_view: Entity<AssistantSettingsView>,
     general_view: Entity<GeneralSettingsView>,
-    shortcuts_view: Entity<ShortcutsView>,
+    hotkeys_view: Entity<HotkeysView>,
 
     error_view: Entity<ErrorView>,
     tabs: Vec<Entity<SettingsTab>>,
@@ -27,12 +27,12 @@ impl SettingsRoot {
             let about_view = cx.new(|cx| AboutView::new(cx, &state));
             let general_view = cx.new(|cx| GeneralSettingsView::new(&state, cx));
             let assistant_view = cx.new(|cx| AssistantSettingsView::new(&state, window, cx));
-            let shortcuts_view = cx.new(|cx| ShortcutsView::new(&state, cx));
+            let hotkeys_view = cx.new(|cx| HotkeysView::new(&state, cx));
             let error_view = cx.new(|cx| ErrorView::new(cx, &state));
 
             let tabs = vec![
+                // cx.new(|cx| SettingsTab::new(SettingsTabType::General, &state, cx)),
                 cx.new(|cx| SettingsTab::new(SettingsTabType::Assistant, &state, cx)),
-                cx.new(|cx| SettingsTab::new(SettingsTabType::General, &state, cx)),
                 cx.new(|cx| SettingsTab::new(SettingsTabType::Shortcuts, &state, cx)),
                 cx.new(|cx| SettingsTab::new(SettingsTabType::About, &state, cx)),
             ];
@@ -51,7 +51,7 @@ impl SettingsRoot {
                 about_view,
                 assistant_view,
                 general_view,
-                shortcuts_view,
+                hotkeys_view,
 
                 tabs,
                 error_view,
@@ -107,7 +107,7 @@ impl Render for SettingsRoot {
                 this.child(self.assistant_view.clone())
             })
             .when(self.active_tab == SettingsTabType::Shortcuts, |this| {
-                this.child(self.shortcuts_view.clone())
+                this.child(self.hotkeys_view.clone())
             })
             .when(self.active_tab == SettingsTabType::About, |this| {
                 this.child(self.about_view.clone())

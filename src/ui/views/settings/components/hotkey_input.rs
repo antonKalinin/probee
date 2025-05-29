@@ -1,9 +1,11 @@
+use gpui::prelude::FluentBuilder;
 use gpui::*;
 
 use crate::state::settings_state::*;
 use crate::ui::Theme;
 
 pub struct HotkeyInput {
+    recording: bool,
     keystroke: Option<String>,
 }
 
@@ -13,7 +15,10 @@ impl HotkeyInput {
         _state: &Entity<SettingsState>,
         _cx: &mut Context<Self>,
     ) -> Self {
-        HotkeyInput { keystroke }
+        HotkeyInput {
+            keystroke,
+            recording: false,
+        }
     }
 }
 
@@ -22,10 +27,17 @@ impl Render for HotkeyInput {
         let theme = cx.global::<Theme>();
 
         let on_click = cx.listener({
-            move |_this, _event, _window, cx: &mut Context<Self>| {
-                println!("Hotkey input clicked");
+            move |this, _event, _window, cx: &mut Context<Self>| {
+                this.recording = true;
+                cx.notify();
             }
         });
+
+        let display_text = if let Some(keystroke) = &self.keystroke {
+            keystroke.clone()
+        } else {
+            "Record Hotkey".to_string()
+        };
 
         div()
             .w_full()
@@ -42,6 +54,7 @@ impl Render for HotkeyInput {
             .font_weight(FontWeight::MEDIUM)
             .cursor_pointer()
             .on_mouse_down(MouseButton::Left, on_click)
-            .child("Record Hotkey")
+            .when(self.recording, |this| this.child("Recording..."))
+            .when(!self.recording, |this| this.child(display_text))
     }
 }

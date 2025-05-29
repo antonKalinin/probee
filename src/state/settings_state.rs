@@ -1,3 +1,5 @@
+use std::sync::mpsc;
+
 use anyhow::Error;
 use gpui::{prelude::*, App, AppContext, AsyncApp, Entity, Global};
 
@@ -15,7 +17,7 @@ pub enum SettingsTabType {
 pub struct SettingsState {
     pub active_tab: SettingsTabType,
     pub error: Option<Error>,
-    pub loading: bool,
+    pub hotkey_recording_channel: Option<String>,
 }
 
 impl ErrorState for SettingsState {
@@ -45,7 +47,7 @@ impl SettingsStateController {
         let state: Entity<SettingsState> = cx.new(|_cx| SettingsState {
             active_tab: SettingsTabType::Assistant,
             error: None,
-            loading: false,
+            hotkey_recording_channel: None,
         });
 
         let settings_state = SettingsStateController { state };
@@ -75,6 +77,11 @@ impl SettingsStateController {
             cx.notify();
         });
     }
+}
+
+pub fn get_hotkey_recording(cx: &mut App) -> Option<String> {
+    let state = cx.global::<SettingsStateController>().state.read(cx);
+    state.hotkey_recording_channel.as_ref().cloned()
 }
 
 pub fn set_active_tab(cx: &mut App, tab: SettingsTabType) {

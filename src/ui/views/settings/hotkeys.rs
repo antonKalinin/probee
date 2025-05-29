@@ -5,7 +5,7 @@ use crate::ui::Theme;
 
 use super::components::HotkeyInput;
 
-pub struct ShortcutsView {
+pub struct HotkeysView {
     assistant_hotkey_input: Entity<HotkeyInput>,
     visibility_hotkey_input: Entity<HotkeyInput>,
     prev_assistant_hotkey_input: Entity<HotkeyInput>,
@@ -16,7 +16,7 @@ pub struct ShortcutsView {
 
 const VIEW_HEIGHT: f32 = 280.0;
 
-impl ShortcutsView {
+impl HotkeysView {
     pub fn new(state: &Entity<SettingsState>, cx: &mut Context<Self>) -> Self {
         let data = state.read(cx);
         let visible = data.active_tab == SettingsTabType::Shortcuts;
@@ -28,7 +28,7 @@ impl ShortcutsView {
         })
         .detach();
 
-        ShortcutsView {
+        HotkeysView {
             assistant_hotkey_input: cx.new(|cx| HotkeyInput::new(None, &state, cx)),
             visibility_hotkey_input: cx.new(|cx| HotkeyInput::new(None, &state, cx)),
             prev_assistant_hotkey_input: cx.new(|cx| HotkeyInput::new(None, &state, cx)),
@@ -39,7 +39,7 @@ impl ShortcutsView {
     }
 }
 
-impl Render for ShortcutsView {
+impl Render for HotkeysView {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 

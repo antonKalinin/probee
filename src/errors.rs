@@ -50,8 +50,16 @@ pub enum AssistantError {
     MissingProviderClient,
     #[error("{0} API key is missing\nPlease provide the API key in the settings.")]
     MissingProviederApiKey(String),
-    #[error("Unsupported assistant provider\n{0}")]
-    UnsupportedProvider(String),
+    // #[error("Unsupported assistant provider\n{0}")]
+    // UnsupportedProvider(String),
+}
+
+#[derive(Error, Debug)]
+pub enum HotkeyError {
+    #[error("Invalid hotkey format\nHotkey shoukd be either a single modifier key pressed twice (cmd+cmd) or a combination of modifirs and keys (alt+tab)")]
+    InvalidHotkeyFormat,
+    #[error("Failed to register global hotkey.\nPlease provide Probee accessibility permissions:\nSystem Settings > Security & Privacy > Privacy > Accessibility.")]
+    TapEventCreationFailure,
 }
 
 #[allow(dead_code)]
