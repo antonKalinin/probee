@@ -1,13 +1,14 @@
 use anyhow::Result;
-use gpui::App;
+use gpui::{App, Global};
 
+use std::fmt::{self, Display, Formatter};
 use std::os::raw::{c_int, c_void};
 use std::ptr;
 use std::sync::mpsc;
+use std::sync::mpsc::Sender;
 use std::time::{Duration, Instant};
 
 use crate::errors::*;
-use crate::services::{Storage, StorageKey};
 use crate::state::app_state::set_error_async;
 use crate::utils::keyboard::KeyCode;
 
@@ -71,73 +72,66 @@ pub struct KeyEvent {
 
 #[derive(Debug)]
 pub struct KeyEventsState {
-    pub curr_pressed: Vec<KeyCode>,
-    pub prev_released: Option<KeyCode>,
-    pub prev_released_ts: Option<Instant>,
+    pub pressed: Vec<KeyCode>,
+    pub released: Option<KeyCode>,
+    pub released_ts: Option<Instant>,
 }
 
 impl KeyEventsState {
     pub fn new() -> Self {
         KeyEventsState {
-            curr_pressed: Vec::new(),
-            prev_released: None,
-            prev_released_ts: None,
+            pressed: Vec::new(),
+            released: None,
+            released_ts: None,
         }
     }
 
     pub fn push(&mut self, key_event: KeyEvent) {
         match key_event.event_type {
             KeyEventType::KeyDown => {
-                if !self.curr_pressed.contains(&key_event.keycode) {
-                    if self.curr_pressed.len() > 4 {
+                if !self.pressed.contains(&key_event.keycode) {
+                    if self.pressed.len() > 4 {
                         // remove oldest key if we have more than 4 keys pressed
-                        self.curr_pressed.remove(0);
+                        self.pressed.remove(0);
                     }
 
-                    self.curr_pressed.push(key_event.keycode);
+                    self.pressed.push(key_event.keycode);
                 }
             }
             KeyEventType::KeyUp => {
-                if let Some(index) = self
-                    .curr_pressed
-                    .iter()
-                    .position(|&k| k == key_event.keycode)
-                {
-                    self.prev_released = Some(self.curr_pressed.remove(index));
+                if let Some(index) = self.pressed.iter().position(|&k| k == key_event.keycode) {
+                    self.released = Some(self.pressed.remove(index));
                 } else {
-                    self.prev_released = Some(key_event.keycode);
+                    self.released = Some(key_event.keycode);
                 }
 
-                self.prev_released_ts = Some(Instant::now());
+                self.released_ts = Some(Instant::now());
             }
             KeyEventType::Unknown => {}
         }
     }
 
     pub fn reset_released(&mut self) {
-        self.prev_released = None;
-        self.prev_released_ts = None;
+        self.released = None;
+        self.released_ts = None;
     }
 
     /// Valid hotkey can be either:
     /// 1. A single modifier key pressed twice
     /// 2. A combination of currently pressed modifier keys and a single key
     pub fn into_hotkey(&self) -> Option<HotKey> {
-        if self.curr_pressed.is_empty() {
+        if self.pressed.is_empty() {
             return None;
         }
 
-        if let Some(released) = self.prev_released {
-            if released.is_modifier()
-                && self.curr_pressed.len() == 1
-                && self.curr_pressed[0] == released
-            {
+        if let Some(released) = self.released {
+            if released.is_modifier() && self.pressed.len() == 1 && self.pressed[0] == released {
                 // Case: A single modifier key pressed twice
                 return Some(HotKey::new(released, vec![], true).ok()?);
             }
         }
 
-        match self.curr_pressed.as_slice() {
+        match self.pressed.as_slice() {
             [a, b] => {
                 return if a.is_modifier() && !b.is_modifier() {
                     Some(HotKey::new(*b, vec![*a], false).ok()?)
@@ -194,6 +188,23 @@ impl HotKey {
     }
 }
 
+impl Display for HotKey {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        if self.double_pressed {
+            write!(f, "{}+{}", self.key, self.key)
+        } else {
+            let mods_str = self
+                .mods
+                .iter()
+                .map(|m| m.to_string())
+                .collect::<Vec<_>>()
+                .join("+");
+
+            write!(f, "{}+{}", mods_str, self.key)
+        }
+    }
+}
+
 extern "C" fn event_callback(
     _proxy: *mut c_void,
     event_type: c_int,
@@ -247,27 +258,11 @@ extern "C" fn event_callback(
     event
 }
 
-pub enum HotKeyCommand {
-    RunAssistant,
-    ToggleVisibility,
-    NextPrompt,
-    PrevPrompt,
+pub struct GlobalHotkeyManager {
+    key_event_channel: Option<Sender<KeyEvent>>,
 }
 
-impl HotKeyCommand {
-    // Default keystroke - can be overridden
-    fn default_keystroke(&self) -> &'static str {
-        match self {
-            HotKeyCommand::RunAssistant => "alt+tab",
-            HotKeyCommand::ToggleVisibility => "alt+`",
-            HotKeyCommand::NextPrompt => "alt-2",
-            HotKeyCommand::PrevPrompt => "alt-1",
-        }
-    }
-}
-
-#[allow(dead_code)]
-pub struct GlobalHotkeyManager;
+impl Global for GlobalHotkeyManager {}
 
 impl GlobalHotkeyManager {
     pub fn init(cx: &mut App) {
@@ -312,27 +307,31 @@ impl GlobalHotkeyManager {
                 let event = rx.try_recv();
 
                 if event.is_err() {
-                    // If no event is received, we can continue to the next iteration
                     cx.background_executor()
                         .timer(Duration::from_millis(50))
                         .await;
                     continue;
                 }
 
+                let event = event.unwrap();
+
                 if state
-                    .prev_released_ts
+                    .released_ts
                     .map(|ts| ts.elapsed().as_millis() > 300)
                     .unwrap_or(false)
                 {
-                    // Reset released state if more than 300ms has passed
                     state.reset_released();
                 }
 
-                state.push(event.unwrap());
+                state.push(event);
 
-                if let Some(hotkey) = state.into_hotkey() {
-                    println!("Detected hotkey: {:?}", hotkey);
-                }
+                let _ = cx.update(|cx| {
+                    let manager = cx.global_mut::<GlobalHotkeyManager>();
+                    if let Some(key_event_channel) = manager.key_event_channel.as_ref() {
+                        // state.into_hotkey()
+                        let _ = key_event_channel.send(event);
+                    }
+                });
 
                 cx.background_executor()
                     .timer(Duration::from_millis(50))
@@ -340,5 +339,15 @@ impl GlobalHotkeyManager {
             }
         })
         .detach();
+
+        let manager = GlobalHotkeyManager {
+            key_event_channel: None,
+        };
+
+        cx.set_global(manager);
+    }
+
+    pub fn set_key_event_channel(&mut self, channel: Option<Sender<KeyEvent>>) {
+        self.key_event_channel = channel;
     }
 }

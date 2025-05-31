@@ -15,12 +15,7 @@ use crate::utils;
 
 actions!(
     app,
-    [
-        OpenSettings,
-        SelectNextAssistant,
-        SelectPrevAssistant,
-        ToggleLibraryView
-    ]
+    [OpenSettings, SelectNextAssistant, SelectPrevAssistant,]
 );
 
 pub struct AppRoot {
@@ -39,15 +34,14 @@ impl AppRoot {
         let focus_handle = cx.focus_handle();
         focus_handle.focus(window);
 
+        let api = cx.global::<Api>().clone();
+        let storage = cx.global::<Storage>().clone();
+        let state_controller = cx.global::<AppStateController>().clone();
+
         cx.bind_keys([KeyBinding::new("cmd-,", OpenSettings, None)]);
         // TODO: Load this bindings from storage
         cx.bind_keys([KeyBinding::new("alt-1", SelectPrevAssistant, None)]);
         cx.bind_keys([KeyBinding::new("alt-2", SelectNextAssistant, None)]);
-        cx.bind_keys([KeyBinding::new("alt-`", ToggleLibraryView, None)]);
-
-        let api = cx.global::<Api>().clone();
-        let storage = cx.global::<Storage>().clone();
-        let state_controller = cx.global::<AppStateController>().clone();
 
         cx.spawn(async move |cx| {
             let prompts = api.get_prompts(cx).await;
