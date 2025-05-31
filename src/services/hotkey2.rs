@@ -4,7 +4,7 @@ use gpui::App;
 use std::os::raw::{c_int, c_void};
 use std::ptr;
 use std::sync::mpsc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use crate::errors::*;
 use crate::services::{Storage, StorageKey};
@@ -56,84 +56,6 @@ const K_CG_EVENT_FLAG_MASK_CONTROL: u64 = 0x00040000;
 const K_CG_EVENT_FLAG_MASK_ALTERNATE: u64 = 0x00080000;
 const K_CG_EVENT_FLAG_MASK_COMMAND: u64 = 0x00100000;
 
-#[derive(Debug)]
-pub struct KeyEventsState {
-    pub prev_released: KeyCode,
-    pub curr_pressed: Vec<KeyCode>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct HotKey {
-    pub mods: Vec<KeyCode>,
-    pub key: Option<KeyCode>,
-}
-
-impl HotKey {
-    pub fn new(mods: Vec<KeyCode>, key: Option<KeyCode>) -> Result<Self> {
-        if mods.is_empty() {
-            return Err(HotkeyError::InvalidHotkeyFormat.into());
-        }
-
-        Ok(HotKey { mods, key })
-    }
-
-    // TODO: Make sure function accepts either array of 2, 3 or 4 events
-    pub fn from_event_sequence(events: Vec<KeyEvent>) -> Option<Self> {
-        match events.as_slice() {
-            [first, second] => {
-                // Case: Modifier Down, Key Down
-                if first.keycode.is_modifier()
-                    && !second.keycode.is_modifier()
-                    && first.event_type == KeyEventType::KeyDown
-                    && second.event_type == KeyEventType::KeyDown
-                {
-                    return Some(HotKey {
-                        mods: vec![first.keycode],
-                        key: Some(second.keycode),
-                    });
-                }
-
-                None
-            }
-            [first, second, third] => {
-                // Case 1: Modifier Down, Modifier Up, Modifier Down
-                let same_modifier = first.keycode.is_modifier()
-                    && first.keycode == second.keycode
-                    && second.keycode == third.keycode;
-
-                let double_press = match (first.event_type, second.event_type, third.event_type) {
-                    (KeyEventType::KeyDown, KeyEventType::KeyUp, KeyEventType::KeyDown) => true,
-                    _ => false,
-                };
-
-                if same_modifier && double_press {
-                    return Some(HotKey {
-                        mods: vec![first.keycode],
-                        key: None,
-                    });
-                }
-
-                // Case 2: Modifier Down, Modifier Down, Key Down
-                if first.event_type == KeyEventType::KeyDown
-                    && second.event_type == KeyEventType::KeyDown
-                    && first.keycode.is_modifier()
-                    && second.keycode.is_modifier()
-                    && first.keycode != second.keycode
-                    && third.event_type == KeyEventType::KeyDown
-                {
-                    return Some(HotKey {
-                        mods: vec![first.keycode, second.keycode],
-                        key: Some(third.keycode),
-                    });
-                }
-
-                None
-            }
-            _ => None,
-        }
-    }
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum KeyEventType {
     KeyDown,
@@ -145,6 +67,131 @@ pub enum KeyEventType {
 pub struct KeyEvent {
     event_type: KeyEventType,
     keycode: KeyCode,
+}
+
+#[derive(Debug)]
+pub struct KeyEventsState {
+    pub curr_pressed: Vec<KeyCode>,
+    pub prev_released: Option<KeyCode>,
+    pub prev_released_ts: Option<Instant>,
+}
+
+impl KeyEventsState {
+    pub fn new() -> Self {
+        KeyEventsState {
+            curr_pressed: Vec::new(),
+            prev_released: None,
+            prev_released_ts: None,
+        }
+    }
+
+    pub fn push(&mut self, key_event: KeyEvent) {
+        match key_event.event_type {
+            KeyEventType::KeyDown => {
+                if !self.curr_pressed.contains(&key_event.keycode) {
+                    if self.curr_pressed.len() > 4 {
+                        // remove oldest key if we have more than 4 keys pressed
+                        self.curr_pressed.remove(0);
+                    }
+
+                    self.curr_pressed.push(key_event.keycode);
+                }
+            }
+            KeyEventType::KeyUp => {
+                if let Some(index) = self
+                    .curr_pressed
+                    .iter()
+                    .position(|&k| k == key_event.keycode)
+                {
+                    self.prev_released = Some(self.curr_pressed.remove(index));
+                } else {
+                    self.prev_released = Some(key_event.keycode);
+                }
+
+                self.prev_released_ts = Some(Instant::now());
+            }
+            KeyEventType::Unknown => {}
+        }
+    }
+
+    pub fn reset_released(&mut self) {
+        self.prev_released = None;
+        self.prev_released_ts = None;
+    }
+
+    /// Valid hotkey can be either:
+    /// 1. A single modifier key pressed twice
+    /// 2. A combination of currently pressed modifier keys and a single key
+    pub fn into_hotkey(&self) -> Option<HotKey> {
+        if self.curr_pressed.is_empty() {
+            return None;
+        }
+
+        if let Some(released) = self.prev_released {
+            if released.is_modifier()
+                && self.curr_pressed.len() == 1
+                && self.curr_pressed[0] == released
+            {
+                // Case: A single modifier key pressed twice
+                return Some(HotKey::new(released, vec![], true).ok()?);
+            }
+        }
+
+        match self.curr_pressed.as_slice() {
+            [a, b] => {
+                return if a.is_modifier() && !b.is_modifier() {
+                    Some(HotKey::new(*b, vec![*a], false).ok()?)
+                } else {
+                    None
+                }
+            }
+            [a, b, c] => {
+                return if a.is_modifier() && b.is_modifier() && !c.is_modifier() {
+                    Some(HotKey::new(*c, vec![*a, *b], false).ok()?)
+                } else {
+                    None
+                }
+            }
+            [a, b, c, d] => {
+                return if a.is_modifier() && b.is_modifier() && c.is_modifier() && !d.is_modifier()
+                {
+                    Some(HotKey::new(*d, vec![*a, *b, *c], false).ok()?)
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct HotKey {
+    key: KeyCode,
+    mods: Vec<KeyCode>,
+    double_pressed: bool,
+}
+
+impl HotKey {
+    pub fn new(key: KeyCode, mods: Vec<KeyCode>, double_pressed: bool) -> Result<Self> {
+        if double_pressed && !key.is_modifier() {
+            return Err(HotkeyError::InvalidHotkeyFormat.into());
+        }
+
+        if !double_pressed && mods.is_empty() {
+            return Err(HotkeyError::InvalidHotkeyFormat.into());
+        }
+
+        if mods.iter().any(|m| !m.is_modifier()) {
+            return Err(HotkeyError::InvalidHotkeyFormat.into());
+        }
+
+        Ok(HotKey {
+            key,
+            mods,
+            double_pressed,
+        })
+    }
 }
 
 extern "C" fn event_callback(
@@ -259,13 +306,7 @@ impl GlobalHotkeyManager {
                 CFRunLoopRun();
             }
 
-            // A sequence of events to form a hotkey
-            // To form valid hotkey we need at least 2 events and at most 4 events
-            // 2: Modifier Down, Key Down
-            // 3: Modifier Down, Modifier Down, Key Down
-            // 3: Modifier Down, Modifier Up, Modifier Down (double press of modifier)
-            // 4: Modifier Down, Modifier Down, Modifier Down, Key Down
-            let mut events: Vec<KeyEvent> = Vec::with_capacity(4);
+            let mut state = KeyEventsState::new();
 
             loop {
                 let event = rx.try_recv();
@@ -278,58 +319,19 @@ impl GlobalHotkeyManager {
                     continue;
                 }
 
-                let event = event.unwrap();
-
-                if events.len() == 4 {
-                    events.remove(0); // remove oldest
+                if state
+                    .prev_released_ts
+                    .map(|ts| ts.elapsed().as_millis() > 300)
+                    .unwrap_or(false)
+                {
+                    // Reset released state if more than 300ms has passed
+                    state.reset_released();
                 }
 
-                // Do not push duplicate events
-                if let Some(last_event) = events.last() {
-                    if last_event.to_owned() == event {
-                        continue; // Skip duplicate event
-                    }
-                }
-                events.push(event);
+                state.push(event.unwrap());
 
-                // To find a hotkey at any position of the sequence [a, b, c?, d?] we need to check
-                // combinations of events in exacly the following order:
-                // 1. [a, b]
-                // 2. [a, b, c]
-                // 3. [a, b, c, d]
-                // 4. [b, c]
-                // 5. [b, c, d]
-                // 6. [c, d]
-                let mut combinations = Vec::new();
-
-                combinations.push(events.iter().take(2).cloned().collect::<Vec<_>>());
-
-                if events.len() == 3 {
-                    combinations.push(events.iter().take(3).cloned().collect::<Vec<_>>());
-                }
-
-                if events.len() == 4 {
-                    combinations.push(events.iter().take(4).cloned().collect::<Vec<_>>());
-                    combinations.push(events.iter().skip(1).take(2).cloned().collect::<Vec<_>>());
-                    combinations.push(events.iter().skip(1).take(3).cloned().collect::<Vec<_>>());
-                    combinations.push(events.iter().skip(2).take(2).cloned().collect::<Vec<_>>());
-                }
-
-                // Note: event sequence doesn't work as events come with duplications which should be ignored
-                // Also if modifier is released while other is still pressed we should update the sequence
-                // to remove the released modifier but keep the pressed one.
-                // So we need something like a state machine, which we update with each event and then check
-                // either the state is valid hotkey or not.
-                // Double press of modifier is special case here and should be handled separately.
-
-                for event_sequence in combinations {
-                    if let Some(hotkey) = HotKey::from_event_sequence(event_sequence) {
-                        // If we have a valid hotkey, we can break the loop
-                        println!("Found hotkey: {:?}", hotkey);
-                        // Here you can handle the hotkey, e.g. run an assistant or toggle visibility
-                        // For now, just print it
-                        break;
-                    }
+                if let Some(hotkey) = state.into_hotkey() {
+                    println!("Detected hotkey: {:?}", hotkey);
                 }
 
                 cx.background_executor()
