@@ -1,16 +1,18 @@
 use gpui::prelude::FluentBuilder;
 use gpui::*;
+use uuid::Uuid;
 
 use std::sync::mpsc;
 use std::time::Duration;
 
-use crate::services::{GlobalHotkeyManager, KeyEvent};
+use crate::services::{GlobalHotkeyManager, HotKey, KeyEvent};
 use crate::state::settings_state::*;
 use crate::ui::Theme;
 
 pub struct HotkeyInput {
-    recording: bool,
     keystroke: Option<String>,
+    recording_id: Option<Uuid>,
+    recording_text: SharedString,
 }
 
 impl HotkeyInput {
@@ -21,42 +23,71 @@ impl HotkeyInput {
     ) -> Self {
         HotkeyInput {
             keystroke,
-            recording: false,
+            recording_id: None,
+            recording_text: SharedString::new("Recording...".to_string()),
         }
     }
 
     pub fn record_global_key_events(&mut self, cx: &mut Context<Self>) {
-        self.recording = true;
+        let recodring_id = Uuid::new_v4();
+        self.recording_id = Some(recodring_id);
 
         cx.spawn(
-            async |weak_entity: WeakEntity<HotkeyInput>, cx: &mut AsyncApp| {
-                let (tx, rx) = mpsc::channel::<KeyEvent>();
+            async move |weak_entity: WeakEntity<HotkeyInput>, cx: &mut AsyncApp| {
+                let (tx_key, rx_key) = mpsc::channel::<KeyEvent>();
+                let (tx_hotkey, rx_hotkey) = mpsc::channel::<HotKey>();
 
                 let _ = cx.update_global(|hotkey_manager: &mut GlobalHotkeyManager, _cx| {
-                    hotkey_manager.set_key_event_channel(Some(tx));
+                    hotkey_manager.set_key_event_channel(Some(tx_key));
+                    hotkey_manager.set_hotkey_channel(Some(tx_hotkey));
                 });
 
-                loop {
-                    let event = rx.try_recv();
+                if let Some(this) = weak_entity.upgrade() {
+                    loop {
+                        let stop_recording = this.update::<bool, AsyncApp>(cx, |this, _cx| {
+                            this.recording_id
+                                .as_ref()
+                                .map(|id| *id != recodring_id)
+                                .unwrap_or(true)
+                        });
 
-                    if let Ok(key_event) = event {
-                        println!("Key event: {:?}", key_event);
+                        if stop_recording.unwrap_or(true) {
+                            let _ = cx.update_global(
+                                |hotkey_manager: &mut GlobalHotkeyManager, _cx| {
+                                    hotkey_manager.set_key_event_channel(None);
+                                    hotkey_manager.set_hotkey_channel(None);
+                                },
+                            );
+                            break;
+                        }
 
-                        if let Some(weak_self) = weak_entity.upgrade() {
-                            let _ = weak_self.update(cx, |this, cx| {
-                                this.recording = false;
+                        let key = rx_key.try_recv();
+                        let hotkey = rx_hotkey.try_recv();
+
+                        if let Ok(hotkey_event) = hotkey {
+                            this.update(cx, |this, cx| {
+                                this.keystroke = Some(hotkey_event.to_string());
+                                this.recording_id = None;
+                                cx.notify();
+                            })
+                            .ok();
+                            break;
+                        }
+
+                        if let Ok(key_event) = key {
+                            this.update(cx, |this, cx| {
+                                this.recording_text =
+                                    SharedString::new(key_event.keycode.to_string());
 
                                 cx.notify();
-                                cx.global_mut::<GlobalHotkeyManager>()
-                                    .set_key_event_channel(None);
-                            });
+                            })
+                            .ok();
                         }
-                        break;
-                    }
 
-                    cx.background_executor()
-                        .timer(Duration::from_millis(50))
-                        .await;
+                        cx.background_executor()
+                            .timer(Duration::from_millis(50))
+                            .await;
+                    }
                 }
             },
         )
@@ -95,7 +126,9 @@ impl Render for HotkeyInput {
             .font_weight(FontWeight::MEDIUM)
             .cursor_pointer()
             .on_mouse_down(MouseButton::Left, on_click)
-            .when(self.recording, |this| this.child("Recording..."))
-            .when(!self.recording, |this| this.child(display_text))
+            .when(self.recording_id.is_some(), |this| {
+                this.child(self.recording_text.clone())
+            })
+            .when(self.recording_id.is_none(), |this| this.child(display_text))
     }
 }

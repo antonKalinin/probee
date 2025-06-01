@@ -67,7 +67,7 @@ pub enum KeyEventType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct KeyEvent {
     event_type: KeyEventType,
-    keycode: KeyCode,
+    pub keycode: KeyCode,
 }
 
 #[derive(Debug)]
@@ -260,6 +260,7 @@ extern "C" fn event_callback(
 
 pub struct GlobalHotkeyManager {
     key_event_channel: Option<Sender<KeyEvent>>,
+    hotkey_channel: Option<Sender<HotKey>>,
 }
 
 impl Global for GlobalHotkeyManager {}
@@ -327,9 +328,15 @@ impl GlobalHotkeyManager {
 
                 let _ = cx.update(|cx| {
                     let manager = cx.global_mut::<GlobalHotkeyManager>();
+
                     if let Some(key_event_channel) = manager.key_event_channel.as_ref() {
-                        // state.into_hotkey()
                         let _ = key_event_channel.send(event);
+                    }
+
+                    if let Some(hotkey_channel) = manager.hotkey_channel.as_ref() {
+                        if let Some(hotkey) = state.into_hotkey() {
+                            let _ = hotkey_channel.send(hotkey);
+                        }
                     }
                 });
 
@@ -342,6 +349,7 @@ impl GlobalHotkeyManager {
 
         let manager = GlobalHotkeyManager {
             key_event_channel: None,
+            hotkey_channel: None,
         };
 
         cx.set_global(manager);
@@ -349,5 +357,9 @@ impl GlobalHotkeyManager {
 
     pub fn set_key_event_channel(&mut self, channel: Option<Sender<KeyEvent>>) {
         self.key_event_channel = channel;
+    }
+
+    pub fn set_hotkey_channel(&mut self, channel: Option<Sender<HotKey>>) {
+        self.hotkey_channel = channel;
     }
 }
