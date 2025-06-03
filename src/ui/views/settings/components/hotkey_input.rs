@@ -6,31 +6,33 @@ use std::sync::mpsc;
 use std::time::Duration;
 
 use crate::services::{GlobalHotkeyManager, HotKey, KeyEvent};
-use crate::state::settings_state::*;
 use crate::ui::Theme;
 
 pub struct HotkeyInput {
     keystroke: Option<String>,
     recording_id: Option<Uuid>,
     recording_text: SharedString,
+    on_hotkey_set: Box<dyn Fn(HotKey, &mut Context<Self>)>,
 }
 
 impl HotkeyInput {
     pub fn new(
         keystroke: Option<String>,
-        _state: &Entity<SettingsState>,
+        on_hotkey_set: Box<dyn Fn(HotKey, &mut Context<Self>) + 'static>,
         _cx: &mut Context<Self>,
     ) -> Self {
         HotkeyInput {
             keystroke,
             recording_id: None,
             recording_text: SharedString::new("Recording...".to_string()),
+            on_hotkey_set,
         }
     }
 
     pub fn record_global_key_events(&mut self, cx: &mut Context<Self>) {
         let recodring_id = Uuid::new_v4();
         self.recording_id = Some(recodring_id);
+        self.recording_text = SharedString::new("Recording...".to_string());
 
         cx.spawn(
             async move |weak_entity: WeakEntity<HotkeyInput>, cx: &mut AsyncApp| {
@@ -64,10 +66,13 @@ impl HotkeyInput {
                         let key = rx_key.try_recv();
                         let hotkey = rx_hotkey.try_recv();
 
-                        if let Ok(hotkey_event) = hotkey {
+                        if let Ok(hotkey) = hotkey {
                             this.update(cx, |this, cx| {
-                                this.keystroke = Some(hotkey_event.to_string());
+                                this.keystroke = Some(hotkey.to_string());
                                 this.recording_id = None;
+
+                                (this.on_hotkey_set)(hotkey, cx);
+
                                 cx.notify();
                             })
                             .ok();

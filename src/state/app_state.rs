@@ -167,7 +167,7 @@ impl AppStateController {
             cx.notify();
 
             if visible {
-                cx.activate(false);
+                cx.activate(true);
             } else {
                 cx.hide();
             }

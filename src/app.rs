@@ -1,22 +1,19 @@
 use async_std::stream::StreamExt;
 use gpui::{
-    actions, div, prelude::*, App, AppContext, Entity, EventEmitter, FocusHandle, KeyBinding,
-    Window,
+    div, prelude::*, App, AppContext, Entity, EventEmitter, FocusHandle, KeyBinding, Window,
 };
 use std::time::Duration;
 
 use crate::assistant::*;
 use crate::errors::*;
 use crate::events::*;
-use crate::services::{Api, Storage, StorageKey};
+use crate::services::{selection, Api, Storage, StorageKey};
 use crate::state::app_state::*;
 use crate::ui::*;
 use crate::utils;
-
-actions!(
-    app,
-    [OpenSettings, SelectNextAssistant, SelectPrevAssistant,]
-);
+use crate::utils::actions::{
+    OpenSettings, RunAssistant, SelectNextAssistant, SelectPrevAssistant, ToogleVisibility,
+};
 
 pub struct AppRoot {
     assistant_view: Entity<AssistantView>,
@@ -42,6 +39,30 @@ impl AppRoot {
         // TODO: Load this bindings from storage
         cx.bind_keys([KeyBinding::new("alt-1", SelectPrevAssistant, None)]);
         cx.bind_keys([KeyBinding::new("alt-2", SelectNextAssistant, None)]);
+
+        // Global actions bindings
+        cx.on_action(|_: &ToogleVisibility, cx| {
+            toggle_visible(cx);
+        });
+
+        cx.on_action(|_: &RunAssistant, cx| {
+            let input_text = selection::get_text();
+
+            match input_text {
+                Ok(text) => {
+                    if text.is_empty() {
+                        set_error(cx, Some(InputError::EmptyTextInputError.into()));
+                    } else {
+                        set_input(cx, text);
+                    }
+                }
+                Err(err) => {
+                    set_error(cx, Some(err));
+                }
+            }
+
+            set_visible(cx, true);
+        });
 
         cx.spawn(async move |cx| {
             let prompts = api.get_prompts(cx).await;

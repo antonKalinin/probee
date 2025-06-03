@@ -132,6 +132,20 @@ impl KeyCode {
                 | KeyCode::Function
         )
     }
+
+    pub fn to_keystroke(&self) -> String {
+        match self {
+            KeyCode::Command => String::from("cmd"),
+            KeyCode::Shift => String::from("shift"),
+            KeyCode::CapsLock => String::from("capslock"),
+            KeyCode::Option => String::from("alt"),
+            KeyCode::Control => String::from("ctrl"),
+            _ => {
+                // For other keys, we can use the Display implementation
+                self.to_string().to_lowercase()
+            }
+        }
+    }
 }
 
 impl TryFrom<u64> for KeyCode {

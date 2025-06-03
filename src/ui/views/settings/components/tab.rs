@@ -31,7 +31,7 @@ impl SettingsTab {
         let icon = match self.tab_type {
             SettingsTabType::General => Icon::new(IconName::Settings),
             SettingsTabType::Assistant => Icon::new(IconName::BotMessageSquare),
-            SettingsTabType::Shortcuts => Icon::new(IconName::Command),
+            SettingsTabType::Hotkeys => Icon::new(IconName::Command),
             SettingsTabType::About => Icon::new(IconName::Signature),
         };
 
@@ -52,7 +52,7 @@ impl SettingsTab {
         let text = match self.tab_type {
             SettingsTabType::General => "General",
             SettingsTabType::Assistant => "Assistant",
-            SettingsTabType::Shortcuts => "Shortcuts",
+            SettingsTabType::Hotkeys => "Hotkeys",
             SettingsTabType::About => "About",
         };
 

@@ -9,7 +9,7 @@ use super::error_state::*;
 pub enum SettingsTabType {
     General,
     Assistant,
-    Shortcuts,
+    Hotkeys,
     About,
 }
 

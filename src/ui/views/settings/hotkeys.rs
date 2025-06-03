@@ -1,5 +1,6 @@
 use gpui::*;
 
+use crate::services::{HotKey, Storage, StorageKey};
 use crate::state::settings_state::*;
 use crate::ui::Theme;
 
@@ -19,20 +20,42 @@ const VIEW_HEIGHT: f32 = 280.0;
 impl HotkeysView {
     pub fn new(state: &Entity<SettingsState>, cx: &mut Context<Self>) -> Self {
         let data = state.read(cx);
-        let visible = data.active_tab == SettingsTabType::Shortcuts;
+        let visible = data.active_tab == SettingsTabType::Hotkeys;
 
         cx.observe(state, |this, state, cx| {
             let data = state.read(cx);
-            this.visible = data.active_tab == SettingsTabType::Shortcuts;
+            this.visible = data.active_tab == SettingsTabType::Hotkeys;
             cx.notify();
         })
         .detach();
 
+        let assistant_hotkey_cb = Box::new(|hotkey: HotKey, cx: &mut Context<_>| {
+            let _ = cx
+                .global_mut::<Storage>()
+                .set(StorageKey::HotkeyRunAssistant, hotkey.to_keystroke());
+        });
+
+        let visibility_hotkey_cb = Box::new(|hotkey: HotKey, cx: &mut Context<_>| {
+            let _ = cx
+                .global_mut::<Storage>()
+                .set(StorageKey::HotkeyToogleVisibility, hotkey.to_keystroke());
+        });
+        let prev_hotkey_cb = Box::new(|hotkey: HotKey, cx: &mut Context<_>| {
+            let _ = cx
+                .global_mut::<Storage>()
+                .set(StorageKey::HotkeyPrevPropmt, hotkey.to_keystroke());
+        });
+        let next_hotkey_cb = Box::new(|hotkey: HotKey, cx: &mut Context<_>| {
+            let _ = cx
+                .global_mut::<Storage>()
+                .set(StorageKey::HotkeyNextPrompt, hotkey.to_keystroke());
+        });
+
         HotkeysView {
-            assistant_hotkey_input: cx.new(|cx| HotkeyInput::new(None, &state, cx)),
-            visibility_hotkey_input: cx.new(|cx| HotkeyInput::new(None, &state, cx)),
-            prev_assistant_hotkey_input: cx.new(|cx| HotkeyInput::new(None, &state, cx)),
-            next_assistant_hotkey_input: cx.new(|cx| HotkeyInput::new(None, &state, cx)),
+            assistant_hotkey_input: cx.new(|cx| HotkeyInput::new(None, assistant_hotkey_cb, cx)),
+            visibility_hotkey_input: cx.new(|cx| HotkeyInput::new(None, visibility_hotkey_cb, cx)),
+            prev_assistant_hotkey_input: cx.new(|cx| HotkeyInput::new(None, prev_hotkey_cb, cx)),
+            next_assistant_hotkey_input: cx.new(|cx| HotkeyInput::new(None, next_hotkey_cb, cx)),
 
             visible,
         }

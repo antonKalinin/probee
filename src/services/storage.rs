@@ -50,14 +50,13 @@ pub enum StorageKey {
     // settings
     SettingsTheme,
     SettingsFontSize,
-    SttingsTransparency,
     SettingsStartOnLogin,
 
-    // shortcuts
-    ShortcutsToogleVisibility,
-    ShortcutsRunAssistant,
-    ShortcutsNextPrompt,
-    ShortcutsPrevPropmt,
+    // hotkeys
+    HotkeyToogleVisibility,
+    HotkeyRunAssistant,
+    HotkeyNextPrompt,
+    HotkeyPrevPropmt,
 }
 
 impl StorageKey {

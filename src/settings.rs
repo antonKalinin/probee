@@ -33,7 +33,7 @@ impl SettingsRoot {
             let tabs = vec![
                 // cx.new(|cx| SettingsTab::new(SettingsTabType::General, &state, cx)),
                 cx.new(|cx| SettingsTab::new(SettingsTabType::Assistant, &state, cx)),
-                cx.new(|cx| SettingsTab::new(SettingsTabType::Shortcuts, &state, cx)),
+                cx.new(|cx| SettingsTab::new(SettingsTabType::Hotkeys, &state, cx)),
                 cx.new(|cx| SettingsTab::new(SettingsTabType::About, &state, cx)),
             ];
 
@@ -106,7 +106,7 @@ impl Render for SettingsRoot {
             .when(self.active_tab == SettingsTabType::Assistant, |this| {
                 this.child(self.assistant_view.clone())
             })
-            .when(self.active_tab == SettingsTabType::Shortcuts, |this| {
+            .when(self.active_tab == SettingsTabType::Hotkeys, |this| {
                 this.child(self.hotkeys_view.clone())
             })
             .when(self.active_tab == SettingsTabType::About, |this| {
