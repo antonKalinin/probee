@@ -34,6 +34,7 @@ pub enum IconName {
     ChevronUp,
     CircleUserRound,
     CircleX,
+    ClipboardCopy,
     Command,
     Copy,
     Eraser,

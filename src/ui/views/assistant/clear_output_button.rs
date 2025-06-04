@@ -31,14 +31,14 @@ impl Render for ClearOutputButton {
         let theme = cx.theme();
 
         let icon_color = match self.enabled {
-            true => theme.foreground,
+            true => theme.foreground.opacity(0.7),
             false => theme.muted_foreground,
         };
 
         let icon = (if self.succeeded {
             Icon::new(IconName::Check)
         } else {
-            Icon::new(IconName::CircleX)
+            Icon::new(IconName::Eraser)
         })
         .text_color(icon_color)
         .hover(|style| style.text_color(theme.foreground));
@@ -61,12 +61,8 @@ impl Render for ClearOutputButton {
         });
 
         let button = div()
-            .h_6()
-            .w_6()
-            .p_1()
-            .rounded_full()
+            .bg(theme.background)
             .on_mouse_down(MouseButton::Left, on_click)
-            .hover(|style| style.bg(theme.muted))
             .cursor_pointer()
             .child(icon);
 

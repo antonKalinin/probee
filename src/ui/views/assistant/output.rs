@@ -1,3 +1,4 @@
+use gpui::prelude::FluentBuilder;
 use gpui::*;
 
 use crate::clipboard::Clipboard;
@@ -13,6 +14,7 @@ pub struct Output {
     loading: bool,
     text: String,
     description: String,
+    actions_visible: bool,
 
     scroll_handle: ScrollHandle,
     copy_button: Entity<CopyOutputButton>,
@@ -62,6 +64,7 @@ impl Output {
             text: "".to_owned(),
             description: "".to_owned(),
             scroll_handle: ScrollHandle::new(),
+            actions_visible: false,
 
             copy_button,
             clear_button,
@@ -159,6 +162,13 @@ impl Render for Output {
             div()
         };
 
+        let handle_hover = cx.listener({
+            move |this, hovered, _window, cx: &mut Context<Self>| {
+                this.actions_visible = *hovered;
+                cx.notify();
+            }
+        });
+
         let output = div()
             .id("output") // element becomes stateful only after assigning ElementId
             .w_full()
@@ -174,12 +184,21 @@ impl Render for Output {
             .track_scroll(&self.scroll_handle)
             .into_any_element();
 
-        let output_actions = div().flex().flex_row().mt_1().justify_end().children(vec![
-            div().flex().ml_2().child(self.clear_button.clone()),
-            div().flex().child(self.copy_button.clone()),
-        ]);
+        let output_actions = div()
+            .mt_1()
+            .flex()
+            .flex_row()
+            .justify_end()
+            .gap_3()
+            .opacity(0.)
+            .when(self.actions_visible, |this| this.opacity(1.0))
+            .children(vec![
+                div().flex().child(self.copy_button.clone()),
+                div().flex().child(self.clear_button.clone()),
+            ]);
 
         div()
+            .id("output-container")
             .relative()
             .flex()
             .flex_col()
@@ -197,6 +216,7 @@ impl Render for Output {
                     .child(gradient_bottom),
             )
             .child(output_actions)
+            .on_hover(handle_hover)
             .into_any_element()
     }
 }
