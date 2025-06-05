@@ -146,6 +146,122 @@ impl KeyCode {
             }
         }
     }
+
+    pub fn from_keystroke(s: &str) -> Self {
+        match s.to_lowercase().as_str() {
+            // Modifiers
+            "cmd" | "command" => KeyCode::Command,
+            "shift" => KeyCode::Shift,
+            "capslock" => KeyCode::CapsLock,
+            "alt" | "option" => KeyCode::Option,
+            "ctrl" | "control" => KeyCode::Control,
+            "right shift" => KeyCode::RightShift,
+            "right option" => KeyCode::RightOption,
+            "right control" => KeyCode::RightControl,
+            "fn" | "function" => KeyCode::Function,
+
+            // Letters
+            "a" => KeyCode::A,
+            "b" => KeyCode::B,
+            "c" => KeyCode::C,
+            "d" => KeyCode::D,
+            "e" => KeyCode::E,
+            "f" => KeyCode::F,
+            "g" => KeyCode::G,
+            "h" => KeyCode::H,
+            "i" => KeyCode::I,
+            "j" => KeyCode::J,
+            "k" => KeyCode::K,
+            "l" => KeyCode::L,
+            "m" => KeyCode::M,
+            "n" => KeyCode::N,
+            "o" => KeyCode::O,
+            "p" => KeyCode::P,
+            "q" => KeyCode::Q,
+            "r" => KeyCode::R,
+            "s" => KeyCode::S,
+            "t" => KeyCode::T,
+            "u" => KeyCode::U,
+            "v" => KeyCode::V,
+            "w" => KeyCode::W,
+            "x" => KeyCode::X,
+            "y" => KeyCode::Y,
+            "z" => KeyCode::Z,
+
+            // Numbers
+            "0" => KeyCode::Zero,
+            "1" => KeyCode::One,
+            "2" => KeyCode::Two,
+            "3" => KeyCode::Three,
+            "4" => KeyCode::Four,
+            "5" => KeyCode::Five,
+            "6" => KeyCode::Six,
+            "7" => KeyCode::Seven,
+            "8" => KeyCode::Eight,
+            "9" => KeyCode::Nine,
+
+            // Symbols & Punctuation
+            "=" => KeyCode::Equal,
+            "-" => KeyCode::Minus,
+            "`" => KeyCode::Backtick,
+            "\\" => KeyCode::Backslash,
+            "," => KeyCode::Comma,
+            "." => KeyCode::Period,
+            "/" => KeyCode::Slash,
+            ";" => KeyCode::Semicolon,
+            "'" => KeyCode::Quote,
+            "[" => KeyCode::LeftBracket,
+            "]" => KeyCode::RightBracket,
+
+            // Navigation & Editing
+            "return" => KeyCode::Return,
+            "tab" => KeyCode::Tab,
+            "space" => KeyCode::Space,
+            "delete" => KeyCode::Delete,
+            "escape" | "esc" => KeyCode::Escape,
+            "forward delete" => KeyCode::ForwardDelete,
+            "home" => KeyCode::Home,
+            "end" => KeyCode::End,
+            "page up" => KeyCode::PageUp,
+            "page down" => KeyCode::PageDown,
+            "help" => KeyCode::Help,
+
+            // Arrows
+            "left" | "left arrow" => KeyCode::LeftArrow,
+            "right" | "right arrow" => KeyCode::RightArrow,
+            "up" | "up arrow" => KeyCode::UpArrow,
+            "down" | "down arrow" => KeyCode::DownArrow,
+
+            // Function Keys
+            "f1" => KeyCode::F1,
+            "f2" => KeyCode::F2,
+            "f3" => KeyCode::F3,
+            "f4" => KeyCode::F4,
+            "f5" => KeyCode::F5,
+            "f6" => KeyCode::F6,
+            "f7" => KeyCode::F7,
+            "f8" => KeyCode::F8,
+            "f9" => KeyCode::F9,
+            "f10" => KeyCode::F10,
+            "f11" => KeyCode::F11,
+            "f12" => KeyCode::F12,
+            "f13" => KeyCode::F13,
+            "f14" => KeyCode::F14,
+            "f15" => KeyCode::F15,
+            "f16" => KeyCode::F16,
+            "f17" => KeyCode::F17,
+            "f18" => KeyCode::F18,
+            "f19" => KeyCode::F19,
+            "f20" => KeyCode::F20,
+
+            // Media
+            "volume up" => KeyCode::VolumeUp,
+            "volume down" => KeyCode::VolumeDown,
+            "mute" => KeyCode::Mute,
+
+            _ => KeyCode::Unknown,
+        }
+    }
 }
 
 impl TryFrom<u64> for KeyCode {
@@ -309,15 +425,15 @@ impl fmt::Display for KeyCode {
             KeyCode::RightBracket => "]",
 
             // Modifiers
-            KeyCode::Command => "Command",
-            KeyCode::Shift => "Shift",
-            KeyCode::CapsLock => "CapsLock",
-            KeyCode::Option => "Option",
-            KeyCode::Control => "Control",
-            KeyCode::RightShift => "Right Shift",
-            KeyCode::RightOption => "Right Option",
-            KeyCode::RightControl => "Right Control",
-            KeyCode::Function => "Function",
+            KeyCode::Command => "⌘",
+            KeyCode::Shift => "⇧",
+            KeyCode::CapsLock => "⇪",
+            KeyCode::Option => "⌥",
+            KeyCode::Control => "⌃",
+            KeyCode::RightShift => "Right ⇧",
+            KeyCode::RightOption => "Right ⌥",
+            KeyCode::RightControl => "Right ⌃",
+            KeyCode::Function => "Fn",
 
             // Navigation & Editing
             KeyCode::Return => "Return",

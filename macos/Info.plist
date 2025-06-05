@@ -17,6 +17,6 @@
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>This app needs to monitor keyboard modifiers to function properly</string>
+	<string>This app requires access to monitor keyboard input in order to function correctly</string>
 </dict>
 </plist>

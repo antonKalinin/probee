@@ -209,6 +209,26 @@ impl HotKey {
             format!("{}+{}", mods_str, self.key.to_keystroke())
         }
     }
+
+    pub fn from_keystroke(keystroke: &str) -> Result<Self> {
+        let parts: Vec<&str> = keystroke.split('+').collect();
+        if parts.is_empty() {
+            return Err(HotkeyError::InvalidHotkeyFormat.into());
+        }
+
+        let key = KeyCode::from_keystroke(parts.last().unwrap());
+        let double_pressed = parts.len() == 2 && parts[0] == parts[1] && key.is_modifier();
+        let mut mods = vec![];
+
+        if !double_pressed {
+            mods = parts[..parts.len() - 1]
+                .iter()
+                .map(|&m| KeyCode::from_keystroke(m))
+                .collect::<Vec<_>>();
+        }
+
+        HotKey::new(key, mods, double_pressed)
+    }
 }
 
 impl Display for HotKey {
@@ -294,11 +314,11 @@ impl GlobalHotkeyManager {
 
         let assistant_hotkey = storage
             .get(StorageKey::HotkeyRunAssistant)
-            .unwrap_or("cmd+cmd".to_string());
+            .unwrap_or("".into());
 
         let visibility_hotkey = storage
             .get(StorageKey::HotkeyToogleVisibility)
-            .unwrap_or("alt+tab".to_string());
+            .unwrap_or("".into());
 
         cx.spawn(async move |cx| {
             // Create a channel for communication between threads

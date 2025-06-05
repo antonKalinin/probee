@@ -9,7 +9,7 @@ use crate::services::{GlobalHotkeyManager, HotKey, KeyEvent};
 use crate::ui::Theme;
 
 pub struct HotkeyInput {
-    keystroke: Option<String>,
+    hotkey: Option<HotKey>,
     recording_id: Option<Uuid>,
     recording_text: SharedString,
     on_hotkey_set: Box<dyn Fn(HotKey, &mut Context<Self>)>,
@@ -17,12 +17,12 @@ pub struct HotkeyInput {
 
 impl HotkeyInput {
     pub fn new(
-        keystroke: Option<String>,
+        hotkey: Option<HotKey>,
         on_hotkey_set: Box<dyn Fn(HotKey, &mut Context<Self>) + 'static>,
         _cx: &mut Context<Self>,
     ) -> Self {
         HotkeyInput {
-            keystroke,
+            hotkey,
             recording_id: None,
             recording_text: SharedString::new("Recording...".to_string()),
             on_hotkey_set,
@@ -68,7 +68,7 @@ impl HotkeyInput {
 
                         if let Ok(hotkey) = hotkey {
                             this.update(cx, |this, cx| {
-                                this.keystroke = Some(hotkey.to_string());
+                                this.hotkey = Some(hotkey.clone());
                                 this.recording_id = None;
 
                                 (this.on_hotkey_set)(hotkey, cx);
@@ -110,8 +110,8 @@ impl Render for HotkeyInput {
             move |this, _event, _window, cx: &mut Context<Self>| this.record_global_key_events(cx)
         });
 
-        let display_text = if let Some(keystroke) = &self.keystroke {
-            keystroke.clone()
+        let display_text = if let Some(hotkey) = &self.hotkey {
+            hotkey.to_string()
         } else {
             "Record Hotkey".to_string()
         };

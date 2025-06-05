@@ -1,7 +1,5 @@
-use std::sync::mpsc;
-
 use anyhow::Error;
-use gpui::{prelude::*, App, AppContext, AsyncApp, Entity, Global};
+use gpui::{prelude::*, App, AppContext, Entity, Global};
 
 use super::error_state::*;
 
@@ -17,7 +15,6 @@ pub enum SettingsTabType {
 pub struct SettingsState {
     pub active_tab: SettingsTabType,
     pub error: Option<Error>,
-    pub hotkey_recording_channel: Option<String>,
 }
 
 impl ErrorState for SettingsState {
@@ -47,7 +44,6 @@ impl SettingsStateController {
         let state: Entity<SettingsState> = cx.new(|_cx| SettingsState {
             active_tab: SettingsTabType::Assistant,
             error: None,
-            hotkey_recording_channel: None,
         });
 
         let settings_state = SettingsStateController { state };
@@ -65,11 +61,11 @@ impl SettingsStateController {
         })
     }
 
-    pub fn update_async(f: impl FnOnce(&mut Self, &mut App), cx: &mut AsyncApp) {
-        let _ = cx.update_global::<Self, _>(|this, cx| {
-            f(this, cx);
-        });
-    }
+    // pub fn update_async(f: impl FnOnce(&mut Self, &mut App), cx: &mut AsyncApp) {
+    //     let _ = cx.update_global::<Self, _>(|this, cx| {
+    //         f(this, cx);
+    //     });
+    // }
 
     pub fn set_active_tab(&self, cx: &mut App, tab: SettingsTabType) {
         self.state.update(cx, |state, cx| {
@@ -77,11 +73,6 @@ impl SettingsStateController {
             cx.notify();
         });
     }
-}
-
-pub fn get_hotkey_recording(cx: &mut App) -> Option<String> {
-    let state = cx.global::<SettingsStateController>().state.read(cx);
-    state.hotkey_recording_channel.as_ref().cloned()
 }
 
 pub fn set_active_tab(cx: &mut App, tab: SettingsTabType) {
@@ -92,6 +83,6 @@ pub fn set_error(cx: &mut App, error: Option<Error>) {
     SettingsStateController::update(|this, cx| this.set_error(cx, error), cx);
 }
 
-pub fn set_error_async(cx: &mut AsyncApp, error: Option<Error>) {
-    SettingsStateController::update_async(|this, cx| this.set_error(cx, error), cx);
-}
+// pub fn set_error_async(cx: &mut AsyncApp, error: Option<Error>) {
+//     SettingsStateController::update_async(|this, cx| this.set_error(cx, error), cx);
+// }

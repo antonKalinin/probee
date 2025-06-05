@@ -1,7 +1,7 @@
+use arboard::Clipboard;
 use gpui::prelude::FluentBuilder;
 use gpui::*;
 
-use crate::clipboard::Clipboard;
 use crate::events::UiEvent;
 use crate::state::app_state::*;
 use crate::ui::{Spinner, Theme};
@@ -41,10 +41,12 @@ impl Output {
         let copy_button = cx.new(|cx| CopyOutputButton::new(cx, &state));
         let clear_button = cx.new(|cx| ClearOutputButton::new(cx, &state));
 
-        cx.subscribe(&copy_button, move |subscriber, _emitter, event, cx| {
+        cx.subscribe(&copy_button, move |subscriber, _emitter, event, _cx| {
             if UiEvent::CopyOutput == *event && !subscriber.text.is_empty() {
-                let clipboard = cx.global_mut::<Clipboard>();
-                clipboard.set_text(subscriber.text.clone());
+                let _ = match Clipboard::new() {
+                    Ok(mut clipboard) => clipboard.set_text(subscriber.text.clone()),
+                    Err(_) => Ok(()),
+                };
             }
         })
         .detach();

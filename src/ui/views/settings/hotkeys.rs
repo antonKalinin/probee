@@ -19,15 +19,29 @@ const VIEW_HEIGHT: f32 = 280.0;
 
 impl HotkeysView {
     pub fn new(state: &Entity<SettingsState>, cx: &mut Context<Self>) -> Self {
-        let data = state.read(cx);
-        let visible = data.active_tab == SettingsTabType::Hotkeys;
+        let storage = cx.global::<Storage>();
+        let state_data = state.read(cx);
+        let visible = state_data.active_tab == SettingsTabType::Hotkeys;
 
-        cx.observe(state, |this, state, cx| {
-            let data = state.read(cx);
-            this.visible = data.active_tab == SettingsTabType::Hotkeys;
-            cx.notify();
-        })
-        .detach();
+        let assistant_hotkey = storage
+            .get(StorageKey::HotkeyRunAssistant)
+            .map(|s| HotKey::from_keystroke(s.as_str()).ok())
+            .unwrap_or(None);
+
+        let visibility_hotkey = storage
+            .get(StorageKey::HotkeyToogleVisibility)
+            .map(|s| HotKey::from_keystroke(s.as_str()).ok())
+            .unwrap_or(None);
+
+        let prev_assistant_hotkey = storage
+            .get(StorageKey::HotkeyPrevPropmt)
+            .map(|s| HotKey::from_keystroke(s.as_str()).ok())
+            .unwrap_or(None);
+
+        let next_assistant_hotkey = storage
+            .get(StorageKey::HotkeyNextPrompt)
+            .map(|s| HotKey::from_keystroke(s.as_str()).ok())
+            .unwrap_or(None);
 
         let assistant_hotkey_cb = Box::new(|hotkey: HotKey, cx: &mut Context<_>| {
             let _ = cx
@@ -51,11 +65,22 @@ impl HotkeysView {
                 .set(StorageKey::HotkeyNextPrompt, hotkey.to_keystroke());
         });
 
+        cx.observe(state, |this, state, cx| {
+            let data = state.read(cx);
+            this.visible = data.active_tab == SettingsTabType::Hotkeys;
+            cx.notify();
+        })
+        .detach();
+
         HotkeysView {
-            assistant_hotkey_input: cx.new(|cx| HotkeyInput::new(None, assistant_hotkey_cb, cx)),
-            visibility_hotkey_input: cx.new(|cx| HotkeyInput::new(None, visibility_hotkey_cb, cx)),
-            prev_assistant_hotkey_input: cx.new(|cx| HotkeyInput::new(None, prev_hotkey_cb, cx)),
-            next_assistant_hotkey_input: cx.new(|cx| HotkeyInput::new(None, next_hotkey_cb, cx)),
+            assistant_hotkey_input: cx
+                .new(|cx| HotkeyInput::new(assistant_hotkey, assistant_hotkey_cb, cx)),
+            visibility_hotkey_input: cx
+                .new(|cx| HotkeyInput::new(visibility_hotkey, visibility_hotkey_cb, cx)),
+            prev_assistant_hotkey_input: cx
+                .new(|cx| HotkeyInput::new(prev_assistant_hotkey, prev_hotkey_cb, cx)),
+            next_assistant_hotkey_input: cx
+                .new(|cx| HotkeyInput::new(next_assistant_hotkey, next_hotkey_cb, cx)),
 
             visible,
         }

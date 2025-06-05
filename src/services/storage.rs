@@ -33,7 +33,7 @@ pub struct Storage {
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum StorageKey {
     // auth
-    AuthEmail,
+    // AuthEmail,
     AuthUserId,
     AuthAccessToken,
     AuthAccessTokenExpiresAt,
@@ -49,8 +49,8 @@ pub enum StorageKey {
 
     // settings
     SettingsTheme,
-    SettingsFontSize,
-    SettingsStartOnLogin,
+    // SettingsFontSize,
+    // SettingsStartOnLogin,
 
     // hotkeys
     HotkeyToogleVisibility,
@@ -98,6 +98,12 @@ impl Storage {
         app_dir.push(".probee/storage.db");
 
         let storage = Storage::new(app_dir, storage_salt.as_bytes()).unwrap();
+
+        // Initialize default values
+        let _ = storage.set(StorageKey::HotkeyRunAssistant, "alt+alt".into());
+        let _ = storage.set(StorageKey::HotkeyToogleVisibility, "alt+tab".into());
+        let _ = storage.set(StorageKey::HotkeyPrevPropmt, "alt+1".into());
+        let _ = storage.set(StorageKey::HotkeyNextPrompt, "alt+2".into());
 
         cx.set_global(storage);
     }
@@ -249,14 +255,14 @@ mod tests {
         // Create store and add data
         {
             let store = Storage::new(path.clone(), salt)?;
-            store.set(StorageKey::SettingsFontSize, "small".to_string())?;
+            store.set(StorageKey::HotkeyRunAssistant, "alt+alt".into())?;
         }
 
         // Create new store instance and verify data
         let store2 = Storage::new(path.clone(), salt)?;
         assert_eq!(
-            store2.get(StorageKey::SettingsFontSize),
-            Some("small".to_string())
+            store2.get(StorageKey::HotkeyRunAssistant),
+            Some("alt+alt".to_string())
         );
 
         Ok(())
