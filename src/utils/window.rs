@@ -1,6 +1,6 @@
 use gpui::{
-    point, px, App, Bounds, Pixels, Point, Size, TitlebarOptions, WindowBackgroundAppearance,
-    WindowBounds, WindowKind, WindowOptions,
+    point, px, App, Bounds, Pixels, Point, SharedString, Size, TitlebarOptions,
+    WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions,
 };
 
 pub static APP_WIDTH: f32 = 360.;
@@ -13,6 +13,9 @@ pub static SETTINGS_WIDTH: f32 = 600.;
 pub static SETTINGS_HEIGHT: f32 = 400.;
 pub static SETTINGS_MIN_HEIGHT: f32 = 280.;
 pub static SETTINGS_MAX_HEIGHT: f32 = 640.;
+
+pub static PROMPT_WIDTH: f32 = 600.;
+pub static PROMPT_HEIGHT: f32 = 560.;
 
 pub fn app_window_options(cx: &mut App) -> WindowOptions {
     let displays = cx.displays();
@@ -78,7 +81,6 @@ pub fn settings_window_options(cx: &mut App) -> WindowOptions {
         height: px(SETTINGS_HEIGHT),
     };
 
-    // Center origin
     let bounds = Bounds {
         origin: point(
             display.bounds().center().x - size.center().x * 2.,
@@ -120,4 +122,41 @@ pub fn settings_window_bounds(_cx: &mut App, origin: Point<Pixels>, height: f32)
         origin: point(origin.x, origin.y + px(height)),
         size,
     }
+}
+
+pub fn prompt_window_options(cx: &mut App) -> WindowOptions {
+    let displays = cx.displays();
+    let display = displays.first().unwrap();
+
+    let size = Size {
+        width: px(PROMPT_WIDTH),
+        height: px(PROMPT_HEIGHT),
+    };
+
+    let bounds = Bounds {
+        origin: point(
+            display.bounds().center().x + px(20.),
+            display.bounds().center().y - size.center().y - px(20.),
+        ),
+        size,
+    };
+
+    let options = WindowOptions {
+        window_bounds: Some(WindowBounds::Windowed(bounds)),
+        display_id: Some(display.id()),
+        titlebar: Some(TitlebarOptions {
+            appears_transparent: true,
+            ..Default::default()
+        }),
+        window_background: WindowBackgroundAppearance::Opaque,
+        focus: true,
+        show: true,
+        kind: WindowKind::Normal,
+        is_movable: true,
+        app_id: None,
+        window_min_size: Some(size),
+        window_decorations: None,
+    };
+
+    options
 }

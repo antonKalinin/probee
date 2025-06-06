@@ -56,12 +56,12 @@ async fn main() {
                     let windows = cx.windows();
 
                     // FIXME: Error prone, probably better just do nothing
-                    if windows.len() == 2 {
-                        let handle = windows.get(1).unwrap();
-                        let _ = handle.update(cx, |_view, window, _cx| {
-                            window.remove_window();
-                        });
-                    }
+                    // if windows.len() == 2 {
+                    //     let handle = windows.get(1).unwrap();
+                    //     let _ = handle.update(cx, |_view, window, _cx| {
+                    //         window.remove_window();
+                    //     });
+                    // }
 
                     let settings_window_options = utils::settings_window_options(cx);
                     let _ = cx.open_window(settings_window_options, SettingsRoot::build);

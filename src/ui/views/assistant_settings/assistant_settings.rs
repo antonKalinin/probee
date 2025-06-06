@@ -5,8 +5,9 @@ use crate::state::settings_state::*;
 use crate::storage::{Storage, StorageKey};
 use crate::ui::{
     ActiveTheme, Button, Dropdown, DropdownEvent, DropdownItem, Icon, IconName, InputEvent,
-    Sizable as _, TextInput, Theme,
+    PromptEditorView, Sizable as _, TextInput, Theme,
 };
+use crate::utils::prompt_window_options;
 
 use super::components::{Prompt, PromptList};
 
@@ -48,6 +49,7 @@ pub struct AssistantSettingsView {
     prompt_list: Entity<PromptList>,
 
     provider: ModelProvider,
+    prompt_editor_opened: bool,
 }
 
 impl AssistantSettingsView {
@@ -147,6 +149,7 @@ impl AssistantSettingsView {
             prompt_list,
 
             provider: ModelProvider::Anthropic,
+            prompt_editor_opened: false,
         }
     }
 }
@@ -175,7 +178,17 @@ impl Render for AssistantSettingsView {
             Button::new("create-prompt-button")
                 .label("Create New Prompt")
                 .small()
-                .on_click(cx.listener({ |this, event, window, cx: &mut Context<Self>| {} })),
+                .on_click(
+                    cx.listener(|this, _event, _window, cx: &mut Context<Self>| {
+                        if this.prompt_editor_opened {
+                            return;
+                        }
+
+                        this.prompt_editor_opened = true;
+                        let window_options = prompt_window_options(cx);
+                        let _ = cx.open_window(window_options, PromptEditorView::build);
+                    }),
+                ),
         );
 
         div()
@@ -211,7 +224,7 @@ impl Render for AssistantSettingsView {
             .child(
                 row()
                     .items_start()
-                    .children(vec![label("").pt_1(), value().child(create_prompt_button)])
+                    .children(vec![label(""), value().child(create_prompt_button)])
                     .mt_8(),
             )
             .into_any_element()
