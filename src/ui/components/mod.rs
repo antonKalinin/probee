@@ -10,6 +10,7 @@ pub mod icon;
 pub mod input;
 pub mod list;
 pub mod scroll;
+pub mod settings_tab;
 pub mod skeleton;
 pub mod slider;
 pub mod spinner;
@@ -22,7 +23,9 @@ pub use header::*;
 pub use icon::*;
 pub use input::*;
 pub use list::*;
+pub use settings_tab::*;
 pub use slider::*;
+
 // pub use scroll::*;
 pub use skeleton::*;
 pub use spinner::*;

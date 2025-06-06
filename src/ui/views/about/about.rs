@@ -232,11 +232,14 @@ impl Render for AboutView {
                     .when(self.can_check_for_update(), |this| {
                         this.child(check_update_button)
                     })
-                    .when(!self.can_check_for_update(), |this| {
-                        this.text_size(theme.subtext_size)
-                            .text_color(theme.muted_foreground)
-                            .child("You have the latest version")
-                    })
+                    .when(
+                        !self.can_check_for_update() && self.update.is_none(),
+                        |this| {
+                            this.text_size(theme.subtext_size)
+                                .text_color(theme.muted_foreground)
+                                .child("You have the latest version")
+                        },
+                    )
                     .when(self.update.is_some(), |this| {
                         this.child(install_update_button)
                     }),

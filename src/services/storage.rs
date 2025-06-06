@@ -33,7 +33,7 @@ pub struct Storage {
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum StorageKey {
     // auth
-    // AuthEmail,
+    AuthEmail,
     AuthUserId,
     AuthAccessToken,
     AuthAccessTokenExpiresAt,
@@ -42,10 +42,11 @@ pub enum StorageKey {
     // assistant
     AssistantId,
     AssistantModel,
-    CustomAssistants,
-    // provider specific
     AnthropicApiKey,
-    AssistantOpenAiApiKey,
+    OpenAiApiKey,
+    CustomPrompt1,
+    CustomPrompt2,
+    CustomPrompt3,
 
     // settings
     SettingsTheme,

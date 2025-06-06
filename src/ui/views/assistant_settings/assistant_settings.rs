@@ -82,7 +82,7 @@ impl AssistantSettingsView {
 
         let api_key = (match model.provider {
             ModelProvider::Anthropic => storage.get(StorageKey::AnthropicApiKey),
-            ModelProvider::OpenAI => storage.get(StorageKey::AssistantOpenAiApiKey),
+            ModelProvider::OpenAI => storage.get(StorageKey::OpenAiApiKey),
         })
         .unwrap_or(String::from(""));
 
@@ -99,7 +99,7 @@ impl AssistantSettingsView {
                 let storage = cx.global::<Storage>();
                 let storage_key = match this.provider {
                     ModelProvider::Anthropic => StorageKey::AnthropicApiKey,
-                    ModelProvider::OpenAI => StorageKey::AssistantOpenAiApiKey,
+                    ModelProvider::OpenAI => StorageKey::OpenAiApiKey,
                 };
 
                 let _ = storage.set(storage_key, api_key.into());
