@@ -75,7 +75,7 @@ impl Model {
     }
 }
 
-#[derive(Clone, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Prompt {
     pub id: String,
     pub name: String,

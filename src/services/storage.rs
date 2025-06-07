@@ -44,9 +44,13 @@ pub enum StorageKey {
     AssistantModel,
     AnthropicApiKey,
     OpenAiApiKey,
-    CustomPrompt1,
-    CustomPrompt2,
-    CustomPrompt3,
+    DefaultPrompt1,
+    DefaultPrompt2,
+    DefaultPrompt3,
+    UserPrompt1,
+    UserPrompt2,
+    UserPrompt3,
+    PromptsLastLoadedAt,
 
     // settings
     SettingsTheme,

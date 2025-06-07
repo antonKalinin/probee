@@ -1,32 +1,10 @@
 use gpui::{
     div, rems, AnyElement, App, AppContext, Context, ElementId, Entity, IntoElement, ParentElement,
-    Render, RenderOnce, SharedString, Styled, Window,
+    Render, RenderOnce, Styled, Window,
 };
 
+use crate::services::Prompt;
 use crate::ui::{h_flex, Checkbox, Icon, IconName, List, ListDelegate, ListItem, Theme};
-
-#[derive(Clone, Default)]
-pub struct Prompt {
-    id: String,
-    name: SharedString,
-    description: SharedString,
-    text: SharedString,
-    created_at: String,
-    updated_at: String,
-}
-
-impl Prompt {
-    pub fn new(name: impl Into<SharedString>, text: impl Into<SharedString>) -> Self {
-        Self {
-            id: String::from("67e55044-10b1-426f-9247-bb680e5fe0c8"),
-            name: name.into(),
-            description: "Test description".into(),
-            text: text.into(),
-            created_at: "2025-05-13T14:25:30.123Z".into(),
-            updated_at: "2025-05-13T14:25:30.123Z".into(),
-        }
-    }
-}
 
 #[derive(IntoElement)]
 pub struct PromptListItem {
@@ -135,6 +113,7 @@ impl ListDelegate for PromptListDelegate {
 
 pub struct PromptList {
     prompt_list: Entity<List<PromptListDelegate>>,
+    on_select: Option<Box<dyn Fn(&Prompt)>>,
 }
 
 impl PromptList {
@@ -151,7 +130,10 @@ impl PromptList {
                 .max_h(rems(11.5))
         });
 
-        PromptList { prompt_list }
+        PromptList {
+            prompt_list,
+            on_select: None,
+        }
     }
 }
 

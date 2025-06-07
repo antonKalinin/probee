@@ -63,36 +63,54 @@ impl AppRoot {
             set_visible(cx, true);
         });
 
+        // Load prompts from API to store them and set to state
         cx.spawn(async move |cx| {
             let prompts = api.get_prompts(cx).await;
             let saved_propmt_id = storage.get(StorageKey::AssistantId);
 
-            AppStateController::update_async(
-                |this, cx| match prompts {
-                    Ok(prompts) => {
-                        this.set_promts(cx, prompts.clone());
-                        let prompts_ids = prompts.iter().map(|a| a.id.clone()).collect::<Vec<_>>();
-                        let first_prompt_id = prompts_ids.first().cloned();
+            match prompts {
+                Ok(prompts) => {
+                    // Pick the first 3 prompts to show in the library
+                    let prompts = prompts.into_iter().take(3).collect::<Vec<_>>();
 
-                        // ensure if the saved prompt id is still valid
-                        let saved_propmt_id = saved_propmt_id
-                            .as_ref()
-                            .filter(|id| prompts_ids.contains(id))
-                            .cloned();
+                    let keys = vec![
+                        StorageKey::DefaultPrompt1,
+                        StorageKey::DefaultPrompt2,
+                        StorageKey::DefaultPrompt3,
+                    ];
 
-                        match (saved_propmt_id, first_prompt_id) {
-                            (Some(id), _) | (None, Some(id)) => {
-                                this.set_active_prompt_id(cx, Some(id))
+                    prompts.iter().enumerate().for_each(|(i, prompt)| {
+                        let key = keys.get(i).unwrap_or(&StorageKey::DefaultPrompt1);
+                        let _ = storage.set(key.clone(), serde_json::to_string(prompt).unwrap());
+                    });
+
+                    AppStateController::update_async(
+                        |this, cx| {
+                            this.set_promts(cx, prompts.clone());
+                            let prompts_ids =
+                                prompts.iter().map(|a| a.id.clone()).collect::<Vec<_>>();
+                            let first_prompt_id = prompts_ids.first().cloned();
+
+                            // ensure if the saved prompt id is still valid
+                            let saved_propmt_id = saved_propmt_id
+                                .as_ref()
+                                .filter(|id| prompts_ids.contains(id))
+                                .cloned();
+
+                            match (saved_propmt_id, first_prompt_id) {
+                                (Some(id), _) | (None, Some(id)) => {
+                                    this.set_active_prompt_id(cx, Some(id))
+                                }
+                                _ => {}
                             }
-                            _ => {}
-                        }
-                    }
-                    Err(err) => {
-                        set_error(cx, Some(err));
-                    }
-                },
-                cx,
-            );
+                        },
+                        cx,
+                    );
+                }
+                Err(err) => {
+                    set_error_async(cx, Some(err));
+                }
+            }
         })
         .detach();
 

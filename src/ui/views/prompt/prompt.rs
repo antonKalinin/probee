@@ -58,6 +58,7 @@ impl Render for PromptEditorView {
             Button::new("create-prompt-button")
                 .label("Save Prompt")
                 .small()
+                .flex()
                 .w_32()
                 .on_click(cx.listener(|_this, _event, _window, _cx: &mut Context<Self>| {})),
         );
@@ -89,7 +90,7 @@ impl Render for PromptEditorView {
                         value()
                             .flex()
                             .flex_row()
-                            .items_end()
+                            .justify_center()
                             .child(save_prompt_button),
                     ])
                     .mt_8(),

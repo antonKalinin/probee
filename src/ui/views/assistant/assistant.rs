@@ -1,7 +1,6 @@
 use gpui::*;
 
 use crate::events::*;
-use crate::services::{Api, Storage, StorageKey};
 use crate::state::app_state::*;
 use crate::ui::*;
 
@@ -17,9 +16,6 @@ pub struct AssistantView {
 
 impl AssistantView {
     pub fn new(cx: &mut Context<Self>, state: &Entity<AppState>) -> Self {
-        let api = cx.global::<Api>().clone();
-        let storage = cx.global::<Storage>().clone();
-
         let header_view = cx.new(|cx| Header::new(cx, &state));
         let output_view = cx.new(|cx| Output::new(cx, &state));
 
@@ -33,50 +29,6 @@ impl AssistantView {
             if UiEvent::ToggleAssistantLibrary == *event {
                 set_active_view(cx, AppView::LibraryView);
             }
-        })
-        .detach();
-
-        // load prompts in the background
-        cx.spawn(async move |weak_view, cx| {
-            let _ = weak_view.update(cx, |this: &mut AssistantView, cx| {
-                this.loading = true;
-                cx.notify();
-            });
-
-            let prompts = api.get_prompts(cx).await;
-            let saved_propmt_id = storage.get(StorageKey::AssistantId);
-
-            AppStateController::update_async(
-                |this, cx| match prompts {
-                    Ok(prompts) => {
-                        this.set_promts(cx, prompts.clone());
-                        let prompts_ids = prompts.iter().map(|a| a.id.clone()).collect::<Vec<_>>();
-                        let first_prompt_id = prompts_ids.first().cloned();
-
-                        // ensure if the saved prompt id is still valid
-                        let saved_propmt_id = saved_propmt_id
-                            .as_ref()
-                            .filter(|id| prompts_ids.contains(id))
-                            .cloned();
-
-                        match (saved_propmt_id, first_prompt_id) {
-                            (Some(id), _) | (None, Some(id)) => {
-                                this.set_active_prompt_id(cx, Some(id))
-                            }
-                            _ => {}
-                        }
-                    }
-                    Err(err) => {
-                        set_error(cx, Some(err));
-                    }
-                },
-                cx,
-            );
-
-            let _ = weak_view.update(cx, |this: &mut AssistantView, cx| {
-                this.loading = false;
-                cx.notify();
-            });
         })
         .detach();
 

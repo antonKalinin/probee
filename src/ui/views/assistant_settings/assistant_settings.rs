@@ -1,6 +1,7 @@
 use gpui::*;
 
 use crate::assistant::{Model, ModelProvider};
+use crate::services::Prompt;
 use crate::state::settings_state::*;
 use crate::storage::{Storage, StorageKey};
 use crate::ui::{
@@ -9,7 +10,7 @@ use crate::ui::{
 };
 use crate::utils::prompt_window_options;
 
-use super::components::{Prompt, PromptList};
+use super::components::PromptList;
 
 const VIEW_HEIGHT: f32 = 464.0;
 
@@ -60,16 +61,22 @@ impl AssistantSettingsView {
     ) -> Self {
         let storage = cx.global::<Storage>();
         let models = Model::get_models();
-        let prompts = vec![
-            Prompt::new("Change Tone to Confident", ""),
-            Prompt::new("Change Tone to Professional", ""),
-            Prompt::new("Explain This in Simple Terms", ""),
-            Prompt::new("Translate to Chinese", ""),
-            Prompt::new("Translate to English", ""),
-            Prompt::new("Translate to German", ""),
-            Prompt::new("Translate to Spanish", ""),
-            Prompt::new("Translate to Russian", ""),
-        ];
+
+        let prompts = (vec![
+            StorageKey::UserPrompt1,
+            StorageKey::UserPrompt2,
+            StorageKey::UserPrompt3,
+            StorageKey::DefaultPrompt1,
+            StorageKey::DefaultPrompt2,
+            StorageKey::DefaultPrompt3,
+        ])
+        .into_iter()
+        .filter_map(|key| {
+            storage
+                .get(key)
+                .and_then(|value| serde_json::from_str::<Prompt>(&value).ok())
+        })
+        .collect::<Vec<_>>();
 
         let default_model = models.get(0).unwrap();
         let model = storage
