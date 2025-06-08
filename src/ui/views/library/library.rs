@@ -1,7 +1,7 @@
 use gpui::*;
 
+use crate::assistant::Prompt;
 use crate::events::*;
-use crate::services::Prompt;
 use crate::state::app_state::*;
 use crate::ui::*;
 

@@ -1,33 +1,56 @@
 use gpui::*;
 
+use crate::assistant::Prompt;
 use crate::storage::{Storage, StorageKey};
-use crate::ui::{Button, Sizable as _, TextInput, Theme};
+use crate::ui::{Button, Disableable, InputEvent, Sizable as _, TextInput, Theme};
 
 pub struct PromptEditorView {
+    prompt: Option<Prompt>,
     name_input: Entity<TextInput>,
     prompt_input: Entity<TextInput>,
+    save_enabled: bool,
 }
 
 impl PromptEditorView {
-    pub fn build(window: &mut Window, cx: &mut App) -> Entity<Self> {
+    pub fn build(prompt: Option<Prompt>, window: &mut Window, cx: &mut App) -> Entity<Self> {
+        let storage = cx.global::<Storage>();
+
         let view = cx.new(move |cx| {
-            let storage = cx.global::<Storage>();
+            let prompt_name = prompt.as_ref().map(|p| p.name.clone()).unwrap_or("".into());
+            let prompt_text = prompt
+                .as_ref()
+                .map(|p| p.system_message.clone())
+                .unwrap_or("".into());
+
+            let name_input = cx.new(|cx| {
+                let mut text_input = TextInput::new(window, cx).placeholder("What I should do?");
+                text_input.set_text(prompt_name, window, cx);
+                text_input
+            });
+
+            let prompt_input = cx.new(|cx| {
+                let mut text_input = TextInput::new(window, cx)
+                    .placeholder("You are an expert in ... ")
+                    .multi_line()
+                    .rows(20);
+
+                text_input.set_text(prompt_text, window, cx);
+                text_input
+            });
+
+            cx.subscribe(
+                &name_input,
+                |this, input, event, cx| {
+                    if let InputEvent::Change(text) = event {}
+                },
+            )
+            .detach();
 
             PromptEditorView {
-                name_input: cx.new(|cx| {
-                    let mut text_input = TextInput::new(window, cx).placeholder("Prompt Name");
-                    text_input.set_text("", window, cx);
-                    text_input
-                }),
-                prompt_input: cx.new(|cx| {
-                    let mut text_input = TextInput::new(window, cx)
-                        .placeholder("Enter your prompt here")
-                        .multi_line()
-                        .rows(20);
-
-                    text_input.set_text("", window, cx);
-                    text_input
-                }),
+                prompt,
+                name_input,
+                prompt_input,
+                save_enabled: false,
             }
         });
 
@@ -60,7 +83,12 @@ impl Render for PromptEditorView {
                 .small()
                 .flex()
                 .w_32()
-                .on_click(cx.listener(|_this, _event, _window, _cx: &mut Context<Self>| {})),
+                .disabled(!self.save_enabled)
+                .on_click(
+                    cx.listener(|_this, _event, window, _cx: &mut Context<Self>| {
+                        window.remove_window();
+                    }),
+                ),
         );
 
         div()

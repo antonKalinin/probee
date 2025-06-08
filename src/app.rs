@@ -65,28 +65,38 @@ impl AppRoot {
 
         // Load prompts from API to store them and set to state
         cx.spawn(async move |cx| {
-            let prompts = api.get_prompts(cx).await;
+            let app_prompts = api.get_prompts(cx).await;
             let saved_propmt_id = storage.get(StorageKey::AssistantId);
 
-            match prompts {
-                Ok(prompts) => {
-                    // Pick the first 3 prompts to show in the library
-                    let prompts = prompts.into_iter().take(3).collect::<Vec<_>>();
+            match app_prompts {
+                Ok(app_prompts) => {
+                    let app_prompts = app_prompts.into_iter().take(3).collect::<Vec<_>>();
+                    let app_prompt_ids =
+                        app_prompts.iter().map(|a| a.id.clone()).collect::<Vec<_>>();
 
-                    let keys = vec![
-                        StorageKey::DefaultPrompt1,
-                        StorageKey::DefaultPrompt2,
-                        StorageKey::DefaultPrompt3,
-                    ];
+                    let mut prompts = storage
+                        .get(StorageKey::Prompts)
+                        .and_then(|value| serde_json::from_str::<Vec<Prompt>>(&value).ok())
+                        .unwrap_or(vec![])
+                        .into_iter()
+                        .filter(|p| !app_prompt_ids.contains(&p.id))
+                        .collect::<Vec<_>>();
 
-                    prompts.iter().enumerate().for_each(|(i, prompt)| {
-                        let key = keys.get(i).unwrap_or(&StorageKey::DefaultPrompt1);
-                        let _ = storage.set(key.clone(), serde_json::to_string(prompt).unwrap());
-                    });
+                    prompts.extend(app_prompts.iter().cloned());
+
+                    let _ = storage.set_notify_async(
+                        StorageKey::Prompts,
+                        serde_json::to_string(&prompts).unwrap(),
+                        cx,
+                    );
+
+                    let _ = storage.set(
+                        StorageKey::AppPropmptIds,
+                        serde_json::to_string(&app_prompt_ids).unwrap(),
+                    );
 
                     AppStateController::update_async(
                         |this, cx| {
-                            this.set_promts(cx, prompts.clone());
                             let prompts_ids =
                                 prompts.iter().map(|a| a.id.clone()).collect::<Vec<_>>();
                             let first_prompt_id = prompts_ids.first().cloned();

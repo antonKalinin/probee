@@ -1,7 +1,7 @@
 use gpui::*;
 
+use crate::assistant::Prompt;
 use crate::assistant::{Model, ModelProvider};
-use crate::services::Prompt;
 use crate::state::settings_state::*;
 use crate::storage::{Storage, StorageKey};
 use crate::ui::{
@@ -50,7 +50,6 @@ pub struct AssistantSettingsView {
     prompt_list: Entity<PromptList>,
 
     provider: ModelProvider,
-    prompt_editor_opened: bool,
 }
 
 impl AssistantSettingsView {
@@ -62,21 +61,10 @@ impl AssistantSettingsView {
         let storage = cx.global::<Storage>();
         let models = Model::get_models();
 
-        let prompts = (vec![
-            StorageKey::UserPrompt1,
-            StorageKey::UserPrompt2,
-            StorageKey::UserPrompt3,
-            StorageKey::DefaultPrompt1,
-            StorageKey::DefaultPrompt2,
-            StorageKey::DefaultPrompt3,
-        ])
-        .into_iter()
-        .filter_map(|key| {
-            storage
-                .get(key)
-                .and_then(|value| serde_json::from_str::<Prompt>(&value).ok())
-        })
-        .collect::<Vec<_>>();
+        let prompts = storage
+            .get(StorageKey::Prompts)
+            .and_then(|value| serde_json::from_str::<Vec<Prompt>>(&value).ok())
+            .unwrap_or(vec![]);
 
         let default_model = models.get(0).unwrap();
         let model = storage
@@ -156,7 +144,6 @@ impl AssistantSettingsView {
             prompt_list,
 
             provider: ModelProvider::Anthropic,
-            prompt_editor_opened: false,
         }
     }
 }
@@ -187,13 +174,10 @@ impl Render for AssistantSettingsView {
                 .small()
                 .on_click(
                     cx.listener(|this, _event, _window, cx: &mut Context<Self>| {
-                        if this.prompt_editor_opened {
-                            return;
-                        }
-
-                        this.prompt_editor_opened = true;
                         let window_options = prompt_window_options(cx);
-                        let _ = cx.open_window(window_options, PromptEditorView::build);
+                        let _ = cx.open_window(window_options, |window, cx| {
+                            PromptEditorView::build(None, window, cx)
+                        });
                     }),
                 ),
         );

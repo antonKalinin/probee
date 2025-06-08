@@ -11,7 +11,7 @@ use aes_gcm::{
     Aes256Gcm, Nonce,
 };
 use anyhow::Result;
-use gpui::{App, Global};
+use gpui::{App, AsyncApp, Global};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
@@ -28,6 +28,7 @@ pub struct Storage {
     data: Arc<Mutex<HashMap<String, String>>>,
     path: PathBuf,
     cipher: Aes256Gcm,
+    subscribers: Vec<Arc<dyn Fn(&StorageKey, String, &mut App)>>,
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
@@ -44,12 +45,9 @@ pub enum StorageKey {
     AssistantModel,
     AnthropicApiKey,
     OpenAiApiKey,
-    DefaultPrompt1,
-    DefaultPrompt2,
-    DefaultPrompt3,
-    UserPrompt1,
-    UserPrompt2,
-    UserPrompt3,
+    Prompts,
+    AppPropmptIds,
+    EnabledPromptIds,
     PromptsLastLoadedAt,
 
     // settings
@@ -124,7 +122,12 @@ impl Storage {
             Aes256Gcm::new_from_slice(&hash).map_err(|_| StorageError::StorageCreationError)?;
 
         let data = Arc::new(Mutex::new(HashMap::new()));
-        let store = Self { data, path, cipher };
+        let store = Self {
+            data,
+            path,
+            cipher,
+            subscribers: vec![],
+        };
 
         // Load existing data if available
         store.load()?;
@@ -143,6 +146,29 @@ impl Storage {
         Ok(())
     }
 
+    pub fn set_notify(&self, key: StorageKey, value: String, cx: &mut App) -> Result<()> {
+        self.set(key.clone(), value.clone())?;
+        self.notify(&key, value.clone(), cx);
+
+        Ok(())
+    }
+
+    pub fn set_notify_async(
+        &self,
+        key: StorageKey,
+        value: String,
+        cx: &mut AsyncApp,
+    ) -> Result<()> {
+        let _ = cx.update_global::<Self, _>(|this, cx| -> Result<()> {
+            this.set(key.clone(), value.clone())?;
+            this.notify(&key, value.clone(), cx);
+
+            Ok(())
+        });
+
+        Ok(())
+    }
+
     pub fn get(&self, key: StorageKey) -> Option<String> {
         let data = self.data.lock().unwrap();
         data.get(&key.stringify()).cloned()
@@ -157,6 +183,13 @@ impl Storage {
         self.flush()?;
 
         Ok(())
+    }
+
+    pub fn subscribe<F>(&mut self, callback: F)
+    where
+        F: Fn(&StorageKey, String, &mut App) + 'static,
+    {
+        self.subscribers.push(Arc::new(callback));
     }
 
     // TODO: Implement non blocking flush
@@ -221,6 +254,12 @@ impl Storage {
         *data = loaded_data;
 
         Ok(())
+    }
+
+    fn notify(&self, key: &StorageKey, value: String, cx: &mut App) {
+        for callback in &self.subscribers {
+            callback(key, value.clone(), cx);
+        }
     }
 }
 

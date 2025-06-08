@@ -3,7 +3,7 @@ use gpui::{
     Render, RenderOnce, Styled, Window,
 };
 
-use crate::services::Prompt;
+use crate::assistant::Prompt;
 use crate::ui::{h_flex, Checkbox, Icon, IconName, List, ListDelegate, ListItem, Theme};
 
 #[derive(IntoElement)]
@@ -18,7 +18,10 @@ impl RenderOnce for PromptListItem {
     fn render(self, _: &mut Window, cx: &mut App) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
-        let propmt_enabled_checkbox = Checkbox::new(self.ix).checked(true).on_click(|a, b, c| {});
+        let propmt_enabled_checkbox = Checkbox::new(self.ix)
+            .checked(true)
+            .on_click(|checked, _window, _cx| {});
+
         let readonly_icon = Icon::new(IconName::PencilOff)
             .size_3()
             .text_color(theme.muted_foreground);
@@ -58,6 +61,7 @@ impl PromptListItem {
 
 struct PromptListDelegate {
     prompts: Vec<Prompt>,
+    on_select: Option<Box<dyn Fn(&Prompt)>>,
     selected_index: Option<usize>,
 }
 
@@ -86,6 +90,10 @@ impl ListDelegate for PromptListDelegate {
     ) {
         self.selected_index = ix;
         cx.notify();
+    }
+
+    fn confirm(&mut self, secondary: bool, window: &mut Window, cx: &mut Context<List<Self>>) {
+        println!("Index {} confirmed", self.selected_index.unwrap_or(0));
     }
 
     fn render_item(
@@ -121,12 +129,13 @@ impl PromptList {
         let delegate = PromptListDelegate {
             prompts,
             selected_index: None,
+            on_select: None,
         };
 
         let prompt_list = cx.new(|cx| {
             List::new(delegate, window, cx)
                 .no_query()
-                .selectable(false)
+                .selectable(true)
                 .max_h(rems(11.5))
         });
 
@@ -145,6 +154,7 @@ impl Render for PromptList {
             .flex_1()
             .w_full()
             .border_1()
+            .h(rems(11.5))
             .border_color(theme.border)
             .rounded_lg()
             .child(self.prompt_list.clone())

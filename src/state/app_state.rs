@@ -2,8 +2,10 @@ use anyhow::Error;
 use gpui::{App, AppContext, AsyncApp, BorrowAppContext, Entity, EventEmitter, Global};
 
 use super::error_state::*;
+use crate::assistant::Prompt;
 use crate::events::AppEvent;
-use crate::services::Prompt;
+use crate::services::storage;
+use crate::storage::{Storage, StorageKey};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum AppView {
@@ -52,6 +54,24 @@ impl ErrorStateController for AppStateController {
 
 impl AppStateController {
     pub fn init(cx: &mut App) {
+        let storage = cx.global_mut::<Storage>();
+
+        storage.subscribe(|key, value, cx| match key {
+            StorageKey::Prompts => {
+                let prompts = serde_json::from_str::<Vec<Prompt>>(&value)
+                    .ok()
+                    .unwrap_or(vec![]);
+
+                set_prompts(cx, prompts);
+            }
+            _ => {}
+        });
+
+        let prompts = storage
+            .get(StorageKey::Prompts)
+            .and_then(|value| serde_json::from_str::<Vec<Prompt>>(&value).ok())
+            .unwrap_or(vec![]);
+
         let state: Entity<AppState> = cx.new(|_cx| AppState {
             active_prompt_id: None,
             active_view: AppView::AssistantView,
@@ -59,16 +79,16 @@ impl AppStateController {
             error: None,
             input: None,
             output: "".to_owned(),
-            prompts: vec![],
+            prompts,
 
             focused: false,
             loading: false,
             visible: true,
         });
 
-        let global_state = AppStateController { state };
+        let app_state = AppStateController { state };
 
-        cx.set_global(global_state);
+        cx.set_global(app_state);
     }
 
     pub fn update(f: impl FnOnce(&mut Self, &mut App), cx: &mut App) {
@@ -247,6 +267,10 @@ pub fn set_error_async(cx: &mut AsyncApp, error: Option<Error>) {
 
 pub fn set_focused(cx: &mut App, focused: bool) {
     AppStateController::update(|this, cx| this.set_focused(cx, focused), cx);
+}
+
+pub fn set_prompts(cx: &mut App, prompts: Vec<Prompt>) {
+    AppStateController::update(|this, cx| this.set_promts(cx, prompts), cx);
 }
 
 pub fn set_visible(cx: &mut App, visible: bool) {

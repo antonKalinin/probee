@@ -1,6 +1,8 @@
 use anyhow::Result;
 use gpui::{App, Global, SharedString};
 use serde::{Deserialize, Serialize};
+use time::format_description::well_known::Rfc3339;
+use time::OffsetDateTime;
 use tokio_stream::wrappers::ReceiverStream;
 use uuid::Uuid;
 
@@ -87,16 +89,33 @@ pub struct Prompt {
 }
 
 impl Prompt {
-    pub fn new(name: String, message: String) -> Self {
+    pub fn new() -> Self {
+        let now = OffsetDateTime::now_utc();
+        let now_iso = now.format(&Rfc3339).unwrap();
+
         Self {
             id: Uuid::new_v4().to_string(),
-            name: name.into(),
+            name: "".into(),
             description: "".into(),
-            system_message: message.into(),
+            system_message: "".into(),
             temperature: 0.2,
-            created_at: "2025-05-13T14:25:30.123Z".into(),
-            updated_at: "2025-05-13T14:25:30.123Z".into(),
+            created_at: now_iso.clone(),
+            updated_at: now_iso.clone(),
         }
+    }
+
+    pub fn set_name(&mut self, name: String) -> &mut Self {
+        self.name = name;
+        self
+    }
+
+    pub fn set_message(&mut self, message: String) -> &mut Self {
+        self.system_message = message;
+        self
+    }
+
+    pub fn is_valid(&self) -> bool {
+        !self.name.is_empty() && !self.system_message.is_empty()
     }
 }
 
