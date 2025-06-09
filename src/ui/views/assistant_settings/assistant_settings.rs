@@ -50,6 +50,7 @@ pub struct AssistantSettingsView {
     prompt_list: Entity<PromptList>,
 
     provider: ModelProvider,
+    prompt_window_handle: Option<WindowHandle<PromptEditorView>>,
 }
 
 impl AssistantSettingsView {
@@ -136,7 +137,35 @@ impl AssistantSettingsView {
         })
         .detach();
 
-        let prompt_list = cx.new(|cx| PromptList::new(prompts, window, cx));
+        let handle_select_prompt = cx.listener(|this, prompt: &Prompt, _window, cx| {
+            let handle_close = cx.listener(|this, ok, window, cx| {
+                window.remove_window();
+                this.prompt_window_handle = None;
+                cx.notify();
+            });
+
+            if this.prompt_window_handle.is_some() {
+                // Update the existing prompt window
+                let window_handle = this.prompt_window_handle.unwrap();
+                let _ = cx.update_window(window_handle.into(), |_this, window, cx| {
+                    window.replace_root(cx, |window, cx| {
+                        PromptEditorView::new(Some(prompt.clone()), handle_close, window, cx)
+                    });
+                });
+
+                return;
+            };
+
+            let window_options = prompt_window_options(cx);
+            let window_handle = cx
+                .open_window(window_options, |window, cx| {
+                    PromptEditorView::build(Some(prompt.clone()), handle_close, window, cx)
+                })
+                .ok();
+
+            this.prompt_window_handle = window_handle;
+        });
+        let prompt_list = cx.new(|cx| PromptList::new(prompts, handle_select_prompt, window, cx));
 
         AssistantSettingsView {
             api_key_input,
@@ -144,6 +173,7 @@ impl AssistantSettingsView {
             prompt_list,
 
             provider: ModelProvider::Anthropic,
+            prompt_window_handle: None,
         }
     }
 }
@@ -174,10 +204,33 @@ impl Render for AssistantSettingsView {
                 .small()
                 .on_click(
                     cx.listener(|this, _event, _window, cx: &mut Context<Self>| {
-                        let window_options = prompt_window_options(cx);
-                        let _ = cx.open_window(window_options, |window, cx| {
-                            PromptEditorView::build(None, window, cx)
+                        let handle_close = cx.listener(|this, _, window, cx| {
+                            window.remove_window();
+                            this.prompt_window_handle = None;
+                            cx.notify();
                         });
+
+                        if this.prompt_window_handle.is_some() {
+                            // Update the existing prompt window
+                            let window_handle = this.prompt_window_handle.unwrap();
+
+                            let _ = cx.update_window(window_handle.into(), |_, window, cx| {
+                                window.replace_root(cx, |window, cx| {
+                                    PromptEditorView::new(None, handle_close, window, cx)
+                                });
+                            });
+
+                            return;
+                        }
+
+                        let window_options = prompt_window_options(cx);
+                        let window_handle = cx
+                            .open_window(window_options, |window, cx| {
+                                PromptEditorView::build(None, handle_close, window, cx)
+                            })
+                            .ok();
+
+                        this.prompt_window_handle = window_handle;
                     }),
                 ),
         );

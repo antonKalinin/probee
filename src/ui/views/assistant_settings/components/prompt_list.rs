@@ -61,7 +61,7 @@ impl PromptListItem {
 
 struct PromptListDelegate {
     prompts: Vec<Prompt>,
-    on_select: Option<Box<dyn Fn(&Prompt)>>,
+    on_select: Box<dyn Fn(&Prompt, &mut Window, &mut App) + 'static>,
     selected_index: Option<usize>,
 }
 
@@ -92,8 +92,13 @@ impl ListDelegate for PromptListDelegate {
         cx.notify();
     }
 
-    fn confirm(&mut self, secondary: bool, window: &mut Window, cx: &mut Context<List<Self>>) {
-        println!("Index {} confirmed", self.selected_index.unwrap_or(0));
+    fn confirm(&mut self, _secondary: bool, window: &mut Window, cx: &mut Context<List<Self>>) {
+        let selected_index = self.selected_index.unwrap_or(0);
+        let propmt = self.prompts.get(selected_index).cloned();
+
+        if let Some(propmt) = propmt {
+            (self.on_select)(&propmt, window, cx);
+        }
     }
 
     fn render_item(
@@ -121,15 +126,19 @@ impl ListDelegate for PromptListDelegate {
 
 pub struct PromptList {
     prompt_list: Entity<List<PromptListDelegate>>,
-    on_select: Option<Box<dyn Fn(&Prompt)>>,
 }
 
 impl PromptList {
-    pub fn new(prompts: Vec<Prompt>, window: &mut Window, cx: &mut Context<Self>) -> Self {
+    pub fn new(
+        prompts: Vec<Prompt>,
+        on_select: impl Fn(&Prompt, &mut Window, &mut App) + 'static,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Self {
         let delegate = PromptListDelegate {
             prompts,
             selected_index: None,
-            on_select: None,
+            on_select: Box::new(on_select),
         };
 
         let prompt_list = cx.new(|cx| {
@@ -139,10 +148,7 @@ impl PromptList {
                 .max_h(rems(11.5))
         });
 
-        PromptList {
-            prompt_list,
-            on_select: None,
-        }
+        PromptList { prompt_list }
     }
 }
 

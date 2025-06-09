@@ -89,15 +89,15 @@ pub struct Prompt {
 }
 
 impl Prompt {
-    pub fn new() -> Self {
+    pub fn new(name: String, message: String) -> Self {
         let now = OffsetDateTime::now_utc();
         let now_iso = now.format(&Rfc3339).unwrap();
 
         Self {
             id: Uuid::new_v4().to_string(),
-            name: "".into(),
-            description: "".into(),
-            system_message: "".into(),
+            name,
+            description: "Select text on the screen and run this prompt".into(),
+            system_message: message,
             temperature: 0.2,
             created_at: now_iso.clone(),
             updated_at: now_iso.clone(),
