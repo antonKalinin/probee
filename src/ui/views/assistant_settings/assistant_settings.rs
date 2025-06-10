@@ -54,18 +54,9 @@ pub struct AssistantSettingsView {
 }
 
 impl AssistantSettingsView {
-    pub fn new(
-        _state: &Entity<SettingsState>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Self {
+    pub fn new(state: &Entity<SettingsState>, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let storage = cx.global::<Storage>();
         let models = Model::get_models();
-
-        let prompts = storage
-            .get(StorageKey::Prompts)
-            .and_then(|value| serde_json::from_str::<Vec<Prompt>>(&value).ok())
-            .unwrap_or(vec![]);
 
         let default_model = models.get(0).unwrap();
         let model = storage
@@ -165,7 +156,8 @@ impl AssistantSettingsView {
 
             this.prompt_window_handle = window_handle;
         });
-        let prompt_list = cx.new(|cx| PromptList::new(prompts, handle_select_prompt, window, cx));
+
+        let prompt_list = cx.new(|cx| PromptList::new(state, handle_select_prompt, window, cx));
 
         AssistantSettingsView {
             api_key_input,

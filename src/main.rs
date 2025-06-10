@@ -83,7 +83,5 @@ async fn main() {
 
         // TODO: Log status menu initialization failure
         let _ = platform::init_status_menu(cx);
-
-        // app_entity.update(cx, |_, cx| cx.emit(AppEvent::OpenSettings));
     });
 }

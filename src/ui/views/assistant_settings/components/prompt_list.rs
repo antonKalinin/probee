@@ -4,6 +4,7 @@ use gpui::{
 };
 
 use crate::assistant::Prompt;
+use crate::state::settings_state::*;
 use crate::ui::{h_flex, Checkbox, Icon, IconName, List, ListDelegate, ListItem, Theme};
 
 #[derive(IntoElement)]
@@ -130,11 +131,22 @@ pub struct PromptList {
 
 impl PromptList {
     pub fn new(
-        prompts: Vec<Prompt>,
+        state: &Entity<SettingsState>,
         on_select: impl Fn(&Prompt, &mut Window, &mut App) + 'static,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
+        let prompts = state.read(cx).prompts.clone();
+
+        cx.observe(state, |this, model, cx| {
+            this.prompt_list.update(cx, |list, cx| {
+                list.delegate_mut().prompts = model.read(cx).prompts.clone();
+                cx.notify();
+            });
+            cx.notify();
+        })
+        .detach();
+
         let delegate = PromptListDelegate {
             prompts,
             selected_index: None,

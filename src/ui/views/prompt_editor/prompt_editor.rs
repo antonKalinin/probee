@@ -2,14 +2,14 @@ use gpui::*;
 
 use crate::assistant::Prompt;
 use crate::services::{Storage, StorageKey};
-use crate::ui::{Button, InputEvent, Sizable as _, TextInput, Theme};
+use crate::ui::{Button, ButtonVariants, Disableable, Sizable as _, TextInput, Theme};
 
 pub struct PromptEditorView {
     prompt: Option<Prompt>,
     name_input: Entity<TextInput>,
     prompt_input: Entity<TextInput>,
     // on_close: Option<Box<dyn Fn(&String, &mut Window, &mut App) + 'static>>,
-    save_enabled: bool,
+    readonly: bool,
 }
 
 impl PromptEditorView {
@@ -41,25 +41,29 @@ impl PromptEditorView {
             text_input
         });
 
-        cx.subscribe(
-            &name_input,
-            |this, input, event, cx| {
-                if let InputEvent::Change(text) = event {}
-            },
-        )
-        .detach();
-
         window.on_window_should_close(cx, move |window, cx| {
             on_close(&true, window, cx);
             true
         });
+
+        let mut readonly = false;
+
+        if let Some(prompt) = &prompt {
+            let storage = cx.global_mut::<Storage>();
+            let app_prompt_ids = storage
+                .get(StorageKey::AppPropmptIds)
+                .and_then(|ids_str| serde_json::from_str::<Vec<String>>(&ids_str).ok())
+                .unwrap_or(vec![]);
+
+            readonly = app_prompt_ids.contains(&prompt.id);
+        }
 
         PromptEditorView {
             prompt,
             name_input,
             prompt_input,
             // on_close: Some(Box::new(on_close)),
-            save_enabled: false,
+            readonly,
         }
     }
 
@@ -70,6 +74,67 @@ impl PromptEditorView {
         cx: &mut App,
     ) -> Entity<Self> {
         cx.new(|cx| PromptEditorView::new(prompt, on_close, window, cx))
+    }
+
+    fn save_prompt(&self, cx: &mut Context<Self>) -> Option<Prompt> {
+        let name = self.name_input.read(cx).text().clone();
+        let text = self.prompt_input.read(cx).text().clone();
+
+        if name.is_empty() || text.is_empty() {
+            return None;
+        }
+
+        let prompt = match &self.prompt {
+            Some(existing_prompt) => existing_prompt
+                .to_owned()
+                .set_name(name.into())
+                .set_message(text.into())
+                .clone(),
+            None => Prompt::new(name.into(), text.into()),
+        };
+
+        let storage = cx.global::<Storage>().clone();
+        let existing_prompts: Vec<Prompt> = storage
+            .get(StorageKey::Prompts)
+            .and_then(|value| serde_json::from_str(&value).ok())
+            .unwrap_or(vec![]);
+
+        // Replace prompt if it exists by id or append if it doesn't
+        let mut updated_prompts = existing_prompts
+            .into_iter()
+            .filter(|p| p.id != prompt.id)
+            .collect::<Vec<_>>();
+
+        updated_prompts.push(prompt.clone());
+
+        let _ = storage.set_notify(
+            StorageKey::Prompts,
+            serde_json::to_string(&updated_prompts).unwrap(),
+            cx,
+        );
+
+        Some(prompt)
+    }
+
+    fn delete_propmt(&self, cx: &mut Context<Self>) {
+        if let Some(prompt) = &self.prompt {
+            let storage = cx.global_mut::<Storage>().clone();
+            let existing_prompts: Vec<Prompt> = storage
+                .get(StorageKey::Prompts)
+                .and_then(|value| serde_json::from_str(&value).ok())
+                .unwrap_or(vec![]);
+
+            let updated_prompts = existing_prompts
+                .into_iter()
+                .filter(|p| p.id != prompt.id)
+                .collect::<Vec<_>>();
+
+            let _ = storage.set_notify(
+                StorageKey::Prompts,
+                serde_json::to_string(&updated_prompts).unwrap(),
+                cx,
+            );
+        }
     }
 }
 
@@ -92,48 +157,34 @@ impl Render for PromptEditorView {
 
         let value = || div().w(px(360.));
 
-        let save_prompt_button = div().child(
-            Button::new("create-prompt-button")
-                .label("Save Prompt")
+        let delete_prompt_button = div().child(
+            Button::new("delete-prompt-button")
+                .label("Delete Prompt")
                 .small()
+                .disabled(self.prompt.is_none() || self.readonly)
                 .flex()
                 .w_32()
                 .on_click(
                     cx.listener(|this, _event, _window, cx: &mut Context<Self>| {
-                        let name = this.name_input.read(cx).text().clone();
-                        let text = this.prompt_input.read(cx).text().clone();
+                        this.delete_propmt(cx);
+                    }),
+                ),
+        );
 
-                        if name.is_empty() || text.is_empty() {
-                            return;
-                        }
+        let save_prompt_button = div().child(
+            Button::new("create-prompt-button")
+                .label("Save Prompt")
+                .primary()
+                .small()
+                .flex()
+                .w_32()
+                .disabled(self.readonly)
+                .on_click(
+                    cx.listener(|this, _event, _window, cx: &mut Context<Self>| {
+                        let prompt = this.save_prompt(cx);
+                        this.prompt = prompt;
 
-                        let prompt = match &this.prompt {
-                            Some(existing_prompt) => existing_prompt
-                                .to_owned()
-                                .set_name(name.into())
-                                .set_message(text.into())
-                                .clone(),
-                            None => Prompt::new(name.into(), text.into()),
-                        };
-
-                        let storage = cx.global_mut::<Storage>();
-                        let existing_prompts: Vec<Prompt> = storage
-                            .get(StorageKey::Prompts)
-                            .and_then(|value| serde_json::from_str(&value).ok())
-                            .unwrap_or(vec![]);
-
-                        // Replace prompt if it exists by id or append if it doesn't
-                        let mut updated_prompts = existing_prompts
-                            .into_iter()
-                            .filter(|p| p.id != prompt.id)
-                            .collect::<Vec<_>>();
-
-                        updated_prompts.push(prompt.clone());
-
-                        let _ = storage.set(
-                            StorageKey::Prompts,
-                            serde_json::to_string(&updated_prompts).unwrap(),
-                        );
+                        cx.notify();
                     }),
                 ),
         );
@@ -166,7 +217,8 @@ impl Render for PromptEditorView {
                             .flex()
                             .flex_row()
                             .justify_center()
-                            .child(save_prompt_button),
+                            .gap_2()
+                            .children(vec![delete_prompt_button, save_prompt_button]),
                     ])
                     .mt_8(),
             )
