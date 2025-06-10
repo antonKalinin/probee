@@ -113,10 +113,6 @@ impl Prompt {
         self.system_message = message;
         self
     }
-
-    pub fn is_valid(&self) -> bool {
-        !self.name.is_empty() && !self.system_message.is_empty()
-    }
 }
 
 pub struct Assistant {

@@ -8,7 +8,7 @@ use serde::Deserialize;
 use std::env;
 
 use crate::errors::ApiError;
-use crate::services::{Auth, Prompt};
+use crate::services::Prompt;
 
 /*
  * Api service that uses Supabase REST API as the backend.
@@ -54,15 +54,12 @@ impl Api {
         });
     }
 
-    pub async fn get_prompts(&self, cx: &mut AsyncApp) -> Result<Vec<Prompt>> {
-        // Returns public prompts for authenticated users and personal prompts for their authors.
+    pub async fn get_prompts(&self, _cx: &mut AsyncApp) -> Result<Vec<Prompt>> {
         let url = format!("{}{}", self.base_url, "/rest/v1/prompts");
 
-        let access_token = Auth::get_access_token_async(cx).unwrap_or("".into());
         let response = self
             .client
             .get(url)
-            .header("Authorization", format!("Bearer {}", access_token))
             .send()
             .await
             .map_err(|original_err| ApiError::RequestError(original_err))?;

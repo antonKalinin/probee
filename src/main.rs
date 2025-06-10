@@ -39,7 +39,6 @@ async fn main() {
         Storage::init(cx);
         Api::init(cx);
         Assistant::init(cx);
-        Auth::init(cx);
         GlobalHotkeyManager::init(cx);
         Theme::init(cx);
         Components::init(cx);
