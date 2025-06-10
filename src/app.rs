@@ -189,7 +189,7 @@ impl AppRoot {
 
             cx.on_blur(&focus_handle, window, |_this, _window, cx| {
                 set_focused(cx, false);
-                // set_visible(cx, false);
+                set_visible(cx, false);
                 // let blur_id = get_blur_id(cx);
 
                 // cx.spawn(async move |this, cx| {

@@ -1,10 +1,12 @@
 use anyhow::Error;
-use gpui::{App, AppContext, AsyncApp, BorrowAppContext, Entity, EventEmitter, Global};
+use gpui::{
+    App, AppContext, AsyncApp, BorrowAppContext, Entity, EventEmitter, Global, WindowHandle,
+};
 
 use super::error_state::*;
 use crate::assistant::Prompt;
 use crate::events::AppEvent;
-use crate::services::storage;
+use crate::settings::SettingsRoot;
 use crate::storage::{Storage, StorageKey};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -13,7 +15,6 @@ pub enum AppView {
     LibraryView,
 }
 
-#[derive(Debug)]
 pub struct AppState {
     pub active_prompt_id: Option<String>,
     pub active_view: AppView,
@@ -26,6 +27,7 @@ pub struct AppState {
     pub focused: bool,
     pub loading: bool,
     pub visible: bool,
+    pub settings_window_handle: Option<WindowHandle<SettingsRoot>>,
 }
 
 impl ErrorState for AppState {
@@ -84,6 +86,7 @@ impl AppStateController {
             focused: false,
             loading: false,
             visible: true,
+            settings_window_handle: None,
         });
 
         let app_state = AppStateController { state };
@@ -182,6 +185,11 @@ impl AppStateController {
     }
 
     pub fn set_visible(&self, cx: &mut App, visible: bool) {
+        // Should not hide app if settings window is open.
+        if self.state.read(cx).settings_window_handle.is_some() {
+            return;
+        }
+
         self.state.update(cx, |model, cx| {
             model.visible = visible;
             cx.notify();
@@ -191,6 +199,17 @@ impl AppStateController {
             } else {
                 cx.hide();
             }
+        });
+    }
+
+    pub fn set_settings_window_handle(
+        &self,
+        cx: &mut App,
+        handle: Option<WindowHandle<SettingsRoot>>,
+    ) {
+        self.state.update(cx, |state, cx| {
+            state.settings_window_handle = handle;
+            cx.notify();
         });
     }
 }
@@ -285,4 +304,13 @@ pub fn toggle_visible(cx: &mut App) {
         },
         cx,
     );
+}
+
+pub fn get_settings_window_handle(cx: &App) -> Option<WindowHandle<SettingsRoot>> {
+    let state = cx.global::<AppStateController>().state.read(cx);
+    state.settings_window_handle
+}
+
+pub fn set_settings_window_handle(cx: &mut App, handle: Option<WindowHandle<SettingsRoot>>) {
+    AppStateController::update(|this, cx| this.set_settings_window_handle(cx, handle), cx);
 }

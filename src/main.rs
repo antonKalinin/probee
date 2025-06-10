@@ -19,7 +19,8 @@ use crate::app::AppRoot;
 use crate::assets::Assets;
 use crate::services::*;
 use crate::settings::SettingsRoot;
-use crate::state::*;
+use crate::state::app_state::*;
+use crate::state::settings_state::*;
 use crate::ui::{Components, Theme};
 use crate::utils::devtools;
 
@@ -53,18 +54,27 @@ async fn main() {
         let _ = cx
             .subscribe(&app_entity, move |_app_root, event, cx| match event {
                 AppEvent::OpenSettings => {
-                    let windows = cx.windows();
+                    let window_handle = get_settings_window_handle(cx);
 
-                    // FIXME: Error prone, probably better just do nothing
-                    // if windows.len() == 2 {
-                    //     let handle = windows.get(1).unwrap();
-                    //     let _ = handle.update(cx, |_view, window, _cx| {
-                    //         window.remove_window();
-                    //     });
-                    // }
+                    if window_handle.is_some() {
+                        let _ = window_handle.unwrap().update(cx, |_, window, _cx| {
+                            window.remove_window();
+                        });
+                    }
 
                     let settings_window_options = utils::settings_window_options(cx);
-                    let _ = cx.open_window(settings_window_options, SettingsRoot::build);
+                    let handle = cx.open_window(settings_window_options, SettingsRoot::build);
+
+                    if let Ok(handle) = handle {
+                        let _ = handle.update(cx, |_, window, cx| {
+                            window.on_window_should_close(cx, |_window, cx| {
+                                set_settings_window_handle(cx, None);
+                                true
+                            });
+                        });
+                    }
+
+                    set_settings_window_handle(cx, handle.ok());
                     cx.activate(false);
                 }
                 _ => {}

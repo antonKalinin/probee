@@ -371,7 +371,7 @@ impl GlobalHotkeyManager {
 
                 if state
                     .released_ts
-                    .map(|ts| ts.elapsed().as_millis() > 300)
+                    .map(|ts| ts.elapsed().as_millis() > 200)
                     .unwrap_or(false)
                 {
                     state.reset_released();

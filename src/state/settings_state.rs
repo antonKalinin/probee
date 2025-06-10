@@ -15,7 +15,6 @@ pub enum SettingsTabType {
 pub struct SettingsState {
     pub active_tab: SettingsTabType,
     pub error: Option<Error>,
-    pub prompt_window_opened: bool,
 }
 
 impl ErrorState for SettingsState {
@@ -45,7 +44,6 @@ impl SettingsStateController {
         let state: Entity<SettingsState> = cx.new(|_cx| SettingsState {
             active_tab: SettingsTabType::Assistant,
             error: None,
-            prompt_window_opened: false,
         });
 
         let settings_state = SettingsStateController { state };
@@ -75,13 +73,6 @@ impl SettingsStateController {
             cx.notify();
         });
     }
-
-    pub fn set_prompt_window_opened(&self, cx: &mut App, opened: bool) {
-        self.state.update(cx, |state, cx| {
-            state.prompt_window_opened = opened;
-            cx.notify();
-        });
-    }
 }
 
 pub fn set_active_tab(cx: &mut App, tab: SettingsTabType) {
@@ -90,10 +81,6 @@ pub fn set_active_tab(cx: &mut App, tab: SettingsTabType) {
 
 pub fn set_error(cx: &mut App, error: Option<Error>) {
     SettingsStateController::update(|this, cx| this.set_error(cx, error), cx);
-}
-
-pub fn set_prompt_window_opened(cx: &mut App, opened: bool) {
-    SettingsStateController::update(|this, cx| this.set_prompt_window_opened(cx, opened), cx);
 }
 
 // pub fn set_error_async(cx: &mut AsyncApp, error: Option<Error>) {
