@@ -76,7 +76,6 @@ impl HotkeyInput {
                                 cx.notify();
                             })
                             .ok();
-                            break;
                         }
 
                         if let Ok(key_event) = key {

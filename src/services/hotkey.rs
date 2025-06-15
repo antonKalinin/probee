@@ -304,6 +304,7 @@ extern "C" fn event_callback(
 pub struct GlobalHotkeyManager {
     key_event_channel: Option<Sender<KeyEvent>>,
     hotkey_channel: Option<Sender<HotKey>>,
+    dirty: bool,
 }
 
 impl Global for GlobalHotkeyManager {}
@@ -312,11 +313,11 @@ impl GlobalHotkeyManager {
     pub fn init(cx: &mut App) {
         let storage = cx.global::<Storage>();
 
-        let assistant_hotkey = storage
+        let mut assistant_hotkey = storage
             .get(StorageKey::HotkeyRunAssistant)
             .unwrap_or("".into());
 
-        let visibility_hotkey = storage
+        let mut visibility_hotkey = storage
             .get(StorageKey::HotkeyToogleVisibility)
             .unwrap_or("".into());
 
@@ -384,7 +385,7 @@ impl GlobalHotkeyManager {
                     let _ = cx.update(|cx| {
                         let hotkey = hotkey.unwrap();
                         let keystroke = hotkey.to_keystroke();
-                        let manager = cx.global::<GlobalHotkeyManager>();
+                        let manager = cx.global_mut::<GlobalHotkeyManager>();
 
                         if let Some(key_event_channel) = manager.key_event_channel.as_ref() {
                             let _ = key_event_channel.send(event);
@@ -393,6 +394,20 @@ impl GlobalHotkeyManager {
                         if let Some(hotkey_channel) = manager.hotkey_channel.as_ref() {
                             let _ = hotkey_channel.send(hotkey);
                             return;
+                        }
+
+                        if manager.dirty {
+                            manager.dirty = false;
+
+                            assistant_hotkey = cx
+                                .global::<Storage>()
+                                .get(StorageKey::HotkeyRunAssistant)
+                                .unwrap_or("".into());
+
+                            visibility_hotkey = cx
+                                .global::<Storage>()
+                                .get(StorageKey::HotkeyToogleVisibility)
+                                .unwrap_or("".into());
                         }
 
                         if keystroke == assistant_hotkey {
@@ -413,6 +428,7 @@ impl GlobalHotkeyManager {
         let manager = GlobalHotkeyManager {
             key_event_channel: None,
             hotkey_channel: None,
+            dirty: false,
         };
 
         cx.set_global(manager);
@@ -424,5 +440,6 @@ impl GlobalHotkeyManager {
 
     pub fn set_hotkey_channel(&mut self, channel: Option<Sender<HotKey>>) {
         self.hotkey_channel = channel;
+        self.dirty = true;
     }
 }

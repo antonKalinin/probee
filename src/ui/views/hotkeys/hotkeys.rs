@@ -44,24 +44,28 @@ impl HotkeysView {
             .unwrap_or(None);
 
         let assistant_hotkey_cb = Box::new(|hotkey: HotKey, cx: &mut Context<_>| {
+            println!("Setting assistant hotkey: {:?}", hotkey.to_keystroke());
+
             let _ = cx
-                .global_mut::<Storage>()
+                .global::<Storage>()
                 .set(StorageKey::HotkeyRunAssistant, hotkey.to_keystroke());
         });
 
         let visibility_hotkey_cb = Box::new(|hotkey: HotKey, cx: &mut Context<_>| {
             let _ = cx
-                .global_mut::<Storage>()
+                .global::<Storage>()
                 .set(StorageKey::HotkeyToogleVisibility, hotkey.to_keystroke());
         });
+
         let prev_hotkey_cb = Box::new(|hotkey: HotKey, cx: &mut Context<_>| {
             let _ = cx
-                .global_mut::<Storage>()
+                .global::<Storage>()
                 .set(StorageKey::HotkeyPrevPropmt, hotkey.to_keystroke());
         });
+
         let next_hotkey_cb = Box::new(|hotkey: HotKey, cx: &mut Context<_>| {
             let _ = cx
-                .global_mut::<Storage>()
+                .global::<Storage>()
                 .set(StorageKey::HotkeyNextPrompt, hotkey.to_keystroke());
         });
 

@@ -102,11 +102,27 @@ impl Storage {
 
         let storage = Storage::new(app_dir, storage_salt.as_bytes()).unwrap();
 
-        // Initialize default values
-        let _ = storage.set(StorageKey::HotkeyRunAssistant, "alt+alt".into());
-        let _ = storage.set(StorageKey::HotkeyToogleVisibility, "alt+tab".into());
-        let _ = storage.set(StorageKey::HotkeyPrevPropmt, "alt+1".into());
-        let _ = storage.set(StorageKey::HotkeyNextPrompt, "alt+2".into());
+        let run_assistant_hk = storage
+            .get(StorageKey::HotkeyRunAssistant)
+            .unwrap_or_else(|| "alt+alt".to_string());
+
+        let toggle_visibility_hk = storage
+            .get(StorageKey::HotkeyToogleVisibility)
+            .unwrap_or_else(|| "alt+tab".to_string());
+
+        let prev_prompt_hk = storage
+            .get(StorageKey::HotkeyPrevPropmt)
+            .unwrap_or_else(|| "alt+1".to_string());
+
+        let next_prompt_hk = storage
+            .get(StorageKey::HotkeyNextPrompt)
+            .unwrap_or_else(|| "alt+2".to_string());
+
+        // Reinitialize hotkeys with default values if not set
+        let _ = storage.set(StorageKey::HotkeyRunAssistant, run_assistant_hk);
+        let _ = storage.set(StorageKey::HotkeyToogleVisibility, toggle_visibility_hk);
+        let _ = storage.set(StorageKey::HotkeyPrevPropmt, prev_prompt_hk);
+        let _ = storage.set(StorageKey::HotkeyNextPrompt, next_prompt_hk);
 
         cx.set_global(storage);
     }
