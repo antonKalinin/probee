@@ -1,8 +1,9 @@
 use std::panic;
+use std::time::Duration;
 
 use dotenv::dotenv;
 use events::AppEvent;
-use gpui::{App, Application};
+use gpui::{App, Application, AsyncApp};
 
 mod app;
 mod assets;
@@ -23,6 +24,31 @@ use crate::state::app_state::*;
 use crate::state::settings_state::*;
 use crate::ui::{Components, Theme};
 use crate::utils::devtools;
+
+fn open_settings(cx: &mut App) {
+    let window_handle = get_settings_window_handle(cx);
+
+    if window_handle.is_some() {
+        let _ = window_handle.unwrap().update(cx, |_, window, _cx| {
+            window.remove_window();
+        });
+    }
+
+    let settings_window_options = utils::settings_window_options(cx);
+    let handle = cx.open_window(settings_window_options, SettingsRoot::build);
+
+    if let Ok(handle) = handle {
+        let _ = handle.update(cx, |_, window, cx| {
+            window.on_window_should_close(cx, |_window, cx| {
+                set_settings_window_handle(cx, None);
+                true
+            });
+        });
+    }
+
+    set_settings_window_handle(cx, handle.ok());
+    cx.activate(false);
+}
 
 #[async_std::main]
 async fn main() {
@@ -52,35 +78,33 @@ async fn main() {
 
         let _ = cx
             .subscribe(&app_entity, move |_app_root, event, cx| match event {
-                AppEvent::OpenSettings => {
-                    let window_handle = get_settings_window_handle(cx);
-
-                    if window_handle.is_some() {
-                        let _ = window_handle.unwrap().update(cx, |_, window, _cx| {
-                            window.remove_window();
-                        });
-                    }
-
-                    let settings_window_options = utils::settings_window_options(cx);
-                    let handle = cx.open_window(settings_window_options, SettingsRoot::build);
-
-                    if let Ok(handle) = handle {
-                        let _ = handle.update(cx, |_, window, cx| {
-                            window.on_window_should_close(cx, |_window, cx| {
-                                set_settings_window_handle(cx, None);
-                                true
-                            });
-                        });
-                    }
-
-                    set_settings_window_handle(cx, handle.ok());
-                    cx.activate(false);
-                }
+                AppEvent::OpenSettings => open_settings(cx),
                 _ => {}
             })
             .detach();
 
         // TODO: Log status menu initialization failure
-        let _ = platform::init_status_menu(cx);
+        let menu_handler = platform::init_status_menu(cx);
+
+        if let Ok(rx) = menu_handler {
+            cx.spawn(async move |cx: &mut AsyncApp| loop {
+                let action = rx.try_recv();
+
+                match action {
+                    Ok(platform::MenuAction::OpenApp) => {
+                        cx.update(|cx| set_visible(cx, true)).ok();
+                    }
+                    Ok(platform::MenuAction::OpenSettings) => {
+                        cx.update(open_settings).ok();
+                    }
+                    _ => {}
+                }
+
+                cx.background_executor()
+                    .timer(Duration::from_millis(50))
+                    .await;
+            })
+            .detach();
+        }
     });
 }

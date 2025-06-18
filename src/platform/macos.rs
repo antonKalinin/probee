@@ -1,4 +1,6 @@
 use std::path::PathBuf;
+use std::sync::mpsc::{self, Receiver, Sender};
+use std::sync::OnceLock;
 
 use anyhow::Result;
 use cocoa::appkit::{
@@ -16,8 +18,13 @@ use objc_id::Id;
 static mut HANDLER: Option<id> = None;
 static mut STATUS_ITEM: Option<Id<Object>> = None;
 static mut STATUS_MENU: Option<Id<Object>> = None;
+static MENU_SENDER: OnceLock<Sender<MenuAction>> = OnceLock::new();
 
-const MAC_PLATFORM_IVAR: &str = "platform";
+#[derive(Debug, Clone)]
+pub enum MenuAction {
+    OpenApp,
+    OpenSettings,
+}
 
 #[cfg(target_os = "macos")]
 pub fn register_selector() -> *const Class {
@@ -26,11 +33,6 @@ pub fn register_selector() -> *const Class {
         let mut decl = ClassDecl::new("MenuHandler", superclass).unwrap();
 
         decl.add_method(sel!(openApp:), open_app as extern "C" fn(&Object, Sel, id));
-
-        decl.add_method(
-            sel!(checkUpdates:),
-            check_updates as extern "C" fn(&Object, Sel, id),
-        );
 
         decl.add_method(
             sel!(openSettings:),
@@ -86,8 +88,8 @@ fn create_status_item(handler: id) -> Result<()> {
         settings_item.setTarget_(handler);
         menu.addItem_(settings_item);
 
-        let separator = NSMenuItem::separatorItem(nil);
-        menu.addItem_(separator);
+        // let separator = NSMenuItem::separatorItem(nil);
+        // menu.addItem_(separator);
 
         let activate_title = NSString::alloc(nil).init_str("Open Probee");
         let activate_action = selector("openApp:");
@@ -101,18 +103,6 @@ fn create_status_item(handler: id) -> Result<()> {
         activate_item.setTarget_(handler);
         activate_item.setKeyEquivalentModifierMask_(NSEventModifierFlags::NSAlternateKeyMask);
         menu.addItem_(activate_item);
-
-        let check_updates_title = NSString::alloc(nil).init_str("Check for Updates");
-        let check_updates_action = selector("checkUpdates:");
-        let check_updates_item = NSMenuItem::alloc(nil)
-            .initWithTitle_action_keyEquivalent_(
-                check_updates_title,
-                check_updates_action,
-                NSString::alloc(nil).init_str(""),
-            )
-            .autorelease();
-        check_updates_item.setTarget_(handler);
-        menu.addItem_(check_updates_item);
 
         let separator = NSMenuItem::separatorItem(nil);
         menu.addItem_(separator);
@@ -138,48 +128,37 @@ fn create_status_item(handler: id) -> Result<()> {
 }
 
 #[cfg(target_os = "macos")]
-pub fn init_status_menu(_cx: &mut App) -> Result<()> {
+pub fn init_status_menu(_cx: &mut App) -> Result<Receiver<MenuAction>> {
+    let (tx, rx) = mpsc::channel();
+
+    MENU_SENDER
+        .set(tx)
+        .map_err(|_| anyhow::anyhow!("Menu sender already initialized"))?;
+
     unsafe {
         let handler_class = register_selector();
         let handler: id = msg_send![handler_class, new];
 
-        create_status_item(handler)
+        create_status_item(handler)?;
+    }
+
+    Ok(rx)
+}
+
+fn send_menu_action(action: MenuAction) {
+    if let Some(sender) = MENU_SENDER.get() {
+        if let Err(e) = sender.send(action) {
+            eprintln!("Failed to send menu action: {}", e);
+        }
+    } else {
+        eprintln!("Menu sender not initialized");
     }
 }
 
 extern "C" fn open_app(_this: &Object, _cmd: Sel, _notification: id) {
-    println!("Open app");
-}
-
-extern "C" fn check_updates(_this: &Object, _cmd: Sel, _notification: id) {
-    println!("Check updates");
+    send_menu_action(MenuAction::OpenApp);
 }
 
 extern "C" fn open_settings(_this: &Object, _cmd: Sel, _notification: id) {
-    println!("Open settings");
+    send_menu_action(MenuAction::OpenSettings);
 }
-
-// unsafe fn get_mac_platform(object: &mut Object) -> &MacPlatform {
-//     unsafe {
-//         let platform_ptr: *mut c_void = *object.get_ivar(MAC_PLATFORM_IVAR);
-//         assert!(!platform_ptr.is_null());
-//         &*(platform_ptr as *const MacPlatform)
-//     }
-// }
-
-// extern "C" fn handle_status_item(this: &mut Object, _cmd: Sel, item: id) {
-//     unsafe {
-//         let platform = get_mac_platform(this);
-//         let mut lock = platform.0.lock();
-//         if let Some(mut callback) = lock.menu_command.take() {
-//             let tag: NSInteger = msg_send![item, tag];
-//             let index = tag as usize;
-//             if let Some(action) = lock.menu_actions.get(index) {
-//                 let action = action.boxed_clone();
-//                 drop(lock);
-//                 callback(&*action);
-//             }
-//             platform.0.lock().menu_command.get_or_insert(callback);
-//         }
-//     }
-// }

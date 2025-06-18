@@ -1,3 +1,3 @@
-mod mac;
+mod macos;
 
-pub use mac::*;
+pub use macos::*;
