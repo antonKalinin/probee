@@ -47,7 +47,7 @@ fn open_settings(cx: &mut App) {
     }
 
     set_settings_window_handle(cx, handle.ok());
-    cx.activate(false);
+    cx.activate(true);
 }
 
 #[async_std::main]
