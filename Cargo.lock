@@ -4020,7 +4020,7 @@ dependencies = [
 
 [[package]]
 name = "probee"
-version = "0.0.8"
+version = "0.0.9"
 dependencies = [
  "accessibility",
  "accessibility-sys",
