@@ -1,6 +1,6 @@
 use gpui::{
-    point, px, App, Bounds, Pixels, Point, SharedString, Size, TitlebarOptions,
-    WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions,
+    point, px, App, Bounds, Pixels, Point, Size, TitlebarOptions, WindowBackgroundAppearance,
+    WindowBounds, WindowKind, WindowOptions,
 };
 
 pub static APP_WIDTH: f32 = 360.;
@@ -19,7 +19,12 @@ pub static PROMPT_HEIGHT: f32 = 560.;
 
 pub fn app_window_options(cx: &mut App) -> WindowOptions {
     let displays = cx.displays();
-    let display = displays.first().unwrap(); // TODO: Support multiple displays
+
+    if displays.is_empty() {
+        panic!("No displays found. Cannot create app window.");
+    }
+
+    let display = displays.first().unwrap();
 
     let size = Size {
         width: px(APP_WIDTH),
@@ -52,7 +57,6 @@ pub fn app_window_options(cx: &mut App) -> WindowOptions {
 
 pub fn app_window_bounds(cx: &mut App, height: f32) -> Bounds<Pixels> {
     let displays = cx.displays();
-    let display = displays.first().unwrap();
 
     let height = height.max(APP_MIN_HEIGHT);
     let height = height.min(APP_MAX_HEIGHT);
@@ -61,6 +65,16 @@ pub fn app_window_bounds(cx: &mut App, height: f32) -> Bounds<Pixels> {
         width: px(APP_WIDTH),
         height: px(height),
     };
+
+    // For some reason, the displays can be empty at this point.
+    if displays.is_empty() {
+        return Bounds {
+            origin: point(px(0.), px(0.)),
+            size,
+        };
+    }
+
+    let display = displays.first().unwrap();
 
     Bounds {
         origin: display.bounds().top_right()

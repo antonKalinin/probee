@@ -44,8 +44,6 @@ impl HotkeysView {
             .unwrap_or(None);
 
         let assistant_hotkey_cb = Box::new(|hotkey: HotKey, cx: &mut Context<_>| {
-            println!("Setting assistant hotkey: {:?}", hotkey.to_keystroke());
-
             let _ = cx
                 .global::<Storage>()
                 .set(StorageKey::HotkeyRunAssistant, hotkey.to_keystroke());
@@ -118,7 +116,21 @@ impl Render for HotkeysView {
 
         let value = || div().w(px(280.));
 
-        // let separator = || div().w_full().border_b_1().border_color(theme.border);
+        let force_stop_recording = cx.listener({
+            move |this, _event, _window, cx: &mut Context<Self>| {
+                // Stop recording if any input is currently recording
+                this.assistant_hotkey_input
+                    .update(cx, |input, cx| input.stop_recording(cx));
+                this.visibility_hotkey_input
+                    .update(cx, |input, cx| input.stop_recording(cx));
+                this.prev_assistant_hotkey_input
+                    .update(cx, |input, cx| input.stop_recording(cx));
+                this.next_assistant_hotkey_input
+                    .update(cx, |input, cx| input.stop_recording(cx));
+
+                cx.notify();
+            }
+        });
 
         div()
             .w_full()
@@ -144,6 +156,7 @@ impl Render for HotkeysView {
                 label("Toogle Visibility"),
                 value().child(self.visibility_hotkey_input.clone()),
             ]))
+            .on_mouse_down(MouseButton::Left, force_stop_recording)
             .into_any_element()
     }
 }

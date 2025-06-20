@@ -1,5 +1,8 @@
 use gpui::prelude::FluentBuilder;
-use gpui::*;
+use gpui::{
+    div, AsyncApp, Context, FontWeight, InteractiveElement, IntoElement, MouseButton,
+    ParentElement, Render, SharedString, Styled, WeakEntity, Window,
+};
 use uuid::Uuid;
 
 use std::sync::mpsc;
@@ -99,6 +102,17 @@ impl HotkeyInput {
 
         cx.notify();
     }
+
+    pub fn stop_recording(&mut self, cx: &mut Context<Self>) {
+        self.recording_id = None;
+        self.recording_text = self
+            .hotkey
+            .as_ref()
+            .map(|hotkey| SharedString::new(hotkey.to_string()))
+            .unwrap_or_else(|| SharedString::new("Record Hotkey".to_string()));
+
+        cx.notify();
+    }
 }
 
 impl Render for HotkeyInput {
@@ -106,7 +120,10 @@ impl Render for HotkeyInput {
         let theme = cx.global::<Theme>();
 
         let on_click = cx.listener({
-            move |this, _event, _window, cx: &mut Context<Self>| this.record_global_key_events(cx)
+            move |this, _event, _window, cx: &mut Context<Self>| {
+                cx.stop_propagation();
+                this.record_global_key_events(cx);
+            }
         });
 
         let display_text = if let Some(hotkey) = &self.hotkey {
@@ -132,6 +149,7 @@ impl Render for HotkeyInput {
             .on_mouse_down(MouseButton::Left, on_click)
             .when(self.recording_id.is_some(), |this| {
                 this.child(self.recording_text.clone())
+                    .bg(theme.primary.alpha(0.1))
             })
             .when(self.recording_id.is_none(), |this| this.child(display_text))
     }
