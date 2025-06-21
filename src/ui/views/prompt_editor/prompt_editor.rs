@@ -2,7 +2,9 @@ use gpui::*;
 
 use crate::assistant::Prompt;
 use crate::services::{Storage, StorageKey};
-use crate::ui::{Button, ButtonVariants, Disableable, InputState, Sizable as _, TextInput, Theme};
+use crate::ui::{
+    Button, ButtonVariants, Disableable, InputState, Root, Sizable as _, TextInput, Theme,
+};
 
 pub struct PromptEditorView {
     prompt: Option<Prompt>,
@@ -72,8 +74,10 @@ impl PromptEditorView {
         on_close: impl Fn(&bool, &mut Window, &mut App) + 'static,
         window: &mut Window,
         cx: &mut App,
-    ) -> Entity<Self> {
-        cx.new(|cx| PromptEditorView::new(prompt, on_close, window, cx))
+    ) -> Entity<Root> {
+        let view = cx.new(|cx| PromptEditorView::new(prompt, on_close, window, cx));
+
+        cx.new(|cx| Root::new(view.into(), window, cx))
     }
 
     fn save_prompt(&self, cx: &mut Context<Self>) -> Option<Prompt> {

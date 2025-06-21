@@ -18,10 +18,10 @@ pub struct SettingsRoot {
 }
 
 impl SettingsRoot {
-    pub fn build(window: &mut Window, cx: &mut App) -> Entity<Self> {
+    pub fn build(window: &mut Window, cx: &mut App) -> Entity<Root> {
         let state_controller = cx.global::<SettingsStateController>().clone();
 
-        let view = cx.new(move |cx| {
+        let view = cx.new(|cx| {
             let state = state_controller.state.clone();
 
             let about_view = cx.new(|cx| AboutView::new(cx, &state));
@@ -58,7 +58,7 @@ impl SettingsRoot {
             }
         });
 
-        view
+        cx.new(|cx| Root::new(view.into(), window, cx))
     }
 }
 

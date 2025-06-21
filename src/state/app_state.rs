@@ -6,8 +6,8 @@ use gpui::{
 use super::error_state::*;
 use crate::assistant::Prompt;
 use crate::events::AppEvent;
-use crate::settings::SettingsRoot;
 use crate::storage::{Storage, StorageKey};
+use crate::ui::Root;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum AppView {
@@ -27,7 +27,7 @@ pub struct AppState {
     pub focused: bool,
     pub loading: bool,
     pub visible: bool,
-    pub settings_window_handle: Option<WindowHandle<SettingsRoot>>,
+    pub settings_window_handle: Option<WindowHandle<Root>>,
 }
 
 impl ErrorState for AppState {
@@ -202,11 +202,7 @@ impl AppStateController {
         });
     }
 
-    pub fn set_settings_window_handle(
-        &self,
-        cx: &mut App,
-        handle: Option<WindowHandle<SettingsRoot>>,
-    ) {
+    pub fn set_settings_window_handle(&self, cx: &mut App, handle: Option<WindowHandle<Root>>) {
         self.state.update(cx, |state, cx| {
             state.settings_window_handle = handle;
             cx.notify();
@@ -306,11 +302,11 @@ pub fn toggle_visible(cx: &mut App) {
     );
 }
 
-pub fn get_settings_window_handle(cx: &App) -> Option<WindowHandle<SettingsRoot>> {
+pub fn get_settings_window_handle(cx: &App) -> Option<WindowHandle<Root>> {
     let state = cx.global::<AppStateController>().state.read(cx);
     state.settings_window_handle
 }
 
-pub fn set_settings_window_handle(cx: &mut App, handle: Option<WindowHandle<SettingsRoot>>) {
+pub fn set_settings_window_handle(cx: &mut App, handle: Option<WindowHandle<Root>>) {
     AppStateController::update(|this, cx| this.set_settings_window_handle(cx, handle), cx);
 }

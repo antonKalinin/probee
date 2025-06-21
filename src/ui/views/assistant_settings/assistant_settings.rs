@@ -6,7 +6,7 @@ use crate::state::settings_state::*;
 use crate::storage::{Storage, StorageKey};
 use crate::ui::{
     ActiveTheme, Button, Dropdown, DropdownEvent, DropdownItem, Icon, IconName, InputEvent,
-    InputState, PromptEditorView, Sizable as _, TextInput, Theme,
+    InputState, PromptEditorView, Root, Sizable as _, TextInput, Theme,
 };
 use crate::utils::prompt_window_options;
 
@@ -50,7 +50,7 @@ pub struct AssistantSettingsView {
     prompt_list: Entity<PromptList>,
 
     provider: ModelProvider,
-    prompt_window_handle: Option<WindowHandle<PromptEditorView>>,
+    prompt_window_handle: Option<WindowHandle<Root>>,
 }
 
 impl AssistantSettingsView {
@@ -140,7 +140,11 @@ impl AssistantSettingsView {
                 let window_handle = this.prompt_window_handle.unwrap();
                 let _ = cx.update_window(window_handle.into(), |_this, window, cx| {
                     window.replace_root(cx, |window, cx| {
-                        PromptEditorView::new(Some(prompt.clone()), handle_close, window, cx)
+                        let view = cx.new(|cx| {
+                            PromptEditorView::new(Some(prompt.clone()), handle_close, window, cx)
+                        });
+
+                        Root::new(view.into(), window, cx)
                     });
                 });
 
