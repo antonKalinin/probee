@@ -9,6 +9,7 @@ pub mod header;
 pub mod icon;
 pub mod input;
 pub mod list;
+pub mod root;
 pub mod scroll;
 pub mod settings_tab;
 pub mod skeleton;
@@ -23,6 +24,8 @@ pub use header::*;
 pub use icon::*;
 pub use input::*;
 pub use list::*;
+pub use root::*;
+pub use scroll::*;
 pub use settings_tab::*;
 pub use slider::*;
 

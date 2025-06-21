@@ -6,7 +6,7 @@ use crate::state::settings_state::*;
 use crate::storage::{Storage, StorageKey};
 use crate::ui::{
     ActiveTheme, Button, Dropdown, DropdownEvent, DropdownItem, Icon, IconName, InputEvent,
-    PromptEditorView, Sizable as _, TextInput, Theme,
+    InputState, PromptEditorView, Sizable as _, TextInput, Theme,
 };
 use crate::utils::prompt_window_options;
 
@@ -45,7 +45,7 @@ impl DropdownItem for Model {
 }
 
 pub struct AssistantSettingsView {
-    api_key_input: Entity<TextInput>,
+    api_key_input: Entity<InputState>,
     model_dropdown: Entity<Dropdown<Vec<Model>>>,
     prompt_list: Entity<PromptList>,
 
@@ -76,22 +76,22 @@ impl AssistantSettingsView {
         .unwrap_or(String::from(""));
 
         let api_key_input = cx.new(|cx| {
-            let mut text_input = TextInput::new(window, cx).placeholder("Enter Anthropic API Key");
+            let mut input = InputState::new(window, cx).placeholder("Enter Anthropic API Key");
 
-            text_input.set_text(api_key, window, cx);
-            text_input
+            input.set_value(api_key, window, cx);
+            input
         });
 
         cx.subscribe(&api_key_input, |this, input, event, cx| {
             if let InputEvent::Blur = event {
-                let api_key = input.read(cx).text();
+                let api_key = input.read(cx).value();
                 let storage = cx.global::<Storage>();
                 let storage_key = match this.provider {
                     ModelProvider::Anthropic => StorageKey::AnthropicApiKey,
                     ModelProvider::OpenAI => StorageKey::OpenAiApiKey,
                 };
 
-                let _ = storage.set(storage_key, api_key.into());
+                let _ = storage.set(storage_key, api_key.to_string());
             }
         })
         .detach();
@@ -114,13 +114,13 @@ impl AssistantSettingsView {
                 );
 
                 this.provider = model.provider.clone();
-                this.api_key_input.update(cx, |input, _cx| {
+                this.api_key_input.update(cx, |input, cx| {
                     let placeholder = match model.provider {
                         ModelProvider::Anthropic => "Enter Anthropic API Key",
                         ModelProvider::OpenAI => "Enter OpenAI API Key",
                     };
 
-                    input.set_placeholder(placeholder);
+                    input.set_placeholder(placeholder, cx);
                 });
 
                 cx.notify();
@@ -243,7 +243,7 @@ impl Render for AssistantSettingsView {
                 row()
                     .children(vec![
                         label("API Key"),
-                        value().child(self.api_key_input.clone()),
+                        value().child(TextInput::new(&self.api_key_input)),
                     ])
                     .mb_8(),
             )

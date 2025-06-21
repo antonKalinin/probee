@@ -1,20 +1,18 @@
-// use std::time::Duration;
-use std::{cell::Cell, rc::Rc};
+use std::ops::Range;
 
 use gpui::{
-    div, prelude::FluentBuilder, uniform_list, AnyElement, AppContext, Entity, FocusHandle,
-    Focusable, InteractiveElement, IntoElement, KeyBinding, Length, ListSizingBehavior,
-    MouseButton, ParentElement, Render, Styled, Task, UniformListScrollHandle, Window,
+    div, prelude::FluentBuilder, px, uniform_list, AnyElement, App, AppContext, Context, Entity,
+    EventEmitter, FocusHandle, Focusable, InteractiveElement, IntoElement, KeyBinding, Length,
+    ListSizingBehavior, MouseButton, MouseDownEvent, ParentElement, Render, ScrollStrategy, Styled,
+    Subscription, Task, UniformListScrollHandle, Window,
 };
-use gpui::{px, App, Context, EventEmitter, MouseDownEvent, ScrollStrategy, Subscription};
-// use smol::Timer;
 
-use crate::ui::actions::{Cancel, Confirm, SelectNext, SelectPrev};
-use crate::ui::Icon;
 use crate::ui::{
-    input::{InputEvent, TextInput},
+    actions::{Cancel, Confirm, SelectNext, SelectPrev},
+    h_flex,
+    input::{InputEvent, InputState, TextInput},
     scroll::{Scrollbar, ScrollbarState},
-    v_flex, ActiveTheme, IconName, Size,
+    v_flex, ActiveTheme, Icon, IconName, Sizable as _, Size,
 };
 
 use super::loading::Loading;
@@ -71,7 +69,12 @@ pub trait ListDelegate: Sized + 'static {
 
     /// Return a Element to show when list is empty.
     fn render_empty(&self, window: &mut Window, cx: &mut Context<List<Self>>) -> impl IntoElement {
-        div()
+        h_flex()
+            .size_full()
+            .justify_center()
+            .text_color(cx.theme().muted_foreground.opacity(0.6))
+            .child(Icon::new(IconName::Inbox).size_12())
+            .into_any_element()
     }
 
     /// Returns Some(AnyElement) to render the initial state of the list.
@@ -148,13 +151,13 @@ pub struct List<D: ListDelegate> {
     focus_handle: FocusHandle,
     delegate: D,
     max_height: Option<Length>,
-    query_input: Option<Entity<TextInput>>,
+    query_input: Option<Entity<InputState>>,
     last_query: Option<String>,
     selectable: bool,
     querying: bool,
     scrollbar_visible: bool,
     vertical_scroll_handle: UniformListScrollHandle,
-    scrollbar_state: Rc<Cell<ScrollbarState>>,
+    scroll_state: ScrollbarState,
     pub(crate) size: Size,
     selected_index: Option<usize>,
     right_clicked_index: Option<usize>,
@@ -169,13 +172,7 @@ where
     D: ListDelegate,
 {
     pub fn new(delegate: D, window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let query_input = cx.new(|cx| {
-            TextInput::new(window, cx)
-                .appearance(false)
-                .prefix(|_, cx| Icon::new(IconName::Search).text_color(cx.theme().muted_foreground))
-                .placeholder("Search")
-                .cleanable()
-        });
+        let query_input = cx.new(|cx| InputState::new(window, cx).placeholder("Search"));
 
         let _query_input_subscription =
             cx.subscribe_in(&query_input, window, Self::on_query_input_event);
@@ -188,7 +185,7 @@ where
             selected_index: None,
             right_clicked_index: None,
             vertical_scroll_handle: UniformListScrollHandle::new(),
-            scrollbar_state: Rc::new(Cell::new(ScrollbarState::new())),
+            scroll_state: ScrollbarState::default(),
             max_height: None,
             scrollbar_visible: true,
             selectable: true,
@@ -202,12 +199,7 @@ where
     }
 
     /// Set the size
-    pub fn set_size(&mut self, size: Size, window: &mut Window, cx: &mut Context<Self>) {
-        if let Some(input) = &self.query_input {
-            input.update(cx, |input, cx| {
-                input.set_size(size, window, cx);
-            })
-        }
+    pub fn set_size(&mut self, size: Size, _: &mut Window, _: &mut Context<Self>) {
         self.size = size;
     }
 
@@ -235,7 +227,7 @@ where
 
     pub fn set_query_input(
         &mut self,
-        query_input: Entity<TextInput>,
+        query_input: Entity<InputState>,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
@@ -245,7 +237,7 @@ where
     }
 
     /// Get the query input entity.
-    pub fn query_input(&self) -> Option<&Entity<TextInput>> {
+    pub fn query_input(&self) -> Option<&Entity<InputState>> {
         self.query_input.as_ref()
     }
 
@@ -262,7 +254,7 @@ where
     }
 
     /// Set the selected index of the list, this will also scroll to the selected item.
-    pub fn set_selected_index(
+    fn _set_selected_index(
         &mut self,
         ix: Option<usize>,
         window: &mut Window,
@@ -273,19 +265,29 @@ where
         self.scroll_to_selected_item(window, cx);
     }
 
+    /// Set the selected index of the list, this method will not scroll to the selected item.
+    pub fn set_selected_index(
+        &mut self,
+        ix: Option<usize>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        self.selected_index = ix;
+        self.delegate.set_selected_index(ix, window, cx);
+    }
+
     pub fn selected_index(&self) -> Option<usize> {
         self.selected_index
     }
 
-    fn render_scrollbar(&self, _: &mut Window, cx: &mut Context<Self>) -> Option<impl IntoElement> {
+    fn render_scrollbar(&self, _: &mut Window, _: &mut Context<Self>) -> Option<impl IntoElement> {
         if !self.scrollbar_visible {
             return None;
         }
 
         Some(Scrollbar::uniform_scroll(
-            cx.entity().entity_id(),
-            self.scrollbar_state.clone(),
-            self.vertical_scroll_handle.clone(),
+            &self.scroll_state,
+            &self.vertical_scroll_handle,
         ))
     }
 
@@ -301,7 +303,7 @@ where
         &self.vertical_scroll_handle
     }
 
-    fn scroll_to_selected_item(&mut self, _window: &mut Window, _cx: &mut Context<Self>) {
+    pub fn scroll_to_selected_item(&mut self, _window: &mut Window, _cx: &mut Context<Self>) {
         if let Some(ix) = self.selected_index {
             self.vertical_scroll_handle
                 .scroll_to_item(ix, ScrollStrategy::Top);
@@ -310,7 +312,7 @@ where
 
     fn on_query_input_event(
         &mut self,
-        _: &Entity<TextInput>,
+        _: &Entity<InputState>,
         event: &InputEvent,
         window: &mut Window,
         cx: &mut Context<Self>,
@@ -326,9 +328,9 @@ where
                 let search = self.delegate.perform_search(&text, window, cx);
 
                 if self.delegate.items_count(cx) > 0 {
-                    self.set_selected_index(Some(0), window, cx);
+                    self._set_selected_index(Some(0), window, cx);
                 } else {
-                    self.set_selected_index(None, window, cx);
+                    self._set_selected_index(None, window, cx);
                 }
 
                 self._search_task = cx.spawn_in(window, async move |this, window| {
@@ -400,7 +402,7 @@ where
         }
 
         if self.reset_on_cancel {
-            self.set_selected_index(None, window, cx);
+            self._set_selected_index(None, window, cx);
         }
 
         self.delegate.cancel(window, cx);
@@ -450,9 +452,9 @@ where
 
         let mut selected_index = self.selected_index.unwrap_or(0);
         if selected_index > 0 {
-            selected_index = selected_index - 1;
+            selected_index = selected_index.saturating_sub(1);
         } else {
-            selected_index = items_count - 1;
+            selected_index = items_count.saturating_sub(1);
         }
         self.select_item(selected_index, window, cx);
     }
@@ -470,7 +472,7 @@ where
 
         let selected_index;
         if let Some(ix) = self.selected_index {
-            if ix < items_count - 1 {
+            if ix < items_count.saturating_sub(1) {
                 selected_index = ix + 1;
             } else {
                 // When the last item is selected, select the first item.
@@ -497,6 +499,7 @@ where
             .id("list-item")
             .w_full()
             .relative()
+            .children(self.delegate.render_item(ix, window, cx))
             .when(self.selectable, |this| {
                 this.when(selected || right_clicked, |this| {
                     this.child(
@@ -506,7 +509,9 @@ where
                             .left(px(0.))
                             .right(px(0.))
                             .bottom(px(0.))
-                            .when(selected, |this| this.bg(cx.theme().accent)),
+                            .when(selected, |this| this.bg(cx.theme().accent))
+                            .border_1()
+                            .border_color(cx.theme().accent_foreground),
                     )
                 })
                 .on_mouse_down(
@@ -531,7 +536,6 @@ where
                     }),
                 )
             })
-            .children(self.delegate.render_item(ix, window, cx))
     }
 }
 
@@ -553,7 +557,6 @@ where
     D: ListDelegate,
 {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let view = cx.entity().clone();
         let vertical_scroll_handle = self.vertical_scroll_handle.clone();
         let items_count = self.delegate.items_count(cx);
         let loading = self.delegate.loading(cx);
@@ -564,7 +567,7 @@ where
         };
 
         let initial_view = if let Some(input) = &self.query_input {
-            if input.read(cx).text().is_empty() {
+            if input.read(cx).value().is_empty() {
                 self.delegate().render_initial(window, cx)
             } else {
                 None
@@ -584,12 +587,22 @@ where
                 this.child(
                     div()
                         .map(|this| match self.size {
-                            Size::Small => this.py_0().px_1p5(),
-                            _ => this.py_1().px_2(),
+                            Size::Small => this.px_1p5(),
+                            _ => this.px_2(),
                         })
                         .border_b_1()
                         .border_color(cx.theme().border)
-                        .child(input),
+                        .child(
+                            TextInput::new(&input)
+                                .with_size(self.size)
+                                .prefix(
+                                    Icon::new(IconName::Search)
+                                        .text_color(cx.theme().muted_foreground),
+                                )
+                                .cleanable()
+                                .p_0()
+                                .appearance(false),
+                        ),
                 )
             })
             .when(loading, |this| {
@@ -615,22 +628,28 @@ where
                                     })
                                     .when(items_count > 0, |this| {
                                         this.child(
-                                            uniform_list(view, "uniform-list", items_count, {
-                                                move |list, visible_range, window, cx| {
-                                                    list.load_more_if_need(
-                                                        items_count,
-                                                        visible_range.end,
-                                                        window,
-                                                        cx,
-                                                    );
+                                            uniform_list(
+                                                "uniform-list",
+                                                items_count,
+                                                cx.processor(
+                                                    move |list, visible_range: Range<usize>, window, cx| {
+                                                        list.load_more_if_need(
+                                                            items_count,
+                                                            visible_range.end,
+                                                            window,
+                                                            cx,
+                                                        );
 
-                                                    visible_range
-                                                        .map(|ix| {
-                                                            list.render_list_item(ix, window, cx)
-                                                        })
-                                                        .collect::<Vec<_>>()
-                                                }
-                                            })
+                                                        visible_range
+                                                            .map(|ix| {
+                                                                list.render_list_item(
+                                                                    ix, window, cx,
+                                                                )
+                                                            })
+                                                            .collect::<Vec<_>>()
+                                                    },
+                                                ),
+                                            )
                                             .flex_grow()
                                             .with_sizing_behavior(sizing_behavior)
                                             .track_scroll(vertical_scroll_handle)

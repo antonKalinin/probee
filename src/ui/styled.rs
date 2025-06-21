@@ -1,5 +1,6 @@
 use gpui::{
-    div, px, App, Axis, DefiniteLength, Div, Edges, Element, ElementId, EntityId, Pixels, Styled,
+    div, px, App, Axis, DefiniteLength, Div, Edges, ElementId, Pixels, Refineable, StyleRefinement,
+    Styled,
 };
 use serde::{Deserialize, Serialize};
 use std::fmt::{self, Display, Formatter};
@@ -33,6 +34,12 @@ macro_rules! font_weight {
 
 /// Extends [`gpui::Styled`] with specific styling methods.
 pub trait StyledExt: Styled + Sized {
+    /// Refine the style of this element, applying the given style refinement.
+    fn refine_style(mut self, style: &StyleRefinement) -> Self {
+        self.style().refine(style);
+        self
+    }
+
     /// Apply self into a horizontal flex layout.
     #[inline]
     fn h_flex(self) -> Self {
@@ -48,7 +55,7 @@ pub trait StyledExt: Styled + Sized {
     /// Apply paddings to the element.
     fn paddings<L>(self, paddings: impl Into<Edges<L>>) -> Self
     where
-        L: Into<DefiniteLength> + Clone + Default + std::fmt::Debug,
+        L: Into<DefiniteLength> + Clone + Default + std::fmt::Debug + PartialEq,
     {
         let paddings = paddings.into();
         self.pt(paddings.top.into())
@@ -60,7 +67,7 @@ pub trait StyledExt: Styled + Sized {
     /// Apply margins to the element.
     fn margins<L>(self, margins: impl Into<Edges<L>>) -> Self
     where
-        L: Into<DefiniteLength> + Clone + Default + std::fmt::Debug,
+        L: Into<DefiniteLength> + Clone + Default + std::fmt::Debug + PartialEq,
     {
         let margins = margins.into();
         self.mt(margins.top.into())
@@ -160,6 +167,26 @@ impl Size {
                 left: px(8.),
                 right: px(8.),
             },
+        }
+    }
+
+    pub fn input_px(&self) -> Pixels {
+        match self {
+            Self::Large => px(20.),
+            Self::Medium => px(12.),
+            Self::Small => px(8.),
+            Self::XSmall => px(4.),
+            _ => px(8.),
+        }
+    }
+
+    pub fn input_py(&self) -> Pixels {
+        match self {
+            Size::Large => px(16.),
+            Size::Medium => px(8.),
+            Size::Small => px(4.),
+            Size::XSmall => px(0.),
+            _ => px(4.),
         }
     }
 }

@@ -4,7 +4,7 @@ use gpui::{
 };
 use std::ops::{Deref, DerefMut};
 
-use super::{hsl, Colorize};
+use super::{hsl, scroll::ScrollbarShow, Colorize};
 use crate::storage::*;
 
 fn load_fonts(cx: &mut App) -> gpui::Result<()> {
@@ -243,6 +243,8 @@ pub struct Theme {
     colors: ThemeColor,
 
     pub mode: ThemeMode,
+    pub scrollbar_show: ScrollbarShow,
+    pub radius: Pixels,
 
     // Typography
     pub font_family: SharedString,
@@ -336,6 +338,8 @@ impl From<ThemeColor> for Theme {
             mode,
             colors,
 
+            radius: px(4.),
+            scrollbar_show: ScrollbarShow::Scrolling,
             font_family: "Inter".into(),
             heading_size: px(18.),
             text_size: px(14.),

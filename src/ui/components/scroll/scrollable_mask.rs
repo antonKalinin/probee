@@ -53,9 +53,14 @@ impl Element for ScrollableMask {
         None
     }
 
+    fn source_location(&self) -> Option<&'static std::panic::Location<'static>> {
+        None
+    }
+
     fn request_layout(
         &mut self,
         _: Option<&GlobalElementId>,
+        _: Option<&gpui::InspectorElementId>,
         window: &mut Window,
         cx: &mut App,
     ) -> (LayoutId, Self::RequestLayoutState) {
@@ -73,6 +78,7 @@ impl Element for ScrollableMask {
     fn prepaint(
         &mut self,
         _: Option<&GlobalElementId>,
+        _: Option<&gpui::InspectorElementId>,
         bounds: Bounds<Pixels>,
         _: &mut Self::RequestLayoutState,
         window: &mut Window,
@@ -87,12 +93,13 @@ impl Element for ScrollableMask {
             size: bounds.size,
         };
 
-        window.insert_hitbox(cover_bounds, false)
+        window.insert_hitbox(cover_bounds, gpui::HitboxBehavior::Normal)
     }
 
     fn paint(
         &mut self,
         _: Option<&GlobalElementId>,
+        _: Option<&gpui::InspectorElementId>,
         _: Bounds<Pixels>,
         _: &mut Self::RequestLayoutState,
         hitbox: &mut Self::PrepaintState,

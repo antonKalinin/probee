@@ -61,7 +61,7 @@ async fn main() {
     let app = Application::new().with_assets(Assets);
 
     app.run(|cx: &mut App| {
-        // services (order of initialization matters as services placed to global context)
+        // order of initialization matters as services placed to global context
         Storage::init(cx);
         Api::init(cx);
         Assistant::init(cx);

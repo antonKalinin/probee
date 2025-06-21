@@ -2,12 +2,12 @@ use gpui::*;
 
 use crate::assistant::Prompt;
 use crate::services::{Storage, StorageKey};
-use crate::ui::{Button, ButtonVariants, Disableable, Sizable as _, TextInput, Theme};
+use crate::ui::{Button, ButtonVariants, Disableable, InputState, Sizable as _, TextInput, Theme};
 
 pub struct PromptEditorView {
     prompt: Option<Prompt>,
-    name_input: Entity<TextInput>,
-    prompt_input: Entity<TextInput>,
+    name_input: Entity<InputState>,
+    prompt_input: Entity<InputState>,
     // on_close: Option<Box<dyn Fn(&String, &mut Window, &mut App) + 'static>>,
     readonly: bool,
 }
@@ -26,18 +26,18 @@ impl PromptEditorView {
             .unwrap_or("".into());
 
         let name_input = cx.new(|cx| {
-            let mut text_input = TextInput::new(window, cx).placeholder("What I should do?");
-            text_input.set_text(prompt_name, window, cx);
-            text_input
+            let mut input = InputState::new(window, cx).placeholder("What I should do?");
+            input.set_value(prompt_name, window, cx);
+            input
         });
 
         let prompt_input = cx.new(|cx| {
-            let mut text_input = TextInput::new(window, cx)
+            let mut text_input = InputState::new(window, cx)
                 .placeholder("You are an expert in ... ")
                 .multi_line()
                 .rows(20);
 
-            text_input.set_text(prompt_text, window, cx);
+            text_input.set_value(prompt_text, window, cx);
             text_input
         });
 
@@ -77,8 +77,8 @@ impl PromptEditorView {
     }
 
     fn save_prompt(&self, cx: &mut Context<Self>) -> Option<Prompt> {
-        let name = self.name_input.read(cx).text().clone();
-        let text = self.prompt_input.read(cx).text().clone();
+        let name = self.name_input.read(cx).value().clone();
+        let text = self.prompt_input.read(cx).value().clone();
 
         if name.is_empty() || text.is_empty() {
             return None;
@@ -198,13 +198,16 @@ impl Render for PromptEditorView {
             .text_size(theme.text_size)
             .line_height(theme.line_height)
             .font_family(theme.font_family.clone())
-            .child(row().children(vec![label("Name"), value().child(self.name_input.clone())]))
+            .child(row().children(vec![
+                label("Name"),
+                value().child(TextInput::new(&self.name_input)),
+            ]))
             .child(
                 row()
                     .items_start()
                     .children(vec![
                         label("Prompt").pt_1(),
-                        value().child(self.prompt_input.clone()),
+                        value().child(TextInput::new(&self.prompt_input)),
                     ])
                     .mt_8(),
             )
