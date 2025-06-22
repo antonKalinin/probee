@@ -499,7 +499,6 @@ where
             .id("list-item")
             .w_full()
             .relative()
-            .children(self.delegate.render_item(ix, window, cx))
             .when(self.selectable, |this| {
                 this.when(selected || right_clicked, |this| {
                     this.child(
@@ -509,9 +508,7 @@ where
                             .left(px(0.))
                             .right(px(0.))
                             .bottom(px(0.))
-                            .when(selected, |this| this.bg(cx.theme().accent))
-                            .border_1()
-                            .border_color(cx.theme().accent_foreground),
+                            .when(selected, |this| this.bg(cx.theme().accent)),
                     )
                 })
                 .on_mouse_down(
@@ -536,6 +533,7 @@ where
                     }),
                 )
             })
+            .children(self.delegate.render_item(ix, window, cx))
     }
 }
 
@@ -587,8 +585,8 @@ where
                 this.child(
                     div()
                         .map(|this| match self.size {
-                            Size::Small => this.px_1p5(),
-                            _ => this.px_2(),
+                            Size::Small => this.py_0().px_1p5(),
+                            _ => this.py_1().px_2(),
                         })
                         .border_b_1()
                         .border_color(cx.theme().border)
@@ -642,9 +640,7 @@ where
 
                                                         visible_range
                                                             .map(|ix| {
-                                                                list.render_list_item(
-                                                                    ix, window, cx,
-                                                                )
+                                                                list.render_list_item(ix, window, cx)
                                                             })
                                                             .collect::<Vec<_>>()
                                                     },

@@ -338,7 +338,7 @@ impl From<ThemeColor> for Theme {
             mode,
             colors,
 
-            radius: px(4.),
+            radius: px(6.),
             scrollbar_show: ScrollbarShow::Scrolling,
             font_family: "Inter".into(),
             heading_size: px(18.),

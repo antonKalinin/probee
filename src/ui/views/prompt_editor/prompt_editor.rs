@@ -34,13 +34,13 @@ impl PromptEditorView {
         });
 
         let prompt_input = cx.new(|cx| {
-            let mut text_input = InputState::new(window, cx)
+            let mut textarea = InputState::new(window, cx)
                 .placeholder("You are an expert in ... ")
                 .multi_line()
-                .rows(20);
+                .rows(16);
 
-            text_input.set_value(prompt_text, window, cx);
-            text_input
+            textarea.set_value(prompt_text, window, cx);
+            textarea
         });
 
         window.on_window_should_close(cx, move |window, cx| {
@@ -211,7 +211,7 @@ impl Render for PromptEditorView {
                     .items_start()
                     .children(vec![
                         label("Prompt").pt_1(),
-                        value().child(TextInput::new(&self.prompt_input)),
+                        value().child(TextInput::new(&self.prompt_input).h(px(340.))),
                     ])
                     .mt_8(),
             )
