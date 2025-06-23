@@ -28,19 +28,17 @@ impl PromptEditorView {
             .unwrap_or("".into());
 
         let name_input = cx.new(|cx| {
-            let mut input = InputState::new(window, cx).placeholder("What I should do?");
-            input.set_value(prompt_name, window, cx);
-            input
+            InputState::new(window, cx)
+                .placeholder("What I should do?")
+                .default_value(prompt_name)
         });
 
         let prompt_input = cx.new(|cx| {
-            let mut textarea = InputState::new(window, cx)
+            InputState::new(window, cx)
                 .placeholder("You are an expert in ... ")
+                .default_value(prompt_text)
                 .multi_line()
-                .rows(16);
-
-            textarea.set_value(prompt_text, window, cx);
-            textarea
+                .rows(16)
         });
 
         window.on_window_should_close(cx, move |window, cx| {

@@ -76,10 +76,10 @@ impl AssistantSettingsView {
         .unwrap_or(String::from(""));
 
         let api_key_input = cx.new(|cx| {
-            let mut input = InputState::new(window, cx).placeholder("Enter Anthropic API Key");
-
-            input.set_value(api_key, window, cx);
-            input
+            InputState::new(window, cx)
+                .placeholder("Enter Anthropic API Key")
+                .default_value(api_key)
+                .masked(true)
         });
 
         cx.subscribe(&api_key_input, |this, input, event, cx| {
