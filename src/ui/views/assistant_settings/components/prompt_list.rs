@@ -1,3 +1,4 @@
+use gpui::prelude::FluentBuilder;
 use gpui::{
     div, rems, AnyElement, App, AppContext, Context, ElementId, Entity, IntoElement, ParentElement,
     Render, RenderOnce, Styled, Window,
@@ -19,9 +20,7 @@ impl RenderOnce for PromptListItem {
     fn render(self, _: &mut Window, cx: &mut App) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
-        let propmt_enabled_checkbox = Checkbox::new(self.ix)
-            .checked(true)
-            .on_click(|checked, _window, _cx| {});
+        let propmt_enabled_checkbox = Checkbox::new(self.ix).checked(true);
 
         let readonly_icon = Icon::new(IconName::PencilOff)
             .size_3()
@@ -44,7 +43,9 @@ impl RenderOnce for PromptListItem {
                             .child(propmt_enabled_checkbox)
                             .child(self.prompt.name.clone()),
                     )
-                    .child(readonly_icon),
+                    .when(self.prompt.readonly.is_some(), |this| {
+                        this.child(readonly_icon)
+                    }),
             )
     }
 }

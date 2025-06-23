@@ -70,10 +70,14 @@ impl Api {
             return Ok(vec![]);
         }
 
-        let prompts = response
+        let mut prompts = response
             .json::<Vec<Prompt>>()
             .await
             .map_err(|original_err| ApiError::DecodingError(original_err))?;
+
+        prompts.iter_mut().for_each(|prompt| {
+            prompt.set_readonly(true);
+        });
 
         Ok(prompts)
     }

@@ -84,6 +84,7 @@ pub struct Prompt {
     pub description: String,
     pub system_message: String,
     pub temperature: f32,
+    pub readonly: Option<bool>,
     pub updated_at: String,
     pub created_at: String,
 }
@@ -99,6 +100,7 @@ impl Prompt {
             description: "Select text on the screen and run this prompt".into(),
             system_message: message,
             temperature: 0.2,
+            readonly: None,
             created_at: now_iso.clone(),
             updated_at: now_iso.clone(),
         }
@@ -111,6 +113,11 @@ impl Prompt {
 
     pub fn set_message(&mut self, message: String) -> &mut Self {
         self.system_message = message;
+        self
+    }
+
+    pub fn set_readonly(&mut self, readonly: bool) -> &mut Self {
+        self.readonly = Some(readonly);
         self
     }
 }
