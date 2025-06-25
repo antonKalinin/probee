@@ -17,6 +17,7 @@ type ResultStream = ReceiverStream<String>;
 pub trait AssistantProviderClient {
     async fn generate_response(
         &self,
+        model: Model,
         system_prompt: String,
         user_input: String,
     ) -> Result<ResultStream>;
@@ -72,6 +73,11 @@ impl Model {
                 "Claude 3 Haiku",
                 "claude-3-haiku-20240307".into(),
                 ModelProvider::Anthropic,
+            ),
+            Self::new(
+                "GPT-4.1 Nano",
+                "gpt-4.1-nano-2025-04-14".to_string(),
+                ModelProvider::OpenAI,
             ),
         ]
     }
@@ -149,7 +155,7 @@ impl Assistant {
         let provider_client: Option<Box<dyn AssistantProviderClient>> = match model.clone() {
             Some(model) => match model.provider {
                 ModelProvider::Anthropic => Some(Box::new(AnthropicProviderClient::new(cx))),
-                _ => Some(Box::new(AnthropicProviderClient::new(cx))),
+                ModelProvider::OpenAI => Some(Box::new(OpenAIProviderClient::new(cx))),
             },
             None => None,
         };
@@ -162,11 +168,12 @@ impl Assistant {
     }
 
     pub fn set_model(&mut self, model: Model, cx: &mut App) {
-        self.model = Some(model.clone());
         self.provider_client = match model.provider {
             ModelProvider::Anthropic => Some(Box::new(AnthropicProviderClient::new(cx))),
-            _ => None,
+            ModelProvider::OpenAI => Some(Box::new(OpenAIProviderClient::new(cx))),
         };
+
+        self.model = Some(model);
     }
 
     pub fn set_prompt(&mut self, prompt: Prompt) {
@@ -174,7 +181,7 @@ impl Assistant {
     }
 
     pub async fn generate_response(&self, input: String) -> Result<ResultStream> {
-        if self.provider_client.is_none() {
+        if self.provider_client.is_none() || self.model.is_none() {
             return Err(AssistantError::MissingProviderClient.into());
         }
 
@@ -184,9 +191,10 @@ impl Assistant {
 
         let system_prompt = self.prompt.as_ref().unwrap().system_message.clone();
         let provider_client = self.provider_client.as_ref().unwrap();
+        let model = self.model.as_ref().unwrap().clone();
 
         provider_client
-            .generate_response(system_prompt, input.to_owned())
+            .generate_response(model, system_prompt, input.to_owned())
             .await
     }
 }

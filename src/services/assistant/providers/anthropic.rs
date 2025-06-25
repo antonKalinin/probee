@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::channel;
 use tokio_stream::wrappers::ReceiverStream;
 
-use crate::services::assistant::AssistantProviderClient;
+use crate::services::assistant::{AssistantProviderClient, Model};
 use crate::services::storage::{Storage, StorageKey};
 use crate::{errors::*, state::settings_state::set_error};
 
@@ -102,7 +102,6 @@ struct MessageDeltaContent {
 
 #[derive(Clone, Debug)]
 pub struct AnthropicProviderClient {
-    model: String,
     client: Client,
 }
 
@@ -126,14 +125,7 @@ impl AnthropicProviderClient {
 
         let client = Client::builder().default_headers(headers).build().unwrap();
 
-        Self {
-            client,
-            model: "claude-3-5-sonnet-20241022".to_owned(),
-        }
-    }
-
-    pub fn set_model(&mut self, model: String) {
-        self.model = model;
+        Self { client }
     }
 }
 
@@ -143,11 +135,12 @@ type ResultStream = ReceiverStream<String>;
 impl AssistantProviderClient for AnthropicProviderClient {
     async fn generate_response(
         &self,
+        model: Model,
         system_prompt: String,
         user_input: String,
     ) -> Result<ResultStream> {
         let request = AnthropicRequest {
-            model: self.model.clone(),
+            model: model.name.clone(),
             system: system_prompt,
             temperature: 0.2,
             messages: vec![Message {

@@ -14,15 +14,17 @@ pub enum ApiError {
 pub enum AuthError {
     #[error("Error while logging in\n{0}")]
     EmailLoginRequestError(reqwest::Error),
-    #[error("Error while logging in\nTime out while waiting for magic link to be used. Please try to log in again.")]
+    #[error("Error while logging in\nTime out while waiting for magic link to be used. Please try to log in again")]
     EmailLoginTimeoutError,
-    #[error("Error while logging in\nCan't get auth code from the request. Please try again.")]
+    #[error("Error while logging in\nCan't get auth code from the request. Please try again")]
     EmailLoginNoAuthCode,
     #[error("Error while logging in\n{0}")]
     EmailLoginParseError(ParseError),
     #[error("Error while logging in\n{0}")]
     EmailLoginCodeError(reqwest::Error),
-    #[error("Error while logging in\nAccess token or user is missing in the response. Please try again.")]
+    #[error(
+        "Error while logging in\nAccess token or user is missing in the response. Please try again"
+    )]
     EmailLoginInvalidPayloadError,
     #[error("Error while getting user\n{0}")]
     GetUserRequestError(reqwest::Error),
@@ -44,11 +46,11 @@ pub enum AuthError {
 
 #[derive(Error, Debug)]
 pub enum AssistantError {
-    #[error("Assistant prompt is missing\nIt seems that you haven't selected any assistant. In case you have, please try again or restart the app.")]
+    #[error("Assistant prompt is missing\nIt seems that you haven't selected any assistant. In case you have, please try again or restart the app")]
     MissingPrompt,
-    #[error("Assistant provider is missing\nPlease try again or restart the app.")]
+    #[error("AI provider or model is missing\nPlease select a model in the settings")]
     MissingProviderClient,
-    #[error("{0} API key is missing\nPlease provide the API key in the settings.")]
+    #[error("AI provider API key is missing\nPlease provide your API key in the settings")]
     MissingProviederApiKey(String),
     // #[error("Unsupported assistant provider\n{0}")]
     // UnsupportedProvider(String),
@@ -58,7 +60,7 @@ pub enum AssistantError {
 pub enum HotkeyError {
     #[error("Invalid hotkey format\nHotkey shoukd be either a single modifier key pressed twice (cmd+cmd) or a combination of modifirs and keys (alt+tab)")]
     InvalidHotkeyFormat,
-    #[error("Failed to register global hotkey.\nPlease provide Probee accessibility permissions:\nSystem Settings > Security & Privacy > Privacy > Accessibility.")]
+    #[error("Failed to register global hotkey.\nPlease provide Probee accessibility permissions:\nSystem Settings > Security & Privacy > Privacy > Accessibility")]
     TapEventCreationFailure,
 }
 
@@ -69,11 +71,11 @@ pub enum InputError {
     AccessibilityPermissionsMissing,
     #[error("Error while getting screen selection\n{0}")]
     AppleScriptFailed(String),
-    #[error("No text selected\nPlease select some text and try again.")]
+    #[error("No text selected\nPlease select some text and try again")]
     TextSelectionMissing,
-    #[error("Error while getting clipboard content\nIt might be you don't have any text copied. Please copy some text and try again.")]
+    #[error("Error while getting clipboard content\nIt might be you don't have any text copied. Please copy some text and try again")]
     ClipboardError,
-    #[error("No text provided as input\nPlease copy some text and try again.")]
+    #[error("No text provided as input\nPlease copy some text and try again")]
     EmptyTextInputError,
     #[error("Error while getting selected text\n{0}")]
     UnknownError(String),

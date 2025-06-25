@@ -61,16 +61,16 @@ async fn main() {
     let app = Application::new().with_assets(Assets);
 
     app.run(|cx: &mut App| {
-        // order of initialization matters as services placed to global context
+        // Order of initialization matters here: storage and state should be initialized before others
         Storage::init(cx);
+        AppStateController::init(cx);
+        SettingsStateController::init(cx);
+
         Api::init(cx);
         Assistant::init(cx);
         GlobalHotkeyManager::init(cx);
         Theme::init(cx);
         Components::init(cx);
-        // state
-        AppStateController::init(cx);
-        SettingsStateController::init(cx);
 
         let app_window_options = utils::app_window_options(cx);
         let app_window = cx.open_window(app_window_options, AppRoot::build);

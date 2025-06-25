@@ -1,7 +1,6 @@
 use gpui::*;
 
-use crate::assistant::Prompt;
-use crate::assistant::{Model, ModelProvider};
+use crate::assistant::{Assistant, Model, ModelProvider, Prompt};
 use crate::state::settings_state::*;
 use crate::storage::{Storage, StorageKey};
 use crate::ui::{
@@ -79,12 +78,11 @@ impl AssistantSettingsView {
             InputState::new(window, cx)
                 .placeholder("Enter Anthropic API Key")
                 .default_value(api_key)
-                .masked(true)
         });
 
-        cx.subscribe(&api_key_input, |this, input, event, cx| {
-            if let InputEvent::Blur = event {
-                let api_key = input.read(cx).value();
+        cx.subscribe(&api_key_input, |this, _input, event, cx| {
+            if let InputEvent::Change(value) = event {
+                let api_key = value;
                 let storage = cx.global::<Storage>();
                 let storage_key = match this.provider {
                     ModelProvider::Anthropic => StorageKey::AnthropicApiKey,
@@ -113,6 +111,10 @@ impl AssistantSettingsView {
                     serde_json::to_string(&model).unwrap(),
                 );
 
+                cx.update_global(|assistant: &mut Assistant, cx| {
+                    assistant.set_model(model.clone(), cx);
+                });
+
                 this.provider = model.provider.clone();
                 this.api_key_input.update(cx, |input, cx| {
                     let placeholder = match model.provider {
@@ -129,7 +131,7 @@ impl AssistantSettingsView {
         .detach();
 
         let handle_select_prompt = cx.listener(|this, prompt: &Prompt, _window, cx| {
-            let handle_close = cx.listener(|this, ok, window, cx| {
+            let handle_close = cx.listener(|this, _ok, window, cx| {
                 window.remove_window();
                 this.prompt_window_handle = None;
                 cx.notify();

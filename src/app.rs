@@ -31,13 +31,27 @@ impl AppRoot {
         focus_handle.focus(window);
 
         let api = cx.global::<Api>().clone();
+        let models = Model::get_models();
+        let default_model = models.get(0).unwrap();
         let storage = cx.global::<Storage>().clone();
         let state_controller = cx.global::<AppStateController>().clone();
 
+        // Set default values to storage
+        let _ = storage.set_default(StorageKey::HotkeyPrevPropmt, "alt+1".to_string());
+        let _ = storage.set_default(StorageKey::HotkeyNextPrompt, "alt+2".to_string());
+        let _ = storage.set_default(StorageKey::HotkeyRunAssistant, "alt+alt".to_string());
+        let _ = storage.set_default(StorageKey::HotkeyToogleVisibility, "alt+tab".to_string());
+        let _ = storage.set_default(
+            StorageKey::AssistantModel,
+            serde_json::to_string(default_model).unwrap(),
+        );
+
+        let prev_prompt_hk = storage.get(StorageKey::HotkeyPrevPropmt).unwrap();
+        let next_prompt_hk = storage.get(StorageKey::HotkeyNextPrompt).unwrap();
+
         cx.bind_keys([KeyBinding::new("cmd-,", OpenSettings, None)]);
-        // TODO: Load this bindings from storage
-        cx.bind_keys([KeyBinding::new("alt-1", SelectPrevAssistant, None)]);
-        cx.bind_keys([KeyBinding::new("alt-2", SelectNextAssistant, None)]);
+        cx.bind_keys([KeyBinding::new(&prev_prompt_hk, SelectPrevAssistant, None)]);
+        cx.bind_keys([KeyBinding::new(&next_prompt_hk, SelectNextAssistant, None)]);
 
         // Global actions bindings
         cx.on_action(|_: &ToogleVisibility, cx| {
@@ -190,22 +204,6 @@ impl AppRoot {
             cx.on_blur(&focus_handle, window, |_this, _window, cx| {
                 set_focused(cx, false);
                 set_visible(cx, false);
-                // let blur_id = get_blur_id(cx);
-
-                // cx.spawn(async move |this, cx| {
-                //     // TODO: Provide setting for this timeout
-                //     cx.background_executor().timer(Duration::from_secs(5)).await;
-
-                //     this.update(cx, |_this, cx| {
-                //         // hide the the only window if it is not focused more than 5 seconds
-                //         if !get_focused(cx) && get_blur_id(cx) == blur_id && cx.windows().len() == 1
-                //         {
-                //             set_visible(cx, false);
-                //         }
-                //     })
-                //     .ok();
-                // })
-                // .detach();
             })
             .detach();
 
