@@ -38,7 +38,7 @@ impl Render for CopyOutputButton {
         let icon = (if self.succeeded {
             Icon::new(IconName::Check)
         } else {
-            Icon::new(IconName::ClipboardCopy)
+            Icon::new(IconName::Copy)
         })
         .text_color(icon_color)
         .hover(|style| style.text_color(theme.foreground));

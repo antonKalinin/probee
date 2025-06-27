@@ -54,6 +54,7 @@ struct ChoiceDelta {
 #[derive(Clone, Debug)]
 pub struct OpenAIProviderClient {
     client: Client,
+    api_key: String,
 }
 
 impl OpenAIProviderClient {
@@ -70,15 +71,15 @@ impl OpenAIProviderClient {
 
         let mut headers = HeaderMap::new();
 
-        headers.insert(
-            "Authorization",
-            HeaderValue::from_str(&format!("Bearer {}", api_key)).unwrap(),
-        );
+        // headers.insert(
+        //     "Authorization",
+        //     HeaderValue::from_str(&format!("Bearer {}", api_key)).unwrap(),
+        // );
         headers.insert("content-type", HeaderValue::from_static("application/json"));
 
         let client = Client::builder().default_headers(headers).build().unwrap();
 
-        Self { client }
+        Self { client, api_key }
     }
 }
 
@@ -86,6 +87,10 @@ type ResultStream = ReceiverStream<String>;
 
 #[async_trait::async_trait]
 impl AssistantProviderClient for OpenAIProviderClient {
+    fn set_api_key(&mut self, api_key: String) {
+        self.api_key = api_key.clone();
+    }
+
     async fn generate_response(
         &self,
         model: Model,
@@ -119,6 +124,7 @@ impl AssistantProviderClient for OpenAIProviderClient {
         let response = self
             .client
             .post("https://api.openai.com/v1/chat/completions")
+            .header("Authorization", format!("Bearer {}", self.api_key))
             .json(&request)
             .send()
             .await?;

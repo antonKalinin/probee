@@ -103,6 +103,7 @@ struct MessageDeltaContent {
 #[derive(Clone, Debug)]
 pub struct AnthropicProviderClient {
     client: Client,
+    api_key: String,
 }
 
 impl AnthropicProviderClient {
@@ -119,13 +120,12 @@ impl AnthropicProviderClient {
 
         let mut headers = HeaderMap::new();
 
-        headers.insert("x-api-key", HeaderValue::from_str(&api_key).unwrap());
         headers.insert("anthropic-version", HeaderValue::from_static("2023-06-01"));
         headers.insert("content-type", HeaderValue::from_static("application/json"));
 
         let client = Client::builder().default_headers(headers).build().unwrap();
 
-        Self { client }
+        Self { client, api_key }
     }
 }
 
@@ -133,6 +133,10 @@ type ResultStream = ReceiverStream<String>;
 
 #[async_trait::async_trait]
 impl AssistantProviderClient for AnthropicProviderClient {
+    fn set_api_key(&mut self, api_key: String) {
+        self.api_key = api_key.clone();
+    }
+
     async fn generate_response(
         &self,
         model: Model,
@@ -154,6 +158,7 @@ impl AssistantProviderClient for AnthropicProviderClient {
         let response = self
             .client
             .post("https://api.anthropic.com/v1/messages")
+            .header("x-api-key", HeaderValue::from_str(&self.api_key).unwrap())
             .json(&request)
             .send()
             .await?;

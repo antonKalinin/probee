@@ -1,5 +1,5 @@
 use anyhow::Result;
-use gpui::{App, Global, SharedString};
+use gpui::{App, BorrowAppContext, Global, SharedString};
 use serde::{Deserialize, Serialize};
 use time::format_description::well_known::Rfc3339;
 use time::OffsetDateTime;
@@ -21,6 +21,8 @@ pub trait AssistantProviderClient {
         system_prompt: String,
         user_input: String,
     ) -> Result<ResultStream>;
+
+    fn set_api_key(&mut self, api_key: String);
 
     fn box_clone(&self) -> Box<dyn AssistantProviderClient>;
 }
@@ -77,6 +79,16 @@ impl Model {
             Self::new(
                 "GPT-4.1 Nano",
                 "gpt-4.1-nano-2025-04-14".to_string(),
+                ModelProvider::OpenAI,
+            ),
+            Self::new(
+                "GPT-4.0 Turbo",
+                "gpt-4-turbo-2024-04-09".to_string(),
+                ModelProvider::OpenAI,
+            ),
+            Self::new(
+                "o4 Mini",
+                "o4-mini-2025-04-16".to_string(),
                 ModelProvider::OpenAI,
             ),
         ]
@@ -164,6 +176,19 @@ impl Assistant {
             model,
             prompt: None,
             provider_client,
+        });
+
+        cx.update_global(|storage: &mut Storage, _cx| {
+            storage.subscribe(|key, value, cx| match key {
+                StorageKey::AnthropicApiKey | StorageKey::OpenAiApiKey => {
+                    let provider_client = &mut cx.global_mut::<Assistant>().provider_client;
+
+                    if let Some(client) = provider_client {
+                        client.set_api_key(value);
+                    }
+                }
+                _ => {}
+            });
         });
     }
 

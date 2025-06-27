@@ -76,20 +76,22 @@ impl AssistantSettingsView {
 
         let api_key_input = cx.new(|cx| {
             InputState::new(window, cx)
-                .placeholder("Enter Anthropic API Key")
+                .placeholder("Enter Model Provider API Key")
                 .default_value(api_key)
         });
 
         cx.subscribe(&api_key_input, |this, _input, event, cx| {
-            if let InputEvent::Change(value) = event {
-                let api_key = value;
-                let storage = cx.global::<Storage>();
+            if let InputEvent::Change(api_key) = event {
                 let storage_key = match this.provider {
                     ModelProvider::Anthropic => StorageKey::AnthropicApiKey,
                     ModelProvider::OpenAI => StorageKey::OpenAiApiKey,
                 };
 
-                let _ = storage.set(storage_key, api_key.to_string());
+                cx.update_global(|storage: &mut Storage, cx| {
+                    storage
+                        .set_notify(storage_key, api_key.to_string(), cx)
+                        .ok();
+                });
             }
         })
         .detach();
@@ -111,19 +113,17 @@ impl AssistantSettingsView {
                     serde_json::to_string(&model).unwrap(),
                 );
 
+                let _api_key = match model.provider {
+                    ModelProvider::Anthropic => storage.get(StorageKey::AnthropicApiKey),
+                    ModelProvider::OpenAI => storage.get(StorageKey::OpenAiApiKey),
+                }
+                .unwrap_or(String::from(""));
+
                 cx.update_global(|assistant: &mut Assistant, cx| {
                     assistant.set_model(model.clone(), cx);
                 });
 
                 this.provider = model.provider.clone();
-                this.api_key_input.update(cx, |input, cx| {
-                    let placeholder = match model.provider {
-                        ModelProvider::Anthropic => "Enter Anthropic API Key",
-                        ModelProvider::OpenAI => "Enter OpenAI API Key",
-                    };
-
-                    input.set_placeholder(placeholder, cx);
-                });
 
                 cx.notify();
             }
@@ -170,7 +170,7 @@ impl AssistantSettingsView {
             model_dropdown,
             prompt_list,
 
-            provider: ModelProvider::Anthropic,
+            provider: model.provider.clone(),
             prompt_window_handle: None,
         }
     }
