@@ -156,12 +156,17 @@ impl AppRoot {
                             return;
                         }
 
-                        // TODO: Config should not be reset on every input change
+                        // TODO: Prompt should not be reset on every input change
                         let _ = assitant.set_prompt(prompt.unwrap());
+
+                        if get_asssistant_processing(cx) {
+                            return;
+                        }
 
                         set_error(cx, None);
                         set_output(cx, "".to_owned());
                         set_loading(cx, true);
+                        set_assistant_processing(cx, true);
 
                         cx.spawn(async move |cx| {
                             let output = assitant.generate_response(input).await;
@@ -173,6 +178,8 @@ impl AppRoot {
                                     while let Some(item) = stream.next().await {
                                         append_output_async(cx, item);
                                     }
+
+                                    set_assistant_processing_async(cx, false);
                                 }
                                 Err(err) => set_error_async(cx, Some(err)),
                             };

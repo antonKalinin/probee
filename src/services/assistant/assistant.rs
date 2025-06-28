@@ -205,7 +205,7 @@ impl Assistant {
         self.prompt = Some(prompt);
     }
 
-    pub async fn generate_response(&self, input: String) -> Result<ResultStream> {
+    pub async fn generate_response(&mut self, input: String) -> Result<ResultStream> {
         if self.provider_client.is_none() || self.model.is_none() {
             return Err(AssistantError::MissingProviderClient.into());
         }

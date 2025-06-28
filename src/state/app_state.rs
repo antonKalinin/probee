@@ -27,6 +27,7 @@ pub struct AppState {
     pub focused: bool,
     pub loading: bool,
     pub visible: bool,
+    pub assistant_processing: bool,
     pub settings_window_handle: Option<WindowHandle<Root>>,
 }
 
@@ -86,6 +87,7 @@ impl AppStateController {
             focused: false,
             loading: false,
             visible: true,
+            assistant_processing: false,
             settings_window_handle: None,
         });
 
@@ -134,6 +136,13 @@ impl AppStateController {
             state.active_view = view.clone();
             state.error = None;
 
+            cx.notify();
+        });
+    }
+
+    pub fn set_assistant_processing(&self, cx: &mut App, processing: bool) {
+        self.state.update(cx, |state, cx| {
+            state.assistant_processing = processing;
             cx.notify();
         });
     }
@@ -221,27 +230,9 @@ pub fn get_active_prompt(cx: &App) -> Option<Prompt> {
     }
 }
 
-// pub fn get_active_assistant(cx: &App) -> Option<AssistantConfig> {
-//     let state = cx.global::<AppStateController>().state.read(cx);
-
-//     match state.active_prompt_id.clone() {
-//         Some(id) => state
-//             .assistants
-//             .iter()
-//             .find(|assistant| assistant.id == id)
-//             .cloned(),
-//         None => None,
-//     }
-// }
-
-pub fn get_focused(cx: &mut App) -> bool {
+pub fn get_asssistant_processing(cx: &App) -> bool {
     let state = cx.global::<AppStateController>().state.read(cx);
-    state.focused
-}
-
-pub fn get_blur_id(cx: &mut App) -> u16 {
-    let state = cx.global::<AppStateController>().state.read(cx);
-    state.blur_id
+    state.assistant_processing
 }
 
 pub fn set_active_prompt_id(cx: &mut App, id: Option<String>) {
@@ -250,6 +241,14 @@ pub fn set_active_prompt_id(cx: &mut App, id: Option<String>) {
 
 pub fn set_active_view(cx: &mut App, view: AppView) {
     AppStateController::update(|this, cx| this.set_active_view(cx, view), cx);
+}
+
+pub fn set_assistant_processing(cx: &mut App, processing: bool) {
+    AppStateController::update(|this, cx| this.set_assistant_processing(cx, processing), cx);
+}
+
+pub fn set_assistant_processing_async(cx: &mut AsyncApp, processing: bool) {
+    AppStateController::update_async(|this, cx| this.set_assistant_processing(cx, processing), cx);
 }
 
 pub fn set_input(cx: &mut App, input: String) {
