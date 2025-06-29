@@ -214,7 +214,11 @@ impl Render for AssistantSettingsView {
 
                             let _ = cx.update_window(window_handle.into(), |_, window, cx| {
                                 window.replace_root(cx, |window, cx| {
-                                    PromptEditorView::new(None, handle_close, window, cx)
+                                    let view = cx.new(|cx| {
+                                        PromptEditorView::new(None, handle_close, window, cx)
+                                    });
+
+                                    Root::new(view.into(), window, cx)
                                 });
                             });
 
