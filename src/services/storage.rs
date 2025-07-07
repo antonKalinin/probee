@@ -174,7 +174,7 @@ impl Storage {
         data.get(&key.stringify()).cloned()
     }
 
-    pub fn delete(&self, key: StorageKey) -> Result<()> {
+    pub fn _delete(&self, key: StorageKey) -> Result<()> {
         {
             let mut data = self.data.lock().unwrap();
             data.remove(&key.stringify());
@@ -284,7 +284,7 @@ mod tests {
         );
 
         // Test delete
-        store.delete(StorageKey::AnthropicApiKey)?;
+        store._delete(StorageKey::AnthropicApiKey)?;
         assert_eq!(store.get(StorageKey::AnthropicApiKey), None);
 
         Ok(())

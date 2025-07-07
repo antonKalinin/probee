@@ -46,8 +46,6 @@ pub enum AuthError {
 
 #[derive(Error, Debug)]
 pub enum AssistantError {
-    #[error("Assistant request is already in progress\nPlease wait until the current request is finished")]
-    AlreadyRequesting,
     #[error("Assistant prompt is missing\nIt seems that you haven't selected any assistant. In case you have, please try again or restart the app")]
     MissingPrompt,
     #[error("AI provider or model is missing\nPlease select a model in the settings")]

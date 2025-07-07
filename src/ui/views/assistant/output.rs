@@ -10,7 +10,6 @@ use super::clear_output_button::ClearOutputButton;
 use super::copy_output_button::CopyOutputButton;
 
 pub struct Output {
-    visible: bool,
     loading: bool,
     text: String,
     description: String,
@@ -26,14 +25,12 @@ const MAX_HEIGHT: f32 = 320.0;
 impl Output {
     pub fn new(cx: &mut Context<Self>, state: &Entity<AppState>) -> Self {
         cx.observe(state, |this, state, cx| {
-            let error = state.read(cx).error.is_some();
             let loading = state.read(cx).loading;
             let prompt = get_active_prompt(cx);
 
             this.text = state.read(cx).output.clone();
             this.description = prompt.map(|a| a.description.clone()).unwrap_or_default();
             this.loading = loading;
-            this.visible = state.read(cx).active_view == AppView::AssistantView && !error;
             cx.notify();
         })
         .detach();
@@ -61,7 +58,6 @@ impl Output {
         .detach();
 
         Output {
-            visible: false,
             loading: false,
             text: "".to_owned(),
             description: "".to_owned(),
@@ -116,10 +112,6 @@ impl Output {
 impl Render for Output {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
-
-        if !self.visible {
-            return div().into_any_element();
-        }
 
         if self.loading {
             return self.render_loading(cx);

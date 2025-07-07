@@ -77,6 +77,7 @@ impl AssistantSettingsView {
         let api_key_input = cx.new(|cx| {
             InputState::new(window, cx)
                 .placeholder("Enter Model Provider API Key")
+                .masked(true)
                 .default_value(api_key)
         });
 

@@ -21,6 +21,7 @@ pub struct AppRoot {
 
     visible: bool,
     focus_handle: FocusHandle,
+    active_view: AppView,
 }
 
 impl AppRoot {
@@ -199,6 +200,7 @@ impl AppRoot {
 
             cx.observe(&state, |this: &mut AppRoot, state, cx| {
                 this.visible = state.read(cx).visible;
+                this.active_view = state.read(cx).active_view.clone();
                 cx.notify();
             })
             .detach();
@@ -214,12 +216,15 @@ impl AppRoot {
             })
             .detach();
 
+            let state = state.read(cx);
+
             AppRoot {
                 assistant_view,
                 library_view,
                 error_view,
 
-                visible: state.read(cx).visible,
+                active_view: state.active_view.clone(),
+                visible: state.visible,
                 focus_handle,
             }
         });
@@ -298,17 +303,24 @@ impl Render for AppRoot {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
-        let content = div().flex().flex_col().flex_grow().pt_4().pb_3().px_3();
-
         let assistant_view = div().child(self.assistant_view.clone());
         let library_view = div().child(self.library_view.clone());
+        let inner = div().flex().flex_col().flex_grow().pt_4().pb_3().px_3();
 
         let content = div()
             .on_children_prepainted(move |bounds, window, cx| {
                 let content_height: f32 = bounds.iter().map(|b| b.size.height.0).sum();
                 window.set_frame(utils::app_window_bounds(cx, content_height), true);
             })
-            .child(content.children([assistant_view, library_view])) // only one view is visible per time
+            .child(
+                inner
+                    .when(self.active_view == AppView::AssistantView, |this| {
+                        this.child(assistant_view)
+                    })
+                    .when(self.active_view == AppView::LibraryView, |this| {
+                        this.child(library_view)
+                    }),
+            )
             .child(self.error_view.clone());
 
         div()
