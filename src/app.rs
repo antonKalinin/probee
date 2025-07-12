@@ -3,16 +3,14 @@ use gpui::{
     div, prelude::*, App, AppContext, Entity, EventEmitter, FocusHandle, KeyBinding, Window,
 };
 
+use crate::actions::{CloseApp, OpenSettings, SelectNextAssistant, SelectPrevAssistant};
 use crate::assistant::*;
 use crate::errors::*;
 use crate::events::*;
-use crate::services::{selection, Api, Storage, StorageKey};
+use crate::services::{Api, Storage, StorageKey};
 use crate::state::app_state::*;
 use crate::ui::*;
 use crate::utils;
-use crate::utils::actions::{
-    OpenSettings, RunAssistant, SelectNextAssistant, SelectPrevAssistant, ToogleVisibility,
-};
 
 pub struct AppRoot {
     assistant_view: Entity<AssistantView>,
@@ -41,7 +39,7 @@ impl AppRoot {
         let _ = storage.set_default(StorageKey::HotkeyPrevPropmt, "alt+1".to_string());
         let _ = storage.set_default(StorageKey::HotkeyNextPrompt, "alt+2".to_string());
         let _ = storage.set_default(StorageKey::HotkeyRunAssistant, "alt+alt".to_string());
-        let _ = storage.set_default(StorageKey::HotkeyToogleVisibility, "alt+tab".to_string());
+        let _ = storage.set_default(StorageKey::HotkeyToggleVisibility, "alt+tab".to_string());
         let _ = storage.set_default(
             StorageKey::AssistantModel,
             serde_json::to_string(default_model).unwrap(),
@@ -53,30 +51,6 @@ impl AppRoot {
         cx.bind_keys([KeyBinding::new("cmd-,", OpenSettings, None)]);
         cx.bind_keys([KeyBinding::new(&prev_prompt_hk, SelectPrevAssistant, None)]);
         cx.bind_keys([KeyBinding::new(&next_prompt_hk, SelectNextAssistant, None)]);
-
-        // Global actions bindings
-        cx.on_action(|_: &ToogleVisibility, cx| {
-            toggle_visible(cx);
-        });
-
-        cx.on_action(|_: &RunAssistant, cx| {
-            let input_text = selection::get_text();
-
-            match input_text {
-                Ok(text) => {
-                    if text.is_empty() {
-                        set_error(cx, Some(InputError::EmptyTextInputError.into()));
-                    } else {
-                        set_input(cx, text);
-                    }
-                }
-                Err(err) => {
-                    set_error(cx, Some(err));
-                }
-            }
-
-            set_visible(cx, true);
-        });
 
         // Load prompts from API to store them and set to state
         cx.spawn(async move |cx| {
@@ -210,9 +184,11 @@ impl AppRoot {
             })
             .detach();
 
-            cx.on_blur(&focus_handle, window, |_this, _window, cx| {
+            cx.on_blur(&focus_handle, window, |_this, window, cx| {
                 set_focused(cx, false);
-                set_visible(cx, false);
+
+                window.remove_window();
+                cx.dispatch_action(&CloseApp);
             })
             .detach();
 
@@ -230,10 +206,6 @@ impl AppRoot {
         });
 
         view
-    }
-
-    fn open_settings(&mut self, _: &OpenSettings, _window: &mut Window, cx: &mut Context<Self>) {
-        cx.emit(AppEvent::OpenSettings);
     }
 
     fn select_next_prompt(
@@ -324,7 +296,6 @@ impl Render for AppRoot {
             .child(self.error_view.clone());
 
         div()
-            .on_action(cx.listener(Self::open_settings))
             .on_action(cx.listener(Self::select_next_prompt))
             .on_action(cx.listener(Self::select_prev_prompt))
             .track_focus(&self.focus_handle)

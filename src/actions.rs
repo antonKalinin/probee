@@ -3,10 +3,13 @@ use gpui::actions;
 actions!(
     app,
     [
-        OpenSettings,
         SelectNextAssistant,
         SelectPrevAssistant,
         RunAssistant,
-        ToogleVisibility
+        // windows
+        CloseApp,
+        ToggleApp,
+        OpenSettings,
+        OpenPromptEditor,
     ]
 );

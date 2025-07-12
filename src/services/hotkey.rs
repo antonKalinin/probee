@@ -8,10 +8,10 @@ use std::sync::mpsc;
 use std::sync::mpsc::Sender;
 use std::time::{Duration, Instant};
 
+use crate::actions::{RunAssistant, ToggleApp};
 use crate::errors::*;
 use crate::services::storage::{Storage, StorageKey};
 use crate::state::app_state::set_error_async;
-use crate::utils::actions::{RunAssistant, ToogleVisibility};
 use crate::utils::keyboard::KeyCode;
 
 // Core Graphics and Core Foundation bindings
@@ -318,7 +318,7 @@ impl GlobalHotkeyManager {
             .unwrap_or("".into());
 
         let mut visibility_hotkey = storage
-            .get(StorageKey::HotkeyToogleVisibility)
+            .get(StorageKey::HotkeyToggleVisibility)
             .unwrap_or("".into());
 
         cx.spawn(async move |cx| {
@@ -406,14 +406,14 @@ impl GlobalHotkeyManager {
 
                             visibility_hotkey = cx
                                 .global::<Storage>()
-                                .get(StorageKey::HotkeyToogleVisibility)
+                                .get(StorageKey::HotkeyToggleVisibility)
                                 .unwrap_or("".into());
                         }
 
                         if keystroke == assistant_hotkey {
                             cx.dispatch_action(&RunAssistant);
                         } else if keystroke == visibility_hotkey {
-                            cx.dispatch_action(&ToogleVisibility);
+                            cx.dispatch_action(&ToggleApp);
                         }
                     });
                 }

@@ -54,7 +54,7 @@ pub enum StorageKey {
     // SettingsStartOnLogin,
 
     // hotkeys
-    HotkeyToogleVisibility,
+    HotkeyToggleVisibility,
     HotkeyRunAssistant,
     HotkeyNextPrompt,
     HotkeyPrevPropmt,

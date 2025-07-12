@@ -29,7 +29,7 @@ impl HotkeysView {
             .unwrap_or(None);
 
         let visibility_hotkey = storage
-            .get(StorageKey::HotkeyToogleVisibility)
+            .get(StorageKey::HotkeyToggleVisibility)
             .map(|s| HotKey::from_keystroke(s.as_str()).ok())
             .unwrap_or(None);
 
@@ -52,7 +52,7 @@ impl HotkeysView {
         let visibility_hotkey_cb = Box::new(|hotkey: HotKey, cx: &mut Context<_>| {
             let _ = cx
                 .global::<Storage>()
-                .set(StorageKey::HotkeyToogleVisibility, hotkey.to_keystroke());
+                .set(StorageKey::HotkeyToggleVisibility, hotkey.to_keystroke());
         });
 
         let prev_hotkey_cb = Box::new(|hotkey: HotKey, cx: &mut Context<_>| {

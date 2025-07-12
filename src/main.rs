@@ -2,9 +2,9 @@ use std::panic;
 use std::time::Duration;
 
 use dotenv::dotenv;
-use events::AppEvent;
 use gpui::{App, Application, AsyncApp};
 
+mod actions;
 mod app;
 mod assets;
 mod errors;
@@ -15,40 +15,42 @@ mod settings;
 mod state;
 mod ui;
 mod utils;
+mod windows;
 
-use crate::app::AppRoot;
+use crate::actions::*;
 use crate::assets::Assets;
+use crate::errors::InputError;
 use crate::services::*;
-use crate::settings::SettingsRoot;
 use crate::state::app_state::*;
-use crate::state::settings_state::*;
+use crate::state::settings_state::SettingsStateController;
 use crate::ui::{Components, Theme};
 use crate::utils::devtools;
+use crate::windows::Windows;
 
-fn open_settings(cx: &mut App) {
-    let window_handle = get_settings_window_handle(cx);
+// fn open_settings(cx: &mut App) {
+//     let window_handle = get_settings_window_handle(cx);
 
-    if window_handle.is_some() {
-        let _ = window_handle.unwrap().update(cx, |_, window, _cx| {
-            window.remove_window();
-        });
-    }
+//     if window_handle.is_some() {
+//         let _ = window_handle.unwrap().update(cx, |_, window, _cx| {
+//             window.remove_window();
+//         });
+//     }
 
-    let settings_window_options = utils::settings_window_options(cx);
-    let handle = cx.open_window(settings_window_options, SettingsRoot::build);
+//     let settings_window_options = utils::settings_window_options(cx);
+//     let handle = cx.open_window(settings_window_options, SettingsRoot::build);
 
-    if let Ok(handle) = handle {
-        let _ = handle.update(cx, |_, window, cx| {
-            window.on_window_should_close(cx, |_window, cx| {
-                set_settings_window_handle(cx, None);
-                true
-            });
-        });
-    }
+//     if let Ok(handle) = handle {
+//         let _ = handle.update(cx, |_, window, cx| {
+//             window.on_window_should_close(cx, |_window, cx| {
+//                 set_settings_window_handle(cx, None);
+//                 true
+//             });
+//         });
+//     }
 
-    set_settings_window_handle(cx, handle.ok());
-    cx.activate(true);
-}
+//     set_settings_window_handle(cx, handle.ok());
+//     cx.activate(true);
+// }
 
 #[async_std::main]
 async fn main() {
@@ -71,17 +73,31 @@ async fn main() {
         GlobalHotkeyManager::init(cx);
         Theme::init(cx);
         Components::init(cx);
+        Windows::init(cx);
 
-        let app_window_options = utils::app_window_options(cx);
-        let app_window = cx.open_window(app_window_options, AppRoot::build);
-        let app_entity = app_window.as_ref().unwrap().entity(cx).unwrap();
+        Windows::open_app(cx);
 
-        let _ = cx
-            .subscribe(&app_entity, move |_app_root, event, cx| match event {
-                AppEvent::OpenSettings => open_settings(cx),
-                _ => {}
-            })
-            .detach();
+        // Global actions bindings
+
+        cx.on_action(|_: &ToggleApp, cx| Windows::toggle_app(cx));
+        cx.on_action(|_: &CloseApp, cx| Windows::close_app(cx));
+        cx.on_action(|_: &OpenSettings, cx| Windows::open_settings(cx));
+        cx.on_action(|_: &RunAssistant, cx| {
+            match selection::get_text() {
+                Ok(text) => {
+                    if text.is_empty() {
+                        set_error(cx, Some(InputError::EmptyTextInputError.into()));
+                    } else {
+                        set_input(cx, text);
+                    }
+                }
+                Err(err) => {
+                    set_error(cx, Some(err));
+                }
+            }
+
+            Windows::open_app(cx);
+        });
 
         // TODO: Log status menu initialization failure
         let menu_handler = platform::init_status_menu(cx);
@@ -92,12 +108,12 @@ async fn main() {
 
                 match action {
                     Ok(platform::MenuAction::OpenApp) => {
-                        cx.update(|cx| set_visible(cx, true)).ok();
+                        cx.update(Windows::open_app).ok();
                     }
                     Ok(platform::MenuAction::OpenSettings) => {
-                        cx.update(open_settings).ok();
+                        cx.update(Windows::open_settings).ok();
                     }
-                    _ => {}
+                    _ => (),
                 }
 
                 cx.background_executor()

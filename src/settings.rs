@@ -1,4 +1,4 @@
-use gpui::{div, prelude::*, App, AppContext, Entity, Window};
+use gpui::{div, prelude::*, App, AppContext, Entity, FocusHandle, Window};
 
 use crate::state::settings_state::*;
 use crate::ui::*;
@@ -15,11 +15,16 @@ pub struct SettingsRoot {
 
     error_view: Entity<ErrorView>,
     tabs: Vec<Entity<SettingsTab>>,
+
+    focus_handle: FocusHandle,
 }
 
 impl SettingsRoot {
     pub fn build(window: &mut Window, cx: &mut App) -> Entity<Root> {
         let state_controller = cx.global::<SettingsStateController>().clone();
+
+        let focus_handle = cx.focus_handle();
+        focus_handle.focus(window);
 
         let view = cx.new(|cx| {
             let state = state_controller.state.clone();
@@ -45,6 +50,11 @@ impl SettingsRoot {
             })
             .detach();
 
+            cx.on_blur(&focus_handle, window, |_this, _window, _cx| {
+                // window.remove_window();
+            })
+            .detach();
+
             SettingsRoot {
                 active_tab: state.read(cx).active_tab.clone(),
 
@@ -55,6 +65,8 @@ impl SettingsRoot {
 
                 tabs,
                 error_view,
+
+                focus_handle,
             }
         });
 
@@ -116,6 +128,7 @@ impl Render for SettingsRoot {
         let error = div().child(self.error_view.clone());
 
         div()
+            .track_focus(&self.focus_handle)
             .size_full()
             .flex()
             .flex_col()

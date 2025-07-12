@@ -28,6 +28,7 @@ pub struct AppState {
     pub loading: bool,
     pub visible: bool,
     pub assistant_processing: bool,
+
     pub settings_window_handle: Option<WindowHandle<Root>>,
 }
 
@@ -88,6 +89,7 @@ impl AppStateController {
             loading: false,
             visible: true,
             assistant_processing: false,
+
             settings_window_handle: None,
         });
 
@@ -195,20 +197,20 @@ impl AppStateController {
 
     pub fn set_visible(&self, cx: &mut App, visible: bool) {
         // Should not hide app if settings window is open.
-        if self.state.read(cx).settings_window_handle.is_some() {
-            return;
-        }
+        // if self.state.read(cx).settings_window_handle.is_some() {
+        //     return;
+        // }
 
-        self.state.update(cx, |model, cx| {
-            model.visible = visible;
-            cx.notify();
+        // self.state.update(cx, |model, cx| {
+        //     model.visible = visible;
+        //     cx.notify();
 
-            if visible {
-                cx.activate(true);
-            } else {
-                cx.hide();
-            }
-        });
+        //     if visible {
+        //         cx.activate(true);
+        //     } else {
+        //         cx.hide();
+        //     }
+        // });
     }
 
     pub fn set_settings_window_handle(&self, cx: &mut App, handle: Option<WindowHandle<Root>>) {
@@ -289,16 +291,6 @@ pub fn set_prompts(cx: &mut App, prompts: Vec<Prompt>) {
 
 pub fn set_visible(cx: &mut App, visible: bool) {
     AppStateController::update(|this, cx| this.set_visible(cx, visible), cx);
-}
-
-pub fn toggle_visible(cx: &mut App) {
-    AppStateController::update(
-        |this, cx| {
-            let state = this.state.read(cx);
-            this.set_visible(cx, !state.visible);
-        },
-        cx,
-    );
 }
 
 pub fn get_settings_window_handle(cx: &App) -> Option<WindowHandle<Root>> {
