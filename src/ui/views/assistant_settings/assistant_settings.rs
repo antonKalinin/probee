@@ -5,13 +5,13 @@ use crate::state::settings_state::*;
 use crate::storage::{Storage, StorageKey};
 use crate::ui::{
     ActiveTheme, Button, Dropdown, DropdownEvent, DropdownItem, Icon, IconName, InputEvent,
-    InputState, PromptEditorView, Root, Sizable as _, TextInput, Theme,
+    InputState, Root, Sizable as _, TextInput, Theme,
 };
-use crate::utils::prompt_window_options;
 
 use super::components::PromptList;
+use super::prompt_editor::PromptEditorView;
 
-const VIEW_HEIGHT: f32 = 464.0;
+const VIEW_HEIGHT: f32 = 480.0;
 
 impl DropdownItem for Model {
     type Value = Model;
@@ -49,7 +49,7 @@ pub struct AssistantSettingsView {
     prompt_list: Entity<PromptList>,
 
     provider: ModelProvider,
-    prompt_window_handle: Option<WindowHandle<Root>>,
+    prompt_editor: Option<Entity<Root>>,
 }
 
 impl AssistantSettingsView {
@@ -131,37 +131,20 @@ impl AssistantSettingsView {
         })
         .detach();
 
-        let handle_select_prompt = cx.listener(|this, prompt: &Prompt, _window, cx| {
-            let handle_close = cx.listener(|this, _ok, window, cx| {
-                window.remove_window();
-                this.prompt_window_handle = None;
+        let handle_select_prompt = cx.listener(|this, prompt: &Prompt, window, cx| {
+            let handle_close = cx.listener(|this, _ok, _window, cx| {
+                this.prompt_editor = None;
                 cx.notify();
             });
 
-            if this.prompt_window_handle.is_some() {
-                // Update the existing prompt window
-                let window_handle = this.prompt_window_handle.unwrap();
-                let _ = cx.update_window(window_handle.into(), |_this, window, cx| {
-                    window.replace_root(cx, |window, cx| {
-                        let view = cx.new(|cx| {
-                            PromptEditorView::new(Some(prompt.clone()), handle_close, window, cx)
-                        });
+            this.prompt_editor = Some(PromptEditorView::build(
+                Some(prompt.clone()),
+                handle_close,
+                window,
+                cx,
+            ));
 
-                        Root::new(view.into(), window, cx)
-                    });
-                });
-
-                return;
-            };
-
-            let window_options = prompt_window_options(cx);
-            let window_handle = cx
-                .open_window(window_options, |window, cx| {
-                    PromptEditorView::build(Some(prompt.clone()), handle_close, window, cx)
-                })
-                .ok();
-
-            this.prompt_window_handle = window_handle;
+            cx.notify();
         });
 
         let prompt_list = cx.new(|cx| PromptList::new(state, handle_select_prompt, window, cx));
@@ -172,7 +155,7 @@ impl AssistantSettingsView {
             prompt_list,
 
             provider: model.provider.clone(),
-            prompt_window_handle: None,
+            prompt_editor: None,
         }
     }
 }
@@ -180,6 +163,15 @@ impl AssistantSettingsView {
 impl Render for AssistantSettingsView {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
+
+        if let Some(prompt_editor) = &self.prompt_editor {
+            return div()
+                .w_full()
+                .h(px(VIEW_HEIGHT))
+                .py_8()
+                .child(prompt_editor.clone())
+                .into_any_element();
+        }
 
         let row = || div().w_full().flex().flex_row().mb_6().items_center();
 
@@ -201,41 +193,17 @@ impl Render for AssistantSettingsView {
             Button::new("create-prompt-button")
                 .label("Create New Prompt")
                 .small()
-                .on_click(
-                    cx.listener(|this, _event, _window, cx: &mut Context<Self>| {
-                        let handle_close = cx.listener(|this, _, window, cx| {
-                            window.remove_window();
-                            this.prompt_window_handle = None;
-                            cx.notify();
-                        });
+                .on_click(cx.listener(|this, _event, window, cx: &mut Context<Self>| {
+                    let handle_close = cx.listener(|this, _, _window, cx| {
+                        this.prompt_editor = None;
+                        cx.notify();
+                    });
 
-                        if this.prompt_window_handle.is_some() {
-                            // Update the existing prompt window
-                            let window_handle = this.prompt_window_handle.unwrap();
+                    this.prompt_editor =
+                        Some(PromptEditorView::build(None, handle_close, window, cx));
 
-                            let _ = cx.update_window(window_handle.into(), |_, window, cx| {
-                                window.replace_root(cx, |window, cx| {
-                                    let view = cx.new(|cx| {
-                                        PromptEditorView::new(None, handle_close, window, cx)
-                                    });
-
-                                    Root::new(view.into(), window, cx)
-                                });
-                            });
-
-                            return;
-                        }
-
-                        let window_options = prompt_window_options(cx);
-                        let window_handle = cx
-                            .open_window(window_options, |window, cx| {
-                                PromptEditorView::build(None, handle_close, window, cx)
-                            })
-                            .ok();
-
-                        this.prompt_window_handle = window_handle;
-                    }),
-                ),
+                    cx.notify();
+                })),
         );
 
         div()

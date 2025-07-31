@@ -8,10 +8,12 @@ use crate::ui::{
 
 pub struct PromptEditorView {
     prompt: Option<Prompt>,
-    name_input: Entity<InputState>,
     prompt_input: Entity<InputState>,
-    // on_close: Option<Box<dyn Fn(&String, &mut Window, &mut App) + 'static>>,
+
+    name_input: Entity<InputState>,
     readonly: bool,
+
+    on_close: Box<dyn Fn(&bool, &mut Window, &mut App) + 'static>,
 }
 
 impl PromptEditorView {
@@ -41,11 +43,6 @@ impl PromptEditorView {
                 .rows(16)
         });
 
-        window.on_window_should_close(cx, move |window, cx| {
-            on_close(&true, window, cx);
-            true
-        });
-
         let mut readonly = false;
 
         if let Some(prompt) = &prompt {
@@ -62,8 +59,9 @@ impl PromptEditorView {
             prompt,
             name_input,
             prompt_input,
-            // on_close: Some(Box::new(on_close)),
             readonly,
+
+            on_close: Box::new(on_close),
         }
     }
 
@@ -159,6 +157,19 @@ impl Render for PromptEditorView {
 
         let value = || div().w(px(360.));
 
+        let buttons_space = div().w(px(48.));
+
+        let cancel_button = div().child(
+            Button::new("cancel-prompt-button")
+                .label("Cancel")
+                .small()
+                .flex()
+                .w_32()
+                .on_click(cx.listener(|this, _event, window, cx: &mut Context<Self>| {
+                    this.on_close.as_ref()(&true, window, cx);
+                })),
+        );
+
         let delete_prompt_button = div().child(
             Button::new("delete-prompt-button")
                 .label("Delete Prompt")
@@ -166,11 +177,12 @@ impl Render for PromptEditorView {
                 .disabled(self.prompt.is_none() || self.readonly)
                 .flex()
                 .w_32()
-                .on_click(
-                    cx.listener(|this, _event, _window, cx: &mut Context<Self>| {
-                        this.delete_propmt(cx);
-                    }),
-                ),
+                .on_click(cx.listener(|this, _event, window, cx: &mut Context<Self>| {
+                    this.delete_propmt(cx);
+
+                    cx.notify();
+                    this.on_close.as_ref()(&true, window, cx);
+                })),
         );
 
         let save_prompt_button = div().child(
@@ -181,20 +193,18 @@ impl Render for PromptEditorView {
                 .flex()
                 .w_32()
                 .disabled(self.readonly)
-                .on_click(
-                    cx.listener(|this, _event, _window, cx: &mut Context<Self>| {
-                        let prompt = this.save_prompt(cx);
-                        this.prompt = prompt;
+                .on_click(cx.listener(|this, _event, window, cx: &mut Context<Self>| {
+                    let prompt = this.save_prompt(cx);
+                    this.prompt = prompt;
 
-                        cx.notify();
-                    }),
-                ),
+                    cx.notify();
+                    this.on_close.as_ref()(&true, window, cx);
+                })),
         );
 
         div()
             .w_full()
             .h_full()
-            .py_16()
             .bg(theme.background)
             .text_color(theme.foreground)
             .text_size(theme.text_size)
@@ -209,24 +219,16 @@ impl Render for PromptEditorView {
                     .items_start()
                     .children(vec![
                         label("Prompt").pt_1(),
-                        value().child(TextInput::new(&self.prompt_input).h(px(340.))),
+                        value().child(TextInput::new(&self.prompt_input).h(px(300.))),
                     ])
                     .mt_8(),
             )
-            .child(
-                row()
-                    .items_start()
-                    .children(vec![
-                        label(""),
-                        value()
-                            .flex()
-                            .flex_row()
-                            .justify_center()
-                            .gap_2()
-                            .children(vec![delete_prompt_button, save_prompt_button]),
-                    ])
-                    .mt_8(),
-            )
+            .child(row().gap_2().mt_8().justify_center().children(vec![
+                cancel_button,
+                buttons_space,
+                delete_prompt_button,
+                save_prompt_button,
+            ]))
             .into_any_element()
     }
 }

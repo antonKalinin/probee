@@ -158,7 +158,7 @@ impl PromptList {
             List::new(delegate, window, cx)
                 .no_query()
                 .selectable(true)
-                .max_h(rems(11.5))
+                .max_h(rems(13.))
         });
 
         PromptList { prompt_list }
@@ -173,7 +173,7 @@ impl Render for PromptList {
             .flex_1()
             .w_full()
             .border_1()
-            .h(rems(11.5))
+            .h(rems(13.))
             .border_color(theme.border)
             .rounded_lg()
             .child(self.prompt_list.clone())

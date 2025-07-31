@@ -51,6 +51,9 @@ impl SettingsRoot {
             .detach();
 
             cx.on_blur(&focus_handle, window, |_this, _window, _cx| {
+                // Here is a bug: focusing any input inside the settings window
+                // will close the window, because the handle will lose focus.
+
                 // window.remove_window();
             })
             .detach();

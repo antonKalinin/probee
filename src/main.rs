@@ -27,31 +27,6 @@ use crate::ui::{Components, Theme};
 use crate::utils::devtools;
 use crate::windows::Windows;
 
-// fn open_settings(cx: &mut App) {
-//     let window_handle = get_settings_window_handle(cx);
-
-//     if window_handle.is_some() {
-//         let _ = window_handle.unwrap().update(cx, |_, window, _cx| {
-//             window.remove_window();
-//         });
-//     }
-
-//     let settings_window_options = utils::settings_window_options(cx);
-//     let handle = cx.open_window(settings_window_options, SettingsRoot::build);
-
-//     if let Ok(handle) = handle {
-//         let _ = handle.update(cx, |_, window, cx| {
-//             window.on_window_should_close(cx, |_window, cx| {
-//                 set_settings_window_handle(cx, None);
-//                 true
-//             });
-//         });
-//     }
-
-//     set_settings_window_handle(cx, handle.ok());
-//     cx.activate(true);
-// }
-
 #[async_std::main]
 async fn main() {
     panic::set_hook(Box::new(|panic_info| {
@@ -63,7 +38,8 @@ async fn main() {
     let app = Application::new().with_assets(Assets);
 
     app.run(|cx: &mut App| {
-        // Order of initialization matters here: storage and state should be initialized before others
+        // Order of initialization matters here:
+        // storage and state should be initialized before others
         Storage::init(cx);
         AppStateController::init(cx);
         SettingsStateController::init(cx);
@@ -78,7 +54,6 @@ async fn main() {
         Windows::open_app(cx);
 
         // Global actions bindings
-
         cx.on_action(|_: &ToggleApp, cx| Windows::toggle_app(cx));
         cx.on_action(|_: &CloseApp, cx| Windows::close_app(cx));
         cx.on_action(|_: &OpenSettings, cx| Windows::open_settings(cx));

@@ -9,7 +9,6 @@ use crate::ui::Root;
 
 pub static APP_WIDTH: f32 = 360.;
 pub static APP_MIN_HEIGHT: f32 = 40.;
-pub static APP_MAX_HEIGHT: f32 = 640.;
 pub static APP_MARGIN_TOP: f32 = 44.;
 pub static APP_MARGIN_RIGHT: f32 = 16.;
 
@@ -65,8 +64,8 @@ pub fn settings_window_options(cx: &mut App) -> WindowOptions {
 
     let bounds = Bounds {
         origin: point(
-            display.bounds().center().x - size.center().x * 2.,
-            display.bounds().center().y - size.center().y * 1.5,
+            display.bounds().center().x - size.center().x,
+            display.bounds().center().y - size.center().y * 2.,
         ),
         size,
     };
@@ -94,7 +93,6 @@ pub fn settings_window_options(cx: &mut App) -> WindowOptions {
 pub struct WindowsState {
     pub app_window_handle: Option<WindowHandle<AppRoot>>,
     pub settings_window_handle: Option<WindowHandle<Root>>,
-    pub prompt_editor_window_handle: Option<WindowHandle<Root>>,
 }
 
 #[derive(Clone)]
@@ -107,7 +105,6 @@ impl Windows {
         let state = cx.new(|_cx| WindowsState {
             app_window_handle: None,
             settings_window_handle: None,
-            prompt_editor_window_handle: None,
         });
 
         let windows = Windows { state };
@@ -204,24 +201,6 @@ impl Windows {
                         true
                     });
                 });
-            });
-        });
-    }
-
-    pub fn close_settings(cx: &mut App) {
-        if !cx.has_global::<Self>() {
-            return;
-        }
-
-        cx.update_global::<Self, _>(|this, cx| {
-            this.state.update(cx, |state, cx| {
-                if let Some(handle) = state.settings_window_handle {
-                    let _ = handle.update(cx, |_view, window, _cx| {
-                        window.remove_window();
-                    });
-
-                    state.settings_window_handle = None;
-                }
             });
         });
     }
