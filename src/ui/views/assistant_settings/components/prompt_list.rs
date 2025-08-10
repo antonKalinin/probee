@@ -137,11 +137,16 @@ impl PromptList {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
-        let prompts = state.read(cx).prompts.clone();
+        let mut prompts = state.read(cx).prompts.clone();
+
+        prompts.sort_by(|a, b| a.name.cmp(&b.name));
 
         cx.observe(state, |this, model, cx| {
             this.prompt_list.update(cx, |list, cx| {
-                list.delegate_mut().prompts = model.read(cx).prompts.clone();
+                let mut prompts = model.read(cx).prompts.clone();
+
+                prompts.sort_by(|a, b| a.name.cmp(&b.name));
+                list.delegate_mut().prompts = prompts;
                 cx.notify();
             });
             cx.notify();

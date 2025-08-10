@@ -29,7 +29,9 @@ impl PromptEditorView {
             .map(|p| p.system_message.clone())
             .unwrap_or("".into());
 
-        prompt_text.push_str("\n"); // Hack around impl of TextInput that doesn't handle scroll properly
+        if !prompt_text.is_empty() {
+            prompt_text.push_str("\n"); // Hack around impl of TextInput that doesn't handle scroll properly
+        }
 
         let name_input = cx.new(|cx| {
             InputState::new(window, cx)
@@ -80,7 +82,7 @@ impl PromptEditorView {
 
     fn save_prompt(&self, cx: &mut Context<Self>) -> Option<Prompt> {
         let name = self.name_input.read(cx).value().clone();
-        let text = self.prompt_input.read(cx).value().clone();
+        let text = self.prompt_input.read(cx).value().trim();
 
         if name.is_empty() || text.is_empty() {
             return None;
