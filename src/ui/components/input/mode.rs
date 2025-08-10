@@ -45,13 +45,31 @@ pub enum InputMode {
     },
 }
 
+#[allow(unused)]
 impl InputMode {
+    #[inline]
+    pub(super) fn is_single_line(&self) -> bool {
+        matches!(self, InputMode::SingleLine)
+    }
+
+    #[inline]
+    pub(super) fn is_auto_grow(&self) -> bool {
+        matches!(self, InputMode::AutoGrow { .. })
+    }
+
+    #[inline]
+    pub(super) fn is_multi_line(&self) -> bool {
+        matches!(
+            self,
+            InputMode::MultiLine { .. } | InputMode::AutoGrow { .. }
+        )
+    }
+
     pub(super) fn set_rows(&mut self, new_rows: usize) {
         match self {
             InputMode::MultiLine { rows, .. } => {
                 *rows = new_rows;
             }
-
             InputMode::AutoGrow {
                 rows,
                 min_rows,
@@ -91,6 +109,7 @@ impl InputMode {
     #[allow(unused)]
     pub(super) fn min_rows(&self) -> usize {
         match self {
+            InputMode::MultiLine { .. } => 1,
             InputMode::AutoGrow { min_rows, .. } => *min_rows,
             _ => 1,
         }
@@ -100,6 +119,7 @@ impl InputMode {
     #[allow(unused)]
     pub(super) fn max_rows(&self) -> usize {
         match self {
+            InputMode::MultiLine { .. } => usize::MAX,
             InputMode::AutoGrow { max_rows, .. } => *max_rows,
             _ => 1,
         }
@@ -110,6 +130,13 @@ impl InputMode {
             InputMode::MultiLine { height, .. } => *height,
             _ => None,
         }
+    }
+
+    /// Return false if the mode is not [`InputMode::CodeEditor`].
+    #[allow(unused)]
+    #[inline]
+    pub(super) fn line_number(&self) -> bool {
+        false
     }
 
     #[inline]

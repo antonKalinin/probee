@@ -27,7 +27,6 @@ pub use list::*;
 pub use root::*;
 pub use scroll::*;
 pub use settings_tab::*;
-pub use slider::*;
 
 // pub use scroll::*;
 pub use skeleton::*;

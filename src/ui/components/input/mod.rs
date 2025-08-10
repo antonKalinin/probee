@@ -1,9 +1,9 @@
 mod blink_cursor;
 mod change;
 mod clear_button;
+mod cursor;
 mod element;
 mod history;
-// mod marker;
 mod mask_pattern;
 mod mode;
 mod state;

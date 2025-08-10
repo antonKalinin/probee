@@ -24,10 +24,12 @@ impl PromptEditorView {
         cx: &mut Context<Self>,
     ) -> Self {
         let prompt_name = prompt.as_ref().map(|p| p.name.clone()).unwrap_or("".into());
-        let prompt_text = prompt
+        let mut prompt_text = prompt
             .as_ref()
             .map(|p| p.system_message.clone())
             .unwrap_or("".into());
+
+        prompt_text.push_str("\n"); // Hack around impl of TextInput that doesn't handle scroll properly
 
         let name_input = cx.new(|cx| {
             InputState::new(window, cx)

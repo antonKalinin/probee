@@ -1087,7 +1087,7 @@ dependencies = [
 [[package]]
 name = "collections"
 version = "0.1.0"
-source = "git+https://github.com/antonKalinin/zed?rev=e23fc2d011dbe5f7f2ab0b9b18f50fc417c1b5fc#e23fc2d011dbe5f7f2ab0b9b18f50fc417c1b5fc"
+source = "git+https://github.com/antonKalinin/zed?rev=b538ffde21d4cdbae6dc6577ed2230aea1df2fb6#b538ffde21d4cdbae6dc6577ed2230aea1df2fb6"
 dependencies = [
  "indexmap",
  "rustc-hash 2.1.1",
@@ -1460,7 +1460,7 @@ dependencies = [
 [[package]]
 name = "derive_refineable"
 version = "0.1.0"
-source = "git+https://github.com/antonKalinin/zed?rev=e23fc2d011dbe5f7f2ab0b9b18f50fc417c1b5fc#e23fc2d011dbe5f7f2ab0b9b18f50fc417c1b5fc"
+source = "git+https://github.com/antonKalinin/zed?rev=b538ffde21d4cdbae6dc6577ed2230aea1df2fb6#b538ffde21d4cdbae6dc6577ed2230aea1df2fb6"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2284,7 +2284,7 @@ dependencies = [
 [[package]]
 name = "gpui"
 version = "0.1.0"
-source = "git+https://github.com/antonKalinin/zed?rev=e23fc2d011dbe5f7f2ab0b9b18f50fc417c1b5fc#e23fc2d011dbe5f7f2ab0b9b18f50fc417c1b5fc"
+source = "git+https://github.com/antonKalinin/zed?rev=b538ffde21d4cdbae6dc6577ed2230aea1df2fb6#b538ffde21d4cdbae6dc6577ed2230aea1df2fb6"
 dependencies = [
  "anyhow",
  "as-raw-xcb-connection",
@@ -2377,7 +2377,7 @@ dependencies = [
 [[package]]
 name = "gpui_macros"
 version = "0.1.0"
-source = "git+https://github.com/antonKalinin/zed?rev=e23fc2d011dbe5f7f2ab0b9b18f50fc417c1b5fc#e23fc2d011dbe5f7f2ab0b9b18f50fc417c1b5fc"
+source = "git+https://github.com/antonKalinin/zed?rev=b538ffde21d4cdbae6dc6577ed2230aea1df2fb6#b538ffde21d4cdbae6dc6577ed2230aea1df2fb6"
 dependencies = [
  "heck 0.5.0",
  "proc-macro2",
@@ -2388,9 +2388,9 @@ dependencies = [
 
 [[package]]
 name = "grid"
-version = "0.13.0"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d196ffc1627db18a531359249b2bf8416178d84b729f3cebeb278f285fb9b58c"
+checksum = "71b01d27060ad58be4663b9e4ac9e2d4806918e8876af8912afbddd1a91d5eaa"
 
 [[package]]
 name = "h2"
@@ -2539,14 +2539,16 @@ dependencies = [
 [[package]]
 name = "http_client"
 version = "0.1.0"
-source = "git+https://github.com/antonKalinin/zed?rev=e23fc2d011dbe5f7f2ab0b9b18f50fc417c1b5fc#e23fc2d011dbe5f7f2ab0b9b18f50fc417c1b5fc"
+source = "git+https://github.com/antonKalinin/zed?rev=b538ffde21d4cdbae6dc6577ed2230aea1df2fb6#b538ffde21d4cdbae6dc6577ed2230aea1df2fb6"
 dependencies = [
  "anyhow",
  "bytes",
  "derive_more",
  "futures",
  "http",
+ "http-body",
  "log",
+ "parking_lot",
  "serde",
  "serde_json",
  "url",
@@ -3204,7 +3206,7 @@ dependencies = [
 [[package]]
 name = "media"
 version = "0.1.0"
-source = "git+https://github.com/antonKalinin/zed?rev=e23fc2d011dbe5f7f2ab0b9b18f50fc417c1b5fc#e23fc2d011dbe5f7f2ab0b9b18f50fc417c1b5fc"
+source = "git+https://github.com/antonKalinin/zed?rev=b538ffde21d4cdbae6dc6577ed2230aea1df2fb6#b538ffde21d4cdbae6dc6577ed2230aea1df2fb6"
 dependencies = [
  "anyhow",
  "bindgen",
@@ -4464,9 +4466,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "ref-cast"
+version = "1.0.24"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4a0ae411dbe946a674d89546582cea4ba2bb8defac896622d6496f14c23ba5cf"
+dependencies = [
+ "ref-cast-impl",
+]
+
+[[package]]
+name = "ref-cast-impl"
+version = "1.0.24"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1165225c21bff1f3bbce98f5a1f889949bc902d3575308cc7b0de30b4f6d27c7"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.104",
+]
+
+[[package]]
 name = "refineable"
 version = "0.1.0"
-source = "git+https://github.com/antonKalinin/zed?rev=e23fc2d011dbe5f7f2ab0b9b18f50fc417c1b5fc#e23fc2d011dbe5f7f2ab0b9b18f50fc417c1b5fc"
+source = "git+https://github.com/antonKalinin/zed?rev=b538ffde21d4cdbae6dc6577ed2230aea1df2fb6#b538ffde21d4cdbae6dc6577ed2230aea1df2fb6"
 dependencies = [
  "derive_refineable",
  "workspace-hack",
@@ -4798,7 +4820,7 @@ dependencies = [
 [[package]]
 name = "scap"
 version = "0.0.8"
-source = "git+https://github.com/zed-industries/scap?rev=08f0a01417505cc0990b9931a37e5120db92e0d0#08f0a01417505cc0990b9931a37e5120db92e0d0"
+source = "git+https://github.com/zed-industries/scap?rev=808aa5c45b41e8f44729d02e38fd00a2fe2722e7#808aa5c45b41e8f44729d02e38fd00a2fe2722e7"
 dependencies = [
  "anyhow",
  "cocoa 0.25.0",
@@ -4827,12 +4849,13 @@ dependencies = [
 
 [[package]]
 name = "schemars"
-version = "0.8.22"
+version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3fbf2ae1b8bc8e02df939598064d22402220cd5bbcca1c76f7d6a310974d5615"
+checksum = "82d20c4491bc164fa2f6c5d44565947a52ad80b9505d8e36f8d54c27c739fcd0"
 dependencies = [
  "dyn-clone",
  "indexmap",
+ "ref-cast",
  "schemars_derive",
  "serde",
  "serde_json",
@@ -4840,9 +4863,9 @@ dependencies = [
 
 [[package]]
 name = "schemars_derive"
-version = "0.8.22"
+version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32e265784ad618884abaea0600a9adf15393368d840e0222d101a072f3f7534d"
+checksum = "33d020396d1d138dc19f1165df7545479dcd58d93810dc5d646a16e55abefa80"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4936,7 +4959,7 @@ checksum = "c2fdfc24bc566f839a2da4c4295b82db7d25a24253867d5c64355abb5799bdbe"
 [[package]]
 name = "semantic_version"
 version = "0.1.0"
-source = "git+https://github.com/antonKalinin/zed?rev=e23fc2d011dbe5f7f2ab0b9b18f50fc417c1b5fc#e23fc2d011dbe5f7f2ab0b9b18f50fc417c1b5fc"
+source = "git+https://github.com/antonKalinin/zed?rev=b538ffde21d4cdbae6dc6577ed2230aea1df2fb6#b538ffde21d4cdbae6dc6577ed2230aea1df2fb6"
 dependencies = [
  "anyhow",
  "serde",
@@ -5274,7 +5297,7 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 [[package]]
 name = "sum_tree"
 version = "0.1.0"
-source = "git+https://github.com/antonKalinin/zed?rev=e23fc2d011dbe5f7f2ab0b9b18f50fc417c1b5fc#e23fc2d011dbe5f7f2ab0b9b18f50fc417c1b5fc"
+source = "git+https://github.com/antonKalinin/zed?rev=b538ffde21d4cdbae6dc6577ed2230aea1df2fb6#b538ffde21d4cdbae6dc6577ed2230aea1df2fb6"
 dependencies = [
  "arrayvec",
  "log",
@@ -5488,13 +5511,12 @@ dependencies = [
 
 [[package]]
 name = "taffy"
-version = "0.4.4"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ec17858c2d465b2f734b798b920818a974faf0babb15d7fef81818a4b2d16f1"
+checksum = "7aaef0ac998e6527d6d0d5582f7e43953bb17221ac75bb8eb2fcc2db3396db1c"
 dependencies = [
  "arrayvec",
  "grid",
- "num-traits",
  "serde",
  "slotmap",
 ]
@@ -6082,7 +6104,7 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 [[package]]
 name = "util"
 version = "0.1.0"
-source = "git+https://github.com/antonKalinin/zed?rev=e23fc2d011dbe5f7f2ab0b9b18f50fc417c1b5fc#e23fc2d011dbe5f7f2ab0b9b18f50fc417c1b5fc"
+source = "git+https://github.com/antonKalinin/zed?rev=b538ffde21d4cdbae6dc6577ed2230aea1df2fb6#b538ffde21d4cdbae6dc6577ed2230aea1df2fb6"
 dependencies = [
  "anyhow",
  "async-fs",
@@ -6100,6 +6122,7 @@ dependencies = [
  "nix 0.29.0",
  "regex",
  "rust-embed",
+ "schemars",
  "serde",
  "serde_json",
  "serde_json_lenient",

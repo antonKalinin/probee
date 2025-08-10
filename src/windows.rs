@@ -119,10 +119,11 @@ impl Windows {
 
         cx.update_global::<Self, _>(|this, cx| {
             this.state.update(cx, |state, cx| {
-                let app_window_options = app_window_options(cx);
-                let app_window = cx.open_window(app_window_options, AppRoot::build).unwrap();
-
-                state.app_window_handle = Some(app_window);
+                if state.app_window_handle.is_none() {
+                    let app_window_options = app_window_options(cx);
+                    let app_window = cx.open_window(app_window_options, AppRoot::build).unwrap();
+                    state.app_window_handle = Some(app_window);
+                }
             });
         });
     }

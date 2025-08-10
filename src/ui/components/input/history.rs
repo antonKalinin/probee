@@ -13,11 +13,6 @@ pub trait HistoryItem: Clone + PartialEq {
 /// This is now used in Input for undo/redo operations. You can also use this in
 /// your own models to keep track of changes, for example to track the tab
 /// history for prev/next features.
-///
-/// ## Use cases
-///
-/// - Undo/redo operations in Input
-/// - Tracking tab history for prev/next features
 #[derive(Debug)]
 pub struct History<I: HistoryItem> {
     undos: Vec<I>,
