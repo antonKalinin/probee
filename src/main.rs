@@ -58,8 +58,6 @@ async fn main() {
         cx.on_action(|_: &CloseApp, cx| Windows::close_app(cx));
         cx.on_action(|_: &OpenSettings, cx| Windows::open_settings(cx));
         cx.on_action(|_: &RunAssistant, cx| {
-            Windows::open_app(cx); // if its not yet opened
-
             match selection::get_text() {
                 Ok(text) => {
                     if text.is_empty() {
@@ -72,6 +70,10 @@ async fn main() {
                     set_error(cx, Some(err));
                 }
             }
+
+            // Open/Focus window only after selection is captured,
+            // otherwise it will be empty
+            Windows::open_app(cx);
         });
 
         // TODO: Log status menu initialization failure
