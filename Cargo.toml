@@ -2,7 +2,7 @@
 name = "probee"
 authors = ["Anton Kalinin <hurricanebox@gmail.com>"]
 homepage = "https://probee.ai/"
-version = "0.0.13"
+version = "0.0.14"
 edition = "2021"
 description = "Probee is a shortcut to your own collection of AI prompts."
 
