@@ -50,13 +50,10 @@ impl Render for Header {
         let row = || div().flex().flex_row().flex_wrap().items_center();
 
         let dropdown_icon = Icon::new(IconName::ChevronDown)
-            .opacity(0.)
             .text_color(theme.foreground)
-            .ml_3()
-            .group_hover("prompt-name", |style| style.opacity(1.));
+            .ml_3();
 
         div()
-            .group("prompt-name")
             .flex()
             .flex_row()
             .flex_wrap()

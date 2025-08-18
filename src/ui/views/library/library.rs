@@ -3,7 +3,7 @@ use gpui::*;
 use crate::assistant::Prompt;
 use crate::events::*;
 use crate::state::app_state::*;
-use crate::ui::*;
+use crate::ui::{Header, Theme};
 
 pub struct LibraryView {
     active_prompt_id: Option<String>,

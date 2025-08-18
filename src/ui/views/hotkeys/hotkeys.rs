@@ -9,13 +9,11 @@ use super::components::HotkeyInput;
 pub struct HotkeysView {
     assistant_hotkey_input: Entity<HotkeyInput>,
     visibility_hotkey_input: Entity<HotkeyInput>,
-    prev_assistant_hotkey_input: Entity<HotkeyInput>,
-    next_assistant_hotkey_input: Entity<HotkeyInput>,
 
     visible: bool,
 }
 
-const VIEW_HEIGHT: f32 = 280.0;
+const VIEW_HEIGHT: f32 = 196.0;
 
 impl HotkeysView {
     pub fn new(state: &Entity<SettingsState>, cx: &mut Context<Self>) -> Self {
@@ -33,16 +31,6 @@ impl HotkeysView {
             .map(|s| HotKey::from_keystroke(s.as_str()).ok())
             .unwrap_or(None);
 
-        let prev_assistant_hotkey = storage
-            .get(StorageKey::HotkeyPrevPropmt)
-            .map(|s| HotKey::from_keystroke(s.as_str()).ok())
-            .unwrap_or(None);
-
-        let next_assistant_hotkey = storage
-            .get(StorageKey::HotkeyNextPrompt)
-            .map(|s| HotKey::from_keystroke(s.as_str()).ok())
-            .unwrap_or(None);
-
         let assistant_hotkey_cb = Box::new(|hotkey: HotKey, cx: &mut Context<_>| {
             let _ = cx
                 .global::<Storage>()
@@ -53,18 +41,6 @@ impl HotkeysView {
             let _ = cx
                 .global::<Storage>()
                 .set(StorageKey::HotkeyToggleVisibility, hotkey.to_keystroke());
-        });
-
-        let prev_hotkey_cb = Box::new(|hotkey: HotKey, cx: &mut Context<_>| {
-            let _ = cx
-                .global::<Storage>()
-                .set(StorageKey::HotkeyPrevPropmt, hotkey.to_keystroke());
-        });
-
-        let next_hotkey_cb = Box::new(|hotkey: HotKey, cx: &mut Context<_>| {
-            let _ = cx
-                .global::<Storage>()
-                .set(StorageKey::HotkeyNextPrompt, hotkey.to_keystroke());
         });
 
         cx.observe(state, |this, state, cx| {
@@ -79,11 +55,6 @@ impl HotkeysView {
                 .new(|cx| HotkeyInput::new(assistant_hotkey, assistant_hotkey_cb, cx)),
             visibility_hotkey_input: cx
                 .new(|cx| HotkeyInput::new(visibility_hotkey, visibility_hotkey_cb, cx)),
-            prev_assistant_hotkey_input: cx
-                .new(|cx| HotkeyInput::new(prev_assistant_hotkey, prev_hotkey_cb, cx)),
-            next_assistant_hotkey_input: cx
-                .new(|cx| HotkeyInput::new(next_assistant_hotkey, next_hotkey_cb, cx)),
-
             visible,
         }
     }
@@ -123,10 +94,6 @@ impl Render for HotkeysView {
                     .update(cx, |input, cx| input.stop_recording(cx));
                 this.visibility_hotkey_input
                     .update(cx, |input, cx| input.stop_recording(cx));
-                this.prev_assistant_hotkey_input
-                    .update(cx, |input, cx| input.stop_recording(cx));
-                this.next_assistant_hotkey_input
-                    .update(cx, |input, cx| input.stop_recording(cx));
 
                 cx.notify();
             }
@@ -143,14 +110,6 @@ impl Render for HotkeysView {
             .child(row().children(vec![
                 label("Run Assistant"),
                 value().child(self.assistant_hotkey_input.clone()),
-            ]))
-            .child(row().children(vec![
-                label("Next Assistant"),
-                value().child(self.next_assistant_hotkey_input.clone()),
-            ]))
-            .child(row().children(vec![
-                label("Previous Assistant"),
-                value().child(self.prev_assistant_hotkey_input.clone()),
             ]))
             .child(row().children(vec![
                 label("Toogle Visibility"),
