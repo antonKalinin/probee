@@ -14,6 +14,8 @@ fn main() {
     let supabase_public_url = env::var("SUPABASE_PUBLIC_URL").unwrap_or_default();
     let supabase_public_anon_key = env::var("SUPABASE_PUBLIC_ANON_KEY").unwrap_or_default();
     let cargo_updater_public_key = env::var("CARGO_PACKAGER_SIGN_PUBLIC_KEY").unwrap_or_default();
+    let betterstack_ingesting_host = env::var("BETTERSTACK_INGESTING_HOST").unwrap_or_default();
+    let betterstack_source_token = env::var("BETTERSTACK_SOURCE_TOKEN").unwrap_or_default();
 
     println!("cargo:rustc-env=ANTHROPIC_API_KEY={}", api_key);
     println!("cargo:rustc-env=STORAGE_SALT={}", storage_salt);
@@ -28,5 +30,13 @@ fn main() {
     println!(
         "cargo:rustc-env=CARGO_PACKAGER_SIGN_PUBLIC_KEY={}",
         cargo_updater_public_key
+    );
+    println!(
+        "cargo:rustc-env=BETTERSTACK_INGESTING_HOST={}",
+        betterstack_ingesting_host
+    );
+    println!(
+        "cargo:rustc-env=BETTERSTACK_SOURCE_TOKEN={}",
+        betterstack_source_token
     );
 }

@@ -3,6 +3,7 @@ use std::time::Duration;
 
 use dotenv::dotenv;
 use gpui::{App, Application, AsyncApp};
+use log::{info, set_boxed_logger, Level, LevelFilter};
 
 mod actions;
 mod app;
@@ -35,6 +36,11 @@ async fn main() {
 
     dotenv().ok();
 
+    let logger = Logger::new().unwrap().with_level(Level::Info);
+    set_boxed_logger(Box::new(logger))
+        .map(|()| log::set_max_level(LevelFilter::Info))
+        .unwrap();
+
     let app = Application::new().with_assets(Assets);
 
     app.run(|cx: &mut App| {
@@ -50,6 +56,8 @@ async fn main() {
         Theme::init(cx);
         Components::init(cx);
         Windows::init(cx);
+
+        info!("App started");
 
         Windows::open_app(cx);
 

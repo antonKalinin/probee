@@ -1,4 +1,5 @@
 use gpui::*;
+use log::info;
 
 use crate::assistant::Prompt;
 use crate::services::{Storage, StorageKey};
@@ -116,6 +117,8 @@ impl PromptEditorView {
             serde_json::to_string(&updated_prompts).unwrap(),
             cx,
         );
+
+        info!("Saved prompt: {}", prompt.name);
 
         Some(prompt)
     }

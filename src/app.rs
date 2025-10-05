@@ -2,6 +2,7 @@ use async_std::stream::StreamExt;
 use gpui::{
     div, prelude::*, App, AppContext, Entity, EventEmitter, FocusHandle, KeyBinding, Window,
 };
+use log::info;
 
 use crate::actions::{CloseApp, OpenSettings, SelectNextAssistant, SelectPrevAssistant};
 use crate::assistant::*;
@@ -130,6 +131,8 @@ impl AppRoot {
                             set_error(cx, Some(err));
                             return;
                         }
+
+                        info!("Using prompt: {}", prompt.as_ref().unwrap().name);
 
                         // TODO: Prompt should not be reset on every input change
                         let _ = assitant.set_prompt(prompt.unwrap());

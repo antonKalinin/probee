@@ -2,6 +2,7 @@ use gpui::{
     point, px, App, AppContext, BorrowAppContext, Bounds, Entity, Global, Size, TitlebarOptions,
     WindowBackgroundAppearance, WindowBounds, WindowHandle, WindowKind, WindowOptions,
 };
+use log::info;
 
 use crate::app::AppRoot;
 use crate::settings::SettingsRoot;
@@ -126,6 +127,8 @@ impl Windows {
                 }
             });
         });
+
+        info!("App window opened");
     }
 
     pub fn close_app(cx: &mut App) {
@@ -204,6 +207,8 @@ impl Windows {
                 });
             });
         });
+
+        info!("Settings window opened");
     }
 }
 

@@ -1,4 +1,5 @@
 use gpui::*;
+use log::error;
 
 use crate::state::settings_state::set_error;
 use crate::state::ErrorState;
@@ -21,6 +22,8 @@ impl ErrorView {
 
             if error_occured {
                 this.message = state.read(cx).get_error().unwrap().to_string();
+                error!("{}", this.message);
+
                 cx.notify();
             }
         })
