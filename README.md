@@ -1,5 +1,4 @@
 # Probee: Highlight. Hotkey. Answer.
-### Turn any on-screen text into an AI prompt with one keystroke
 
 Desktop App that allows you to quickly run your AI prompts against selected text.
 
