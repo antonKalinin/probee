@@ -1,21 +1,7 @@
-## Probee
+# Probee: Highlight. Hotkey. Answer.
+### Turn any on-screen text into an AI prompt with one keystroke
 
 Desktop App that allows you to quickly run your AI prompts against selected text.
 
-### Project structure
+<img width="1280" height="720" alt="probee_intro_poster" src="https://github.com/user-attachments/assets/50a3fcc3-e1ad-475f-948b-5585095bdce4" />
 
-```
-probee/
-├── build.rs // maps environment variables to rust runtime
-├── src/
-│   ├── assets.rs // static assets
-│   ├── services/ // modules with side effects (e.g. API calls, file system operations, OS interactions)
-│   ├── state // global state
-│   ├── ui/ // entities that can be rendered
-│   ├── utils/ // side-effect free utility functions
-│   ├── events.rs // App & UI events
-│   ├── errors.rs // custom error types
-│   ├── main.rs // entry point, initializes the services, creates windows and starts the app
-│   ├── app.rs // root app view
-│   ├── settings.rs // root settings view
-```
